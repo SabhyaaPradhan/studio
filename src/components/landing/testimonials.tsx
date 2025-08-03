@@ -12,6 +12,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -33,11 +34,56 @@ const testimonials = [
         name: "David Chen",
         title: "Marketing Director, TechCorp",
         image: "https://placehold.co/100x100.png"
+    },
+    {
+        quote: "As a coach, I'm constantly asked about my programs. Savrii handles all of it, letting me focus on coaching.",
+        name: "Maria Rodriguez",
+        title: "Business Coach",
+        image: "https://placehold.co/100x100.png"
+    },
+    {
+        quote: "The best no-code tool I've used. It's simple, powerful, and effective.",
+        name: "James Smith",
+        title: "Freelance Designer",
+        image: "https://placehold.co/100x100.png"
+    },
+    {
+        quote: "Customer satisfaction is up, and my workload is down. It's a win-win.",
+        name: "Emily White",
+        title: "SaaS Founder",
+        image: "https://placehold.co/100x100.png"
+    },
+    {
+        quote: "I was skeptical about AI, but Savrii has made me a believer. It's like having a new team member.",
+        name: "Michael Brown",
+        title: "Consultant",
+        image: "https://placehold.co/100x100.png"
+    },
+    {
+        quote: "It's so easy to update the knowledge base. I can add new info in seconds.",
+        name: "Jessica Green",
+        title: "Creator",
+        image: "https://placehold.co/100x100.png"
+    },
+    {
+        quote: "The analytics are fantastic. I can see exactly what my customers are asking about.",
+        name: "Chris Taylor",
+        title: "Agency Owner",
+        image: "https://placehold.co/100x100.png"
+    },
+    {
+        quote: "My inbox has never been cleaner. Savrii is an essential tool for my business.",
+        name: "Laura Wilson",
+        title: "E-commerce Seller",
+        image: "https://placehold.co/100x100.png"
     }
 ]
 
 export default function Testimonials() {
   const sectionRef = useRef<HTMLDivElement>(null);
+  const plugin = useRef(
+    Autoplay({ delay: 5000, stopOnInteraction: true })
+  );
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -70,24 +116,27 @@ export default function Testimonials() {
             <h2 className="text-3xl md:text-5xl font-bold tracking-tighter">Loved by founders like you</h2>
         </div>
         <Carousel
+          plugins={[plugin.current]}
           opts={{
             align: "start",
             loop: true,
           }}
           className="w-full max-w-6xl mx-auto"
           data-testimonial-element
+          onMouseEnter={() => plugin.current.stop()}
+          onMouseLeave={() => plugin.current.reset()}
         >
           <CarouselContent>
             {testimonials.map((testimonial, index) => (
-                 <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
-                    <div className="p-4">
-                        <Card className="bg-card/80 backdrop-blur-sm border-border h-full flex flex-col justify-between">
+                 <CarouselItem key={index} className="basis-full md:basis-1/2 lg:basis-1/3">
+                    <div className="p-4 h-full">
+                        <Card className="bg-card/80 backdrop-blur-sm border-border h-full flex flex-col justify-between shadow-lg transition-all duration-300 hover:shadow-primary/20 hover:border-primary/50">
                             <CardContent className="p-8 flex-grow">
-                                <blockquote className="text-lg md:text-xl font-medium mb-6">
+                                <blockquote className="text-lg md:text-xl font-medium mb-6 italic text-foreground/90">
                                 “{testimonial.quote}”
                                 </blockquote>
                             </CardContent>
-                             <div className="bg-secondary/50 p-6 flex items-center gap-4 mt-auto">
+                             <div className="bg-secondary/50 p-6 flex items-center gap-4 mt-auto rounded-b-lg">
                                 <Image 
                                     src={testimonial.image} 
                                     alt={testimonial.name}
@@ -97,7 +146,7 @@ export default function Testimonials() {
                                     data-ai-hint="profile picture"
                                 />
                                 <div>
-                                    <p className="font-semibold">{testimonial.name}</p>
+                                    <p className="font-semibold text-lg">{testimonial.name}</p>
                                     <p className="text-sm text-muted-foreground">{testimonial.title}</p>
                                 </div>
                             </div>
@@ -106,8 +155,8 @@ export default function Testimonials() {
                 </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious className="border-border bg-card hover:bg-secondary" />
-          <CarouselNext className="border-border bg-card hover:bg-secondary" />
+          <CarouselPrevious className="border-border bg-card hover:bg-secondary transition-colors" />
+          <CarouselNext className="border-border bg-card hover:bg-secondary transition-colors" />
         </Carousel>
       </div>
     </section>
