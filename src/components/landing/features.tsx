@@ -65,10 +65,7 @@ export default function Features() {
               <Button
                 key={feature.name}
                 variant={activeFeature.name === feature.name ? "default" : "ghost"}
-                className={cn(
-                  "justify-between w-full text-left text-lg py-6 transition-all duration-300",
-                  activeFeature.name === feature.name ? "bg-primary/10 text-primary" : "text-foreground"
-                )}
+                className="justify-between w-full text-left text-lg py-6 transition-all duration-300"
                 onMouseEnter={() => setActiveFeature(feature)}
               >
                 {feature.name}
