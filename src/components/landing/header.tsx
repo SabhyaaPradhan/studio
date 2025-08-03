@@ -4,23 +4,30 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Sun, Moon } from "lucide-react";
+import { Sun, Moon, Menu, X } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetClose,
+} from "@/components/ui/sheet";
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [theme, setTheme] = useState('dark');
+  const [theme, setTheme] = useState("dark");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    const storedTheme = localStorage.getItem('theme');
+    const storedTheme = localStorage.getItem("theme");
     if (storedTheme) {
       setTheme(storedTheme);
-      if (storedTheme === 'light') {
-        document.documentElement.classList.remove('dark');
+      if (storedTheme === "light") {
+        document.documentElement.classList.remove("dark");
       } else {
-        document.documentElement.classList.add('dark');
+        document.documentElement.classList.add("dark");
       }
     } else {
-        document.documentElement.classList.add('dark');
+      document.documentElement.classList.add("dark");
     }
   }, []);
 
@@ -35,13 +42,13 @@ export default function Header() {
   }, []);
 
   const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
+    const newTheme = theme === "light" ? "dark" : "light";
     setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
-    if (newTheme === 'light') {
-      document.documentElement.classList.remove('dark');
+    localStorage.setItem("theme", newTheme);
+    if (newTheme === "light") {
+      document.documentElement.classList.remove("dark");
     } else {
-      document.documentElement.classList.add('dark');
+      document.documentElement.classList.add("dark");
     }
   };
 
@@ -53,38 +60,79 @@ export default function Header() {
       )}
     >
       <div className="container mx-auto flex h-20 items-center justify-between px-4 md:px-6">
-        <div className="flex-1 flex justify-start">
-            <Link href="/" className="flex items-center gap-2">
-              <span className="text-2xl font-bold">Savrii</span>
-            </Link>
-        </div>
+        <Link href="/" className="flex items-center gap-2">
+          <span className="text-2xl font-bold">Savrii</span>
+        </Link>
 
         <nav className="hidden md:flex flex-1 justify-center items-center gap-8 text-lg font-medium">
-            <Link href="/" className="hover:text-primary transition-colors">Home</Link>
-            <Link href="#" className="hover:text-primary transition-colors">Pricing</Link>
-            <Link href="#" className="hover:text-primary transition-colors">Contact</Link>
-            <Link href="#" className="hover:text-primary transition-colors">FAQ</Link>
+          <Link href="/" className="hover:text-primary transition-colors">Home</Link>
+          <Link href="#" className="hover:text-primary transition-colors">Pricing</Link>
+          <Link href="#" className="hover:text-primary transition-colors">Contact</Link>
+          <Link href="#" className="hover:text-primary transition-colors">FAQ</Link>
         </nav>
 
-        <div className="hidden md:flex flex-1 justify-end items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={toggleTheme}>
-                {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-            </Button>
-            <Button variant="ghost" asChild>
-                <Link href="/login">Sign In</Link>
-            </Button>
-            <Button asChild>
-                <Link href="/signup">Get Started</Link>
-            </Button>
+        <div className="hidden md:flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={toggleTheme}>
+            {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+          </Button>
+          <Button variant="ghost" asChild>
+            <Link href="/login">Sign In</Link>
+          </Button>
+          <Button asChild>
+            <Link href="/signup">Get Started</Link>
+          </Button>
         </div>
 
         <div className="md:hidden flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={toggleTheme}>
-                {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-            </Button>
-             <Button size="sm" asChild>
-              <Link href="/signup">Get Started</Link>
-            </Button>
+          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="h-6 w-6" />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[300px] sm:w-[400px] bg-background">
+              <div className="flex flex-col h-full">
+                <div className="flex justify-between items-center p-4 border-b">
+                   <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
+                      <span className="text-2xl font-bold">Savrii</span>
+                   </Link>
+                   <SheetClose asChild>
+                      <Button variant="ghost" size="icon">
+                          <X className="h-6 w-6" />
+                          <span className="sr-only">Close menu</span>
+                      </Button>
+                   </SheetClose>
+                </div>
+                <nav className="flex flex-col gap-6 p-4 text-lg font-medium flex-grow">
+                  <SheetClose asChild><Link href="/" className="hover:text-primary transition-colors">Home</Link></SheetClose>
+                  <SheetClose asChild><Link href="#" className="hover:text-primary transition-colors">Pricing</Link></SheetClose>
+                  <SheetClose asChild><Link href="#" className="hover:text-primary transition-colors">Contact</Link></SheetClose>
+                  <SheetClose asChild><Link href="#" className="hover:text-primary transition-colors">FAQ</Link></SheetClose>
+                </nav>
+                <div className="p-4 border-t mt-auto">
+                    <div className="flex items-center justify-between mb-4">
+                        <span>Switch Theme</span>
+                        <Button variant="ghost" size="icon" onClick={toggleTheme}>
+                            {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+                        </Button>
+                    </div>
+                    <div className="flex flex-col gap-4">
+                        <SheetClose asChild>
+                          <Button variant="ghost" asChild>
+                            <Link href="/login">Sign In</Link>
+                          </Button>
+                        </SheetClose>
+                        <SheetClose asChild>
+                          <Button asChild>
+                            <Link href="/signup">Get Started</Link>
+                          </Button>
+                        </SheetClose>
+                    </div>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </header>
