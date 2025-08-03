@@ -16,7 +16,7 @@ export default function HeroCube() {
 
     // Camera
     const camera = new THREE.PerspectiveCamera(75, currentMount.clientWidth / currentMount.clientHeight, 0.1, 1000);
-    camera.position.z = 2.5;
+    camera.position.z = 3.5;
 
     // Renderer
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
@@ -35,7 +35,7 @@ export default function HeroCube() {
     const lineMaterial = new THREE.LineBasicMaterial({ color: 0x7cfc00, linewidth: 2 });
     
     // Cube
-    const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
+    const cubeGeometry = new THREE.BoxGeometry(1.5, 1.5, 1.5);
     const cube = new THREE.Mesh(cubeGeometry, material);
     const cubeEdges = new THREE.EdgesGeometry(cubeGeometry);
     const cubeLineSegments = new THREE.LineSegments(cubeEdges, lineMaterial);
@@ -43,21 +43,21 @@ export default function HeroCube() {
     scene.add(cube);
     
     // Sphere
-    const sphereGeometry = new THREE.SphereGeometry(0.4, 32, 16);
+    const sphereGeometry = new THREE.SphereGeometry(0.6, 32, 16);
     const sphere = new THREE.Mesh(sphereGeometry, material);
     const sphereEdges = new THREE.EdgesGeometry(sphereGeometry);
     const sphereLineSegments = new THREE.LineSegments(sphereEdges, lineMaterial);
     sphere.add(sphereLineSegments); // Attach edges to the sphere
-    sphere.position.set(-1.8, 1, 0);
+    sphere.position.set(-2.5, 1.2, 0);
     scene.add(sphere);
 
     // Cone
-    const coneGeometry = new THREE.ConeGeometry(0.4, 0.8, 32);
+    const coneGeometry = new THREE.ConeGeometry(0.6, 1.2, 32);
     const cone = new THREE.Mesh(coneGeometry, material);
     const coneEdges = new THREE.EdgesGeometry(coneGeometry);
     const coneLineSegments = new THREE.LineSegments(coneEdges, lineMaterial);
     cone.add(coneLineSegments);
-    cone.position.set(1.8, 1, 0);
+    cone.position.set(2.5, 1.2, 0);
     scene.add(cone);
 
 
