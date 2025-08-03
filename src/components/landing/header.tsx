@@ -53,11 +53,11 @@ export default function Header() {
       )}
     >
       <div className="container mx-auto flex h-20 items-center justify-between px-4 md:px-6">
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center gap-2">
               <span className="text-2xl font-bold">Savrii</span>
             </Link>
-            <nav className="hidden md:flex items-center gap-4 text-sm font-medium">
+            <nav className="hidden md:flex items-center gap-6 text-base font-medium">
                 <Link href="/" className="hover:text-primary transition-colors">Home</Link>
                 <Link href="#" className="hover:text-primary transition-colors">Pricing</Link>
                 <Link href="#" className="hover:text-primary transition-colors">Contact</Link>
