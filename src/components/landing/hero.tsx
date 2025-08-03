@@ -3,6 +3,7 @@
 import { useRef, useEffect } from "react";
 import { gsap } from "gsap";
 import { Button } from "@/components/ui/button";
+import HeroCube from "./hero-cube";
 
 export default function Hero() {
   const heroRef = useRef<HTMLDivElement>(null);
@@ -27,6 +28,7 @@ export default function Hero() {
 
   return (
     <section ref={heroRef} className="relative h-screen flex items-center justify-center text-center bg-background overflow-hidden">
+      <HeroCube />
       <div className="absolute inset-0 bg-grid-black/[0.05] dark:bg-grid-white/[0.05] [mask-image:linear-gradient(to_bottom,white_50%,transparent_100%)]"></div>
       <div className="relative z-10 container mx-auto px-4 md:px-6 flex flex-col items-center gap-6">
         <div data-hero-element>
