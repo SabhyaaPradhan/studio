@@ -16,15 +16,14 @@ export default function HeroCube() {
 
     // Camera
     const camera = new THREE.PerspectiveCamera(75, currentMount.clientWidth / currentMount.clientHeight, 0.1, 1000);
-    camera.position.z = 2;
+    camera.position.z = 2.5;
 
     // Renderer
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
     renderer.setSize(currentMount.clientWidth, currentMount.clientHeight);
     currentMount.appendChild(renderer.domElement);
 
-    // Cube
-    const geometry = new THREE.BoxGeometry(1, 1, 1);
+    // Material
     const material = new THREE.MeshStandardMaterial({
       color: 0x7cfc00, // Neon green tint
       transparent: true,
@@ -32,14 +31,35 @@ export default function HeroCube() {
       roughness: 0.2,
       metalness: 0.8,
     });
-    const cube = new THREE.Mesh(geometry, material);
-    scene.add(cube);
 
-    // Edges
-    const edges = new THREE.EdgesGeometry(geometry);
     const lineMaterial = new THREE.LineBasicMaterial({ color: 0x7cfc00, linewidth: 2 });
-    const lineSegments = new THREE.LineSegments(edges, lineMaterial);
-    scene.add(lineSegments);
+    
+    // Cube
+    const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
+    const cube = new THREE.Mesh(cubeGeometry, material);
+    const cubeEdges = new THREE.EdgesGeometry(cubeGeometry);
+    const cubeLineSegments = new THREE.LineSegments(cubeEdges, lineMaterial);
+    cube.add(cubeLineSegments); // Attach edges to the cube
+    scene.add(cube);
+    
+    // Sphere
+    const sphereGeometry = new THREE.SphereGeometry(0.4, 32, 16);
+    const sphere = new THREE.Mesh(sphereGeometry, material);
+    const sphereEdges = new THREE.EdgesGeometry(sphereGeometry);
+    const sphereLineSegments = new THREE.LineSegments(sphereEdges, lineMaterial);
+    sphere.add(sphereLineSegments); // Attach edges to the sphere
+    sphere.position.set(-1.8, 1, 0);
+    scene.add(sphere);
+
+    // Cone
+    const coneGeometry = new THREE.ConeGeometry(0.4, 0.8, 32);
+    const cone = new THREE.Mesh(coneGeometry, material);
+    const coneEdges = new THREE.EdgesGeometry(coneGeometry);
+    const coneLineSegments = new THREE.LineSegments(coneEdges, lineMaterial);
+    cone.add(coneLineSegments);
+    cone.position.set(1.8, 1, 0);
+    scene.add(cone);
+
 
     // Lights
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
@@ -54,8 +74,10 @@ export default function HeroCube() {
       requestAnimationFrame(animate);
       cube.rotation.x += 0.005;
       cube.rotation.y += 0.005;
-      lineSegments.rotation.x += 0.005;
-      lineSegments.rotation.y += 0.005;
+      sphere.rotation.x += 0.006;
+      sphere.rotation.y += 0.006;
+      cone.rotation.x += 0.007;
+      cone.rotation.y += 0.007;
       renderer.render(scene, camera);
     };
     animate();
@@ -76,7 +98,9 @@ export default function HeroCube() {
       if (currentMount) {
         currentMount.removeChild(renderer.domElement);
       }
-      geometry.dispose();
+      cubeGeometry.dispose();
+      sphereGeometry.dispose();
+      coneGeometry.dispose();
       material.dispose();
       lineMaterial.dispose();
       renderer.dispose();
