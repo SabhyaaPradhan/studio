@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Bot, Sun, Moon } from "lucide-react";
+import { Sun, Moon } from "lucide-react";
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -55,7 +55,6 @@ export default function Header() {
       <div className="container mx-auto flex h-20 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-2">
-              <Bot className="h-8 w-8 text-primary" />
               <span className="text-2xl font-bold">Savrii</span>
             </Link>
             <nav className="hidden md:flex items-center gap-4 text-sm font-medium">

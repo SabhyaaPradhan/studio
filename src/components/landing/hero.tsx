@@ -26,7 +26,6 @@ export default function Hero() {
                 style={{ animationDelay: "0.6s" }}
             >
                 <Button size="lg">Start Free</Button>
-                <Button size="lg" variant="outline">Book a Demo</Button>
             </div>
         </div>
     </section>
