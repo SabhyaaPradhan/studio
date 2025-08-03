@@ -48,7 +48,6 @@ export default function HeroCube() {
     const sphereEdges = new THREE.EdgesGeometry(sphereGeometry);
     const sphereLineSegments = new THREE.LineSegments(sphereEdges, lineMaterial);
     sphere.add(sphereLineSegments); // Attach edges to the sphere
-    sphere.position.set(-2.5, 1.2, 0);
     scene.add(sphere);
 
     // Cone
@@ -57,8 +56,15 @@ export default function HeroCube() {
     const coneEdges = new THREE.EdgesGeometry(coneGeometry);
     const coneLineSegments = new THREE.LineSegments(coneEdges, lineMaterial);
     cone.add(coneLineSegments);
-    cone.position.set(2.5, 1.2, 0);
     scene.add(cone);
+
+    const updateObjectPositions = () => {
+        const aspect = currentMount.clientWidth / currentMount.clientHeight;
+        const xOffset = aspect > 1 ? 2.5 : aspect * 1.8;
+        sphere.position.set(-xOffset, 1.2, 0);
+        cone.position.set(xOffset, 1.2, 0);
+    }
+    updateObjectPositions();
 
 
     // Lights
@@ -88,6 +94,7 @@ export default function HeroCube() {
         camera.aspect = currentMount.clientWidth / currentMount.clientHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(currentMount.clientWidth, currentMount.clientHeight);
+        updateObjectPositions();
       }
     };
     window.addEventListener("resize", handleResize);
