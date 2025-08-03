@@ -10,7 +10,6 @@ export default function Cta() {
         </p>
         <div className="mt-8 flex justify-center gap-4">
           <Button size="lg">Start Free</Button>
-          <Button size="lg" variant="outline">See Live Demo</Button>
         </div>
       </div>
     </section>
