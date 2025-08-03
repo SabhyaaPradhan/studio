@@ -16,7 +16,9 @@ export function HeaderThemeProvider({ children }: { children: React.ReactNode })
   }, []);
 
   if (!mounted) {
-    return null;
+    // Return a placeholder or null to avoid rendering content on the server
+    // that might depend on the theme, preventing hydration mismatches.
+    return null; 
   }
 
   return <>{children}</>;
