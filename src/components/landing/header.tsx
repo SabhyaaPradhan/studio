@@ -53,18 +53,20 @@ export default function Header() {
       )}
     >
       <div className="container mx-auto flex h-20 items-center justify-between px-4 md:px-6">
-        <div className="flex items-center gap-8">
+        <div className="flex-1 flex justify-start">
             <Link href="/" className="flex items-center gap-2">
               <span className="text-2xl font-bold">Savrii</span>
             </Link>
-            <nav className="hidden md:flex items-center gap-6 text-base font-medium">
-                <Link href="/" className="hover:text-primary transition-colors">Home</Link>
-                <Link href="#" className="hover:text-primary transition-colors">Pricing</Link>
-                <Link href="#" className="hover:text-primary transition-colors">Contact</Link>
-                <Link href="#" className="hover:text-primary transition-colors">FAQ</Link>
-            </nav>
         </div>
-        <div className="hidden md:flex items-center gap-2">
+
+        <nav className="hidden md:flex flex-1 justify-center items-center gap-8 text-lg font-medium">
+            <Link href="/" className="hover:text-primary transition-colors">Home</Link>
+            <Link href="#" className="hover:text-primary transition-colors">Pricing</Link>
+            <Link href="#" className="hover:text-primary transition-colors">Contact</Link>
+            <Link href="#" className="hover:text-primary transition-colors">FAQ</Link>
+        </nav>
+
+        <div className="hidden md:flex flex-1 justify-end items-center gap-2">
             <Button variant="ghost" size="icon" onClick={toggleTheme}>
                 {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
             </Button>
@@ -75,6 +77,7 @@ export default function Header() {
                 <Link href="/signup">Get Started</Link>
             </Button>
         </div>
+
         <div className="md:hidden flex items-center gap-2">
             <Button variant="ghost" size="icon" onClick={toggleTheme}>
                 {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
