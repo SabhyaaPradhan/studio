@@ -7,21 +7,24 @@ import Testimonials from '@/components/landing/testimonials';
 import Faq from '@/components/landing/faq';
 import Cta from '@/components/landing/cta';
 import Footer from '@/components/landing/footer';
+import { HeaderThemeProvider } from '@/components/landing/header-theme-provider';
 
 export default function Home() {
   return (
-    <div className="flex flex-col min-h-screen bg-black">
-      <Header />
-      <main className="flex-grow">
-        <Hero />
-        <ProblemSolution />
-        <HowItWorks />
-        <UseCases />
-        <Testimonials />
-        <Faq />
-        <Cta />
-      </main>
-      <Footer />
-    </div>
+    <HeaderThemeProvider>
+      <div className="flex flex-col min-h-screen bg-background">
+        <Header />
+        <main className="flex-grow">
+          <Hero />
+          <ProblemSolution />
+          <HowItWorks />
+          <UseCases />
+          <Testimonials />
+          <Faq />
+          <Cta />
+        </main>
+        <Footer />
+      </div>
+    </HeaderThemeProvider>
   );
 }

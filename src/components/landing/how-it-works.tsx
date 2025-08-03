@@ -56,24 +56,24 @@ export default function HowItWorks() {
   }, []);
 
   return (
-    <section className="py-20 md:py-32 bg-black">
+    <section className="py-20 md:py-32 bg-background">
       <div className="container mx-auto px-4 md:px-6">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-5xl font-bold text-white tracking-tighter">How It Works</h2>
-          <p className="mt-4 max-w-2xl mx-auto text-lg text-neutral-300">A simple, 4-step process to automate your customer support.</p>
+          <h2 className="text-3xl md:text-5xl font-bold tracking-tighter">How It Works</h2>
+          <p className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground">A simple, 4-step process to automate your customer support.</p>
         </div>
         <div ref={ref} className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           {steps.map((step, index) => (
             <div key={index} className={cn("opacity-0", isVisible && "animate-fade-in-up")} style={{ animationDelay: `${index * 150}ms` }}>
-                <Card className="bg-neutral-900 border-neutral-800 text-center h-full">
+                <Card className="bg-card border-border text-center h-full">
                     <CardHeader className="items-center">
-                        <div className="p-4 bg-neutral-800 rounded-full">
+                        <div className="p-4 bg-secondary rounded-full">
                             <step.icon className="h-8 w-8 text-primary" />
                         </div>
-                        <CardTitle className="mt-4 text-white">{step.title}</CardTitle>
+                        <CardTitle className="mt-4">{step.title}</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-neutral-300">{step.description}</p>
+                        <p className="text-muted-foreground">{step.description}</p>
                     </CardContent>
                 </Card>
             </div>
