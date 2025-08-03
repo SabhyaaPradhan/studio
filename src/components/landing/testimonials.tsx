@@ -82,7 +82,7 @@ const testimonials = [
 export default function Testimonials() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const plugin = useRef(
-    Autoplay({ delay: 5000, stopOnInteraction: true })
+    Autoplay({ delay: 2000, stopOnInteraction: true })
   );
 
   useEffect(() => {
