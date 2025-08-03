@@ -26,9 +26,9 @@ export default function HeroCube() {
     // Cube
     const geometry = new THREE.BoxGeometry(1, 1, 1);
     const material = new THREE.MeshStandardMaterial({
-      color: 0x7cfc00,
+      color: 0x7cfc00, // Neon green tint
       transparent: true,
-      opacity: 0.15,
+      opacity: 0.35, // Semi-transparent
       roughness: 0.2,
       metalness: 0.8,
     });
