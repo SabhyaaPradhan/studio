@@ -35,7 +35,7 @@ export default function HeroCube() {
     const lineMaterial = new THREE.LineBasicMaterial({ color: 0x7cfc00, linewidth: 2 });
     
     // Cube
-    const cubeGeometry = new THREE.BoxGeometry(1.5, 1.5, 1.5);
+    const cubeGeometry = new THREE.BoxGeometry(1.2, 1.2, 1.2);
     const cube = new THREE.Mesh(cubeGeometry, material);
     const cubeEdges = new THREE.EdgesGeometry(cubeGeometry);
     const cubeLineSegments = new THREE.LineSegments(cubeEdges, lineMaterial);
@@ -43,7 +43,7 @@ export default function HeroCube() {
     scene.add(cube);
     
     // Sphere
-    const sphereGeometry = new THREE.SphereGeometry(0.6, 32, 16);
+    const sphereGeometry = new THREE.SphereGeometry(0.5, 32, 16);
     const sphere = new THREE.Mesh(sphereGeometry, material);
     const sphereEdges = new THREE.EdgesGeometry(sphereGeometry);
     const sphereLineSegments = new THREE.LineSegments(sphereEdges, lineMaterial);
@@ -51,7 +51,7 @@ export default function HeroCube() {
     scene.add(sphere);
 
     // Cone
-    const coneGeometry = new THREE.ConeGeometry(0.6, 1.2, 32);
+    const coneGeometry = new THREE.ConeGeometry(0.5, 1, 32);
     const cone = new THREE.Mesh(coneGeometry, material);
     const coneEdges = new THREE.EdgesGeometry(coneGeometry);
     const coneLineSegments = new THREE.LineSegments(coneEdges, lineMaterial);
@@ -60,7 +60,7 @@ export default function HeroCube() {
 
     const updateObjectPositions = () => {
         const aspect = currentMount.clientWidth / currentMount.clientHeight;
-        const xOffset = aspect > 1 ? 2.5 : aspect * 1.8;
+        const xOffset = aspect > 1 ? 2.2 : aspect * 1.5;
         sphere.position.set(-xOffset, 1.2, 0);
         cone.position.set(xOffset, 1.2, 0);
     }
