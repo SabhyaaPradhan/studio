@@ -123,8 +123,8 @@ export default function Testimonials() {
           }}
           className="w-full max-w-6xl mx-auto"
           data-testimonial-element
-          onMouseEnter={() => plugin.current.stop()}
-          onMouseLeave={() => plugin.current.reset()}
+          onMouseEnter={plugin.current.stop}
+          onMouseLeave={plugin.current.reset}
         >
           <CarouselContent>
             {testimonials.map((testimonial, index) => (
