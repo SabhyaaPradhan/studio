@@ -138,18 +138,23 @@ export default function PricingPage() {
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
-        const userLang = navigator.language;
-        if (userLang) {
-             if (userLang.startsWith("en-IN")) {
-                setCurrency("INR");
-            } else if (userLang.startsWith("en-GB")) {
-                setCurrency("GBP");
-            } else if (["de", "fr", "es", "it", "nl"].some(lang => userLang.startsWith(lang))) {
-                setCurrency("EUR");
-            }
-        }
         setMounted(true);
     }, []);
+
+    useEffect(() => {
+        if (mounted) {
+            const userLang = navigator.language;
+            if (userLang) {
+                if (userLang.startsWith("en-IN")) {
+                    setCurrency("INR");
+                } else if (userLang.startsWith("en-GB")) {
+                    setCurrency("GBP");
+                } else if (["de", "fr", "es", "it", "nl"].some(lang => userLang.startsWith(lang))) {
+                    setCurrency("EUR");
+                }
+            }
+        }
+    }, [mounted]);
 
     const currentPlans = getPlans(billingCycle, currency);
     
@@ -319,5 +324,3 @@ export default function PricingPage() {
         </div>
     );
 }
-
-    
