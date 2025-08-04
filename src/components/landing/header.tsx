@@ -63,7 +63,7 @@ export default function Header() {
     >
       <div className="container mx-auto flex h-20 items-center justify-between px-4 md:px-6">
         <Link href="/" className="flex items-center gap-2">
-          <span className="text-2xl font-bold">Savrii</span>
+          <span className="text-2xl font-bold text-primary">Savrii</span>
         </Link>
 
         <nav className="hidden md:flex flex-1 justify-center items-center gap-8 text-lg font-medium">
@@ -97,7 +97,7 @@ export default function Header() {
               <SheetHeader className="p-4 border-b flex-row justify-between items-center">
                 <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
                  <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
-                    <span className="text-2xl font-bold">Savrii</span>
+                    <span className="text-2xl font-bold text-primary">Savrii</span>
                  </Link>
                  <SheetClose asChild>
                     <Button variant="ghost" size="icon">
