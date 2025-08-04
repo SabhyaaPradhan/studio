@@ -1,9 +1,11 @@
+
 "use client";
 
 import { useRef, useEffect } from "react";
 import { gsap } from "gsap";
 import { Button } from "@/components/ui/button";
 import HeroCube from "./hero-cube";
+import Link from "next/link";
 
 export default function Hero() {
   const heroRef = useRef<HTMLDivElement>(null);
@@ -45,7 +47,9 @@ export default function Hero() {
           data-hero-element
           className="flex flex-col sm:flex-row gap-4"
         >
-          <Button size="lg" className="transition-transform duration-300 hover:scale-105">Start Free</Button>
+          <Button size="lg" className="transition-transform duration-300 hover:scale-105" asChild>
+            <Link href="/signup">Start Free</Link>
+          </Button>
         </div>
       </div>
     </section>

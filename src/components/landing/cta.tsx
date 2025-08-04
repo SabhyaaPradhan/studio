@@ -1,9 +1,11 @@
+
 "use client";
 
 import { useRef, useEffect } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -55,7 +57,9 @@ export default function Cta() {
           Stop repeating yourself. Start converting visitors. Get your AI assistant today.
         </p>
         <div data-cta-element className="mt-8 flex justify-center gap-4">
-          <Button ref={buttonRef} size="lg">Start Free</Button>
+          <Button ref={buttonRef} size="lg" asChild>
+            <Link href="/signup">Start Free</Link>
+          </Button>
         </div>
       </div>
     </section>
