@@ -38,7 +38,7 @@ const getPlans = (billingCycle: "monthly" | "yearly", currency: Currency) => {
     }
 
     const getPriceDetail = (planPrice: string) => {
-        if (planPrice === 'Free') return "";
+        if (planPrice.startsWith('Free')) return "";
         if (planPrice === "Contact Us") return "";
         return billingCycle === 'monthly' ? '/month' : '/year';
     }
@@ -47,8 +47,8 @@ const getPlans = (billingCycle: "monthly" | "yearly", currency: Currency) => {
     const plans = [
         {
             name: "Starter",
-            price: "Free",
-            description: "Ideal for individuals",
+            price: "Free trial 14 days",
+            description: "Ideal for individuals to test out Savrii.",
             features: [
                 "100 AI queries/month",
                 "Basic AI support",
@@ -138,23 +138,18 @@ export default function PricingPage() {
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
-        setMounted(true);
+      const userLang = navigator.language;
+      if (userLang) {
+          if (userLang.startsWith("en-IN")) {
+              setCurrency("INR");
+          } else if (userLang.startsWith("en-GB")) {
+              setCurrency("GBP");
+          } else if (["de", "fr", "es", "it", "nl"].some(lang => userLang.startsWith(lang))) {
+              setCurrency("EUR");
+          }
+      }
+      setMounted(true);
     }, []);
-
-    useEffect(() => {
-        if (mounted) {
-            const userLang = navigator.language;
-            if (userLang) {
-                if (userLang.startsWith("en-IN")) {
-                    setCurrency("INR");
-                } else if (userLang.startsWith("en-GB")) {
-                    setCurrency("GBP");
-                } else if (["de", "fr", "es", "it", "nl"].some(lang => userLang.startsWith(lang))) {
-                    setCurrency("EUR");
-                }
-            }
-        }
-    }, [mounted]);
 
     const currentPlans = getPlans(billingCycle, currency);
     
@@ -227,8 +222,9 @@ export default function PricingPage() {
                                                 animate={{ opacity: 1, y: 0 }}
                                                 exit={{ opacity: 0, y: 10 }}
                                                 transition={{ duration: 0.2 }}
+                                                className="flex flex-col"
                                             >
-                                                <span className="text-5xl font-bold">{plan.price}</span>
+                                                <span className={cn("font-bold", plan.price.startsWith('Free') ? 'text-3xl' : 'text-5xl')}>{plan.price}</span>
                                                 <span className="text-muted-foreground">{plan.priceDetail}</span>
                                             </motion.div>
                                         </AnimatePresence>
@@ -323,4 +319,5 @@ export default function PricingPage() {
             </div>
         </div>
     );
-}
+
+    
