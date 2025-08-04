@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Sun, Moon, Menu, X } from "lucide-react";
@@ -19,6 +20,9 @@ export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [theme, setTheme] = useState("dark");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
+
+  const isAuthPage = pathname === '/login' || pathname === '/signup';
 
   useEffect(() => {
     const storedTheme = localStorage.getItem("theme");
@@ -74,19 +78,24 @@ export default function Header() {
           <Link href="/faq" className="hover:text-primary transition-colors">FAQ</Link>
         </nav>
 
-        <div className="hidden md:flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={toggleTheme}>
-            {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-          </Button>
-          <Button variant="ghost" asChild>
-            <Link href="/login">Sign In</Link>
-          </Button>
-          <Button asChild>
-            <Link href="/signup">Get Started</Link>
-          </Button>
-        </div>
+        {!isAuthPage && (
+          <div className="hidden md:flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={toggleTheme}>
+              {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+            </Button>
+            <Button variant="ghost" asChild>
+              <Link href="/login">Sign In</Link>
+            </Button>
+            <Button asChild>
+              <Link href="/signup">Get Started</Link>
+            </Button>
+          </div>
+        )}
 
         <div className="md:hidden flex items-center gap-2">
+           <Button variant="ghost" size="icon" onClick={toggleTheme} className={cn(isAuthPage && "hidden")}>
+                {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+           </Button>
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon">
@@ -121,18 +130,20 @@ export default function Header() {
                             {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
                         </Button>
                     </div>
-                    <div className="flex flex-col gap-4">
-                        <SheetClose asChild>
-                          <Button variant="ghost" asChild>
-                            <Link href="/login">Sign In</Link>
-                          </Button>
-                        </SheetClose>
-                        <SheetClose asChild>
-                          <Button asChild>
-                            <Link href="/signup">Get Started</Link>
-                          </Button>
-                        </SheetClose>
-                    </div>
+                    {!isAuthPage && (
+                      <div className="flex flex-col gap-4">
+                          <SheetClose asChild>
+                            <Button variant="ghost" asChild>
+                              <Link href="/login">Sign In</Link>
+                            </Button>
+                          </SheetClose>
+                          <SheetClose asChild>
+                            <Button asChild>
+                              <Link href="/signup">Get Started</Link>
+                            </Button>
+                          </SheetClose>
+                      </div>
+                    )}
                 </div>
               </div>
             </SheetContent>
