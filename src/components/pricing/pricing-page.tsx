@@ -9,17 +9,24 @@ import { Check, X } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 const basePrices = {
     monthly: { pro: 29, enterprise: 99 },
-    yearly: { pro: 290 / 12, enterprise: 990 / 12 },
+    yearly: { pro: 290, enterprise: 990 },
 };
 
 const currencies = {
-    USD: { symbol: "$", rate: 1 },
-    EUR: { symbol: "€", rate: 0.93 },
-    GBP: { symbol: "£", rate: 0.79 },
-    INR: { symbol: "₹", rate: 83.5 },
+    USD: { symbol: "$", rate: 1, name: "USD" },
+    EUR: { symbol: "€", rate: 0.93, name: "EUR" },
+    GBP: { symbol: "£", rate: 0.79, name: "GBP" },
+    INR: { symbol: "₹", rate: 83.5, name: "INR" },
 };
 
 type Currency = keyof typeof currencies;
@@ -27,9 +34,6 @@ type Currency = keyof typeof currencies;
 const getPlans = (billingCycle: "monthly" | "yearly", currency: Currency) => {
     const { symbol, rate } = currencies[currency];
     const formatPrice = (price: number) => {
-        if (billingCycle === 'yearly') {
-            return `${symbol}${Math.round(price * rate * 10)}`;
-        }
         return `${symbol}${Math.round(price * rate)}`;
     }
 
@@ -54,7 +58,7 @@ const getPlans = (billingCycle: "monthly" | "yearly", currency: Currency) => {
         },
         {
             name: "Pro",
-            price: formatPrice(basePrices['monthly'].pro),
+            price: formatPrice(basePrices[billingCycle].pro / (billingCycle === 'yearly' ? 12 : 1)),
             description: "Great for small teams",
             features: [
                 "Unlimited queries/month",
@@ -67,7 +71,7 @@ const getPlans = (billingCycle: "monthly" | "yearly", currency: Currency) => {
         },
         {
             name: "Enterprise",
-            price: formatPrice(basePrices['monthly'].enterprise),
+            price: formatPrice(basePrices[billingCycle].enterprise / (billingCycle === 'yearly' ? 12 : 1)),
             description: "Best for agencies and power users",
             features: [
                 "Unlimited queries",
@@ -80,10 +84,13 @@ const getPlans = (billingCycle: "monthly" | "yearly", currency: Currency) => {
             isPro: false,
         },
     ];
-
+    
     if (billingCycle === 'yearly') {
-        plans[1].price = formatPrice(basePrices['monthly'].pro);
-        plans[2].price = formatPrice(basePrices['monthly'].enterprise);
+        plans[1].price = formatPrice(basePrices.yearly.pro);
+        plans[2].price = formatPrice(basePrices.yearly.enterprise);
+    } else {
+        plans[1].price = formatPrice(basePrices.monthly.pro);
+        plans[2].price = formatPrice(basePrices.monthly.enterprise);
     }
 
 
@@ -158,16 +165,30 @@ export default function PricingPage() {
                         Start for free, then scale as you grow. All plans include a 14-day free trial of our Pro features.
                     </p>
 
-                    <div className="mt-8 flex justify-center items-center gap-4">
-                        <span className={cn("font-medium", billingCycle === "monthly" ? "text-primary" : "text-muted-foreground")}>Monthly</span>
-                        <Switch
-                            checked={billingCycle === "yearly"}
-                            onCheckedChange={(checked) => setBillingCycle(checked ? "yearly" : "monthly")}
-                            aria-label="Toggle billing cycle"
-                        />
-                         <span className={cn("font-medium", billingCycle === "yearly" ? "text-primary" : "text-muted-foreground")}>
-                            Yearly <span className="text-accent text-sm font-semibold ml-1">(2 months free)</span>
-                        </span>
+                    <div className="mt-8 flex justify-center items-center gap-6">
+                        <div className="flex items-center gap-4">
+                            <span className={cn("font-medium", billingCycle === "monthly" ? "text-primary" : "text-muted-foreground")}>Monthly</span>
+                            <Switch
+                                checked={billingCycle === "yearly"}
+                                onCheckedChange={(checked) => setBillingCycle(checked ? "yearly" : "monthly")}
+                                aria-label="Toggle billing cycle"
+                            />
+                            <span className={cn("font-medium", billingCycle === "yearly" ? "text-primary" : "text-muted-foreground")}>
+                                Yearly <span className="text-accent text-sm font-semibold ml-1">(2 months free)</span>
+                            </span>
+                        </div>
+                        <div className="w-[120px]">
+                            <Select value={currency} onValueChange={(value) => setCurrency(value as Currency)}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Currency" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {Object.values(currencies).map(c => (
+                                        <SelectItem key={c.name} value={c.name}>{c.symbol} {c.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
                 </div>
 
@@ -297,5 +318,7 @@ export default function PricingPage() {
         </div>
     );
 }
+
+    
 
     
