@@ -20,7 +20,7 @@ export default function GridBackground() {
 
   return (
     <div
-      className="absolute inset-0 z-0 opacity-[0.15]"
+      className="absolute inset-0 z-0 opacity-[0.25]"
       style={{
         backgroundImage: `url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.5" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><g stroke="${encodedColor}" stroke-width="0.5" filter="url(%23glow)"><path d="M0 50h100M50 0v100"/><circle cx="50" cy="50" r="1.5" fill="${encodedColor}"/></g></svg>')`,
         backgroundRepeat: "repeat",
