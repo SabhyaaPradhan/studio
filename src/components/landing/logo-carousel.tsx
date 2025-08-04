@@ -10,7 +10,7 @@ import {
 import Autoplay from "embla-carousel-autoplay";
 
 const logos = [
-    { name: "Gmail", src: "https://upload.wikimedia.org/wikipedia/commons/4/43/Gmail_Icon.svg" },
+    { name: "Gmail", src: "https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg" },
     { name: "Meta", src: "https://upload.wikimedia.org/wikipedia/commons/a/ab/Meta-Logo.png" },
     { name: "WhatsApp", src: "https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" },
     { name: "Outlook", src: "https://upload.wikimedia.org/wikipedia/commons/d/df/Microsoft_Office_Outlook_%282018%E2%80%93present%29.svg" },
