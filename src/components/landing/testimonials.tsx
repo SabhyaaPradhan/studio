@@ -99,7 +99,6 @@ export default function Testimonials() {
 
   return (
     <section ref={sectionRef} className="relative py-20 md:py-32 bg-background overflow-hidden">
-       <div className="absolute inset-0 bg-grid-black/[0.05] dark:bg-grid-white/[0.05] [mask-image:radial-gradient(ellipse_at_center,white_20%,transparent_70%)]"></div>
        <div className="container mx-auto px-4 md:px-6 relative z-10">
         <div data-testimonial-element className="text-center mb-12">
             <h2 className="text-3xl md:text-5xl font-bold tracking-tighter">Loved by founders like you</h2>
