@@ -1,7 +1,7 @@
 "use client";
 
 export default function GridBackground() {
-  const color = "hsl(var(--accent))";
+  const color = "hsl(var(--grid-pattern-color))";
   
   return (
     <div
