@@ -23,7 +23,6 @@
     --border: 0 0% 89.8%;
     --input: 0 0% 89.8%;
     --ring: 130 90% 45%;
-    --radius: 0.5rem;
   }
 
   .dark {
@@ -55,5 +54,14 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@keyframes move-grid {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: -100px -100px;
   }
 }

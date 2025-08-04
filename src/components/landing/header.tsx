@@ -15,28 +15,15 @@ import {
   SheetTitle,
   SheetHeader,
 } from "@/components/ui/sheet";
+import { useTheme } from "next-themes";
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [theme, setTheme] = useState("dark");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
+  const { theme, setTheme } = useTheme();
 
   const isAuthPage = pathname === '/login' || pathname === '/signup';
-
-  useEffect(() => {
-    const storedTheme = localStorage.getItem("theme");
-    if (storedTheme) {
-      setTheme(storedTheme);
-      if (storedTheme === "light") {
-        document.documentElement.classList.remove("dark");
-      } else {
-        document.documentElement.classList.add("dark");
-      }
-    } else {
-      document.documentElement.classList.add("dark");
-    }
-  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -49,14 +36,7 @@ export default function Header() {
   }, []);
 
   const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light";
-    setTheme(newTheme);
-    localStorage.setItem("theme", newTheme);
-    if (newTheme === "light") {
-      document.documentElement.classList.remove("dark");
-    } else {
-      document.documentElement.classList.add("dark");
-    }
+    setTheme(theme === "light" ? "dark" : "light");
   };
 
   return (
