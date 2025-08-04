@@ -21,6 +21,7 @@ import { useState } from "react";
 import { auth } from "@/lib/firebase";
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { useRouter } from "next/navigation";
+import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 
 const formSchema = z.object({
   email: z.string().email({
@@ -35,6 +36,8 @@ export default function LoginForm() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
+
+  useAuthRedirect();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
