@@ -1,3 +1,4 @@
+
 import {
   Accordion,
   AccordionContent,
@@ -38,7 +39,7 @@ const faqs = [
 
 export default function Faq() {
   return (
-    <section className="py-20 md:py-32 bg-background">
+    <section id="faq" className="py-20 md:py-32 bg-background">
       <div className="container mx-auto px-4 md:px-6 max-w-3xl">
         <div className="text-center mb-12">
             <h2 className="text-3xl md:text-5xl font-bold tracking-tighter">🙋‍♀️ Frequently Asked Questions</h2>

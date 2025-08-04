@@ -70,8 +70,13 @@ export default function Header() {
         <nav className="hidden md:flex flex-1 justify-center items-center gap-8 text-lg font-medium">
           <Link href="/" className="hover:text-primary transition-colors">Home</Link>
           <Link href="/pricing" className="hover:text-primary transition-colors">Pricing</Link>
-          <Link href="#" className="hover:text-primary transition-colors">Contact</Link>
-          <Link href="#" className="hover:text-primary transition-colors">FAQ</Link>
+          <Link href="/contact" className="hover:text-primary transition-colors">Contact</Link>
+          <Link href="/#faq" className="hover:text-primary transition-colors" onClick={(e) => {
+              if (window.location.pathname === '/') {
+                e.preventDefault();
+                document.querySelector('#faq')?.scrollIntoView({ behavior: 'smooth' });
+              }
+          }}>FAQ</Link>
         </nav>
 
         <div className="hidden md:flex items-center gap-2">
@@ -111,8 +116,13 @@ export default function Header() {
                 <nav className="flex flex-col gap-6 p-4 text-lg font-medium flex-grow">
                   <SheetClose asChild><Link href="/" className="hover:text-primary transition-colors">Home</Link></SheetClose>
                   <SheetClose asChild><Link href="/pricing" className="hover:text-primary transition-colors">Pricing</Link></SheetClose>
-                  <SheetClose asChild><Link href="#" className="hover:text-primary transition-colors">Contact</Link></SheetClose>
-                  <SheetClose asChild><Link href="#" className="hover:text-primary transition-colors">FAQ</Link></SheetClose>
+                  <SheetClose asChild><Link href="/contact" className="hover:text-primary transition-colors">Contact</Link></SheetClose>
+                  <SheetClose asChild><Link href="/#faq" className="hover:text-primary transition-colors" onClick={(e) => {
+                      if (window.location.pathname === '/') {
+                        e.preventDefault();
+                        document.querySelector('#faq')?.scrollIntoView({ behavior: 'smooth' });
+                      }
+                  }}>FAQ</Link></SheetClose>
                 </nav>
                 <div className="p-4 border-t mt-auto">
                     <div className="flex items-center justify-between mb-4">
