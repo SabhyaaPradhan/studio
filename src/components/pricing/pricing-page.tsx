@@ -12,13 +12,14 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const basePrices = {
     monthly: { pro: 29, enterprise: 99 },
-    yearly: { pro: 23, enterprise: 79 },
+    yearly: { pro: 290 / 12, enterprise: 990 / 12 },
 };
 
 const currencies = {
     USD: { symbol: "$", rate: 1 },
     EUR: { symbol: "€", rate: 0.93 },
     GBP: { symbol: "£", rate: 0.79 },
+    INR: { symbol: "₹", rate: 83.5 },
 };
 
 type Currency = keyof typeof currencies;
@@ -26,14 +27,22 @@ type Currency = keyof typeof currencies;
 const getPlans = (billingCycle: "monthly" | "yearly", currency: Currency) => {
     const { symbol, rate } = currencies[currency];
     const formatPrice = (price: number) => {
+        if (billingCycle === 'yearly') {
+            return `${symbol}${Math.round(price * rate * 10)}`;
+        }
         return `${symbol}${Math.round(price * rate)}`;
     }
 
-    return [
+    const getPriceDetail = (planPrice: string) => {
+        if (planPrice === 'Free') return "";
+        return billingCycle === 'monthly' ? '/month' : '/year';
+    }
+
+
+    const plans = [
         {
             name: "Starter",
             price: "Free",
-            priceDetail: "",
             description: "Ideal for individuals",
             features: [
                 "100 AI queries/month",
@@ -45,8 +54,7 @@ const getPlans = (billingCycle: "monthly" | "yearly", currency: Currency) => {
         },
         {
             name: "Pro",
-            price: formatPrice(basePrices[billingCycle].pro),
-            priceDetail: "/month",
+            price: formatPrice(basePrices['monthly'].pro),
             description: "Great for small teams",
             features: [
                 "Unlimited queries/month",
@@ -59,8 +67,7 @@ const getPlans = (billingCycle: "monthly" | "yearly", currency: Currency) => {
         },
         {
             name: "Enterprise",
-            price: formatPrice(basePrices[billingCycle].enterprise),
-            priceDetail: "/month",
+            price: formatPrice(basePrices['monthly'].enterprise),
             description: "Best for agencies and power users",
             features: [
                 "Unlimited queries",
@@ -73,6 +80,14 @@ const getPlans = (billingCycle: "monthly" | "yearly", currency: Currency) => {
             isPro: false,
         },
     ];
+
+    if (billingCycle === 'yearly') {
+        plans[1].price = formatPrice(basePrices['monthly'].pro);
+        plans[2].price = formatPrice(basePrices['monthly'].enterprise);
+    }
+
+
+    return plans.map(plan => ({...plan, priceDetail: getPriceDetail(plan.price)}));
 };
 
 
@@ -117,7 +132,9 @@ export default function PricingPage() {
     useEffect(() => {
         const userLang = navigator.language;
         if (userLang) {
-            if (userLang.startsWith("en-GB")) {
+             if (userLang.startsWith("en-IN")) {
+                setCurrency("INR");
+            } else if (userLang.startsWith("en-GB")) {
                 setCurrency("GBP");
             } else if (["de", "fr", "es", "it", "nl"].some(lang => userLang.startsWith(lang))) {
                 setCurrency("EUR");
@@ -149,7 +166,7 @@ export default function PricingPage() {
                             aria-label="Toggle billing cycle"
                         />
                          <span className={cn("font-medium", billingCycle === "yearly" ? "text-primary" : "text-muted-foreground")}>
-                            Yearly <span className="text-accent text-sm font-semibold ml-1">(20% off)</span>
+                            Yearly <span className="text-accent text-sm font-semibold ml-1">(2 months free)</span>
                         </span>
                     </div>
                 </div>
@@ -280,3 +297,5 @@ export default function PricingPage() {
         </div>
     );
 }
+
+    
