@@ -14,7 +14,7 @@ export default function SignupPage() {
         <HeaderThemeProvider>
             <div className="flex flex-col min-h-screen bg-background">
                 <Header />
-                <main className="flex-grow flex items-center justify-center py-12">
+                <main className="flex-grow flex items-center justify-center py-12 pt-28">
                     <SignupForm />
                 </main>
                 <Footer />
