@@ -39,6 +39,7 @@ const getPlans = (billingCycle: "monthly" | "yearly", currency: Currency) => {
 
     const getPriceDetail = (planPrice: string) => {
         if (planPrice === 'Free') return "";
+        if (planPrice === "Contact Us") return "";
         return billingCycle === 'monthly' ? '/month' : '/year';
     }
 
@@ -58,7 +59,7 @@ const getPlans = (billingCycle: "monthly" | "yearly", currency: Currency) => {
         },
         {
             name: "Pro",
-            price: formatPrice(basePrices[billingCycle].pro / (billingCycle === 'yearly' ? 12 : 1)),
+            price: "",
             description: "Great for small teams",
             features: [
                 "Unlimited queries/month",
@@ -71,7 +72,7 @@ const getPlans = (billingCycle: "monthly" | "yearly", currency: Currency) => {
         },
         {
             name: "Enterprise",
-            price: formatPrice(basePrices[billingCycle].enterprise / (billingCycle === 'yearly' ? 12 : 1)),
+            price: "",
             description: "Best for agencies and power users",
             features: [
                 "Unlimited queries",
@@ -153,7 +154,7 @@ export default function PricingPage() {
     const currentPlans = getPlans(billingCycle, currency);
     
     if (!mounted) {
-        return null;
+        return <div className="h-screen w-full flex items-center justify-center"><p>Loading pricing...</p></div>;
     }
 
     return (
@@ -318,7 +319,5 @@ export default function PricingPage() {
         </div>
     );
 }
-
-    
 
     
