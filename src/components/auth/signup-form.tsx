@@ -64,7 +64,7 @@ export default function SignupForm() {
         title: "Account Created! 🎉",
         description: "Welcome to Savrii!",
       });
-      router.push("/");
+      router.push("/dashboard");
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -84,7 +84,7 @@ export default function SignupForm() {
         title: "Account Created! 🎉",
         description: "Welcome to Savrii!",
       });
-      router.push("/");
+      router.push("/dashboard");
     } catch (error: any) {
       toast({
         variant: "destructive",
