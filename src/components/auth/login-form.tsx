@@ -52,7 +52,7 @@ export default function LoginForm() {
         title: "Login Successful! 🎉",
         description: "Welcome back!",
       });
-      router.push("/dashboard");
+      router.push("/home");
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -72,7 +72,7 @@ export default function LoginForm() {
         title: "Login Successful! 🎉",
         description: "Welcome back!",
       });
-      router.push("/dashboard");
+      router.push("/home");
     } catch (error: any) {
       toast({
         variant: "destructive",

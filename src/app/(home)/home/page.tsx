@@ -7,7 +7,7 @@ import { DollarSign, BrainCircuit, MessageSquare, ArrowRight } from 'lucide-reac
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
-export default function DashboardHomePage() {
+export default function HomePage() {
     const { user } = useAuthContext();
     const stats = [
         { title: "AI Replies Today", value: "1,204", icon: MessageSquare, change: "+12%" },
@@ -44,11 +44,10 @@ export default function DashboardHomePage() {
                 </CardHeader>
                 <CardContent>
                     <Button asChild>
-                        <Link href="/dashboard/billing">Manage Billing <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                        <Link href="/billing">Manage Billing <ArrowRight className="ml-2 h-4 w-4" /></Link>
                     </Button>
                 </CardContent>
             </Card>
         </div>
     );
 }
-
