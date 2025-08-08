@@ -39,7 +39,7 @@ function Header() {
     { href: '/home', label: 'Home' },
     { href: '/billing', label: 'Billing' },
     { href: '/settings', label: 'Settings' },
-    { href: '/faq', label: 'FAQ' },
+    { href: '/support', label: 'Support' },
   ];
 
   return (

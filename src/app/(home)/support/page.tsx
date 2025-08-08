@@ -28,11 +28,11 @@ const faqs = [
     },
 ];
 
-export default function FaqPage() {
+export default function SupportPage() {
     return (
         <div className="container mx-auto max-w-3xl py-8 px-4">
             <div className="text-center mb-12">
-                <h1 className="text-4xl font-bold tracking-tight">Frequently Asked Questions</h1>
+                <h1 className="text-4xl font-bold tracking-tight">Support & FAQ</h1>
                 <p className="mt-4 text-lg text-muted-foreground">Find answers to common questions about your Savrii account.</p>
             </div>
             
