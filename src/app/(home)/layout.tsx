@@ -58,6 +58,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
+  TooltipProvider,
 } from '@/components/ui/tooltip';
 import { useState } from 'react';
 import {
@@ -82,17 +83,19 @@ const hasPermission = (
 };
 
 const UpgradeTooltip = ({ children }: { children: React.ReactNode }) => (
-  <Tooltip>
-    <TooltipTrigger asChild>{children}</TooltipTrigger>
-    <TooltipContent side="right" align="center" className="bg-primary text-primary-foreground">
-      <div className="flex flex-col items-center gap-2 p-2">
-        <p className="font-semibold">Upgrade to unlock</p>
-        <Button size="sm" asChild>
-          <Link href="/billing">Upgrade Plan</Link>
-        </Button>
-      </div>
-    </TooltipContent>
-  </Tooltip>
+  <TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent side="right" align="center" className="bg-primary text-primary-foreground">
+        <div className="flex flex-col items-center gap-2 p-2">
+          <p className="font-semibold">Upgrade to unlock</p>
+          <Button size="sm" asChild>
+            <Link href="/billing">Upgrade Plan</Link>
+          </Button>
+        </div>
+      </TooltipContent>
+    </Tooltip>
+  </TooltipProvider>
 );
 
 const NavMenuItem = ({
@@ -134,7 +137,7 @@ const NavMenuItem = ({
 
   return (
     <SidebarMenuItem>
-      {isLocked ? <UpgradeTooltip>{children}</UpgradeTooltip> : itemContent}
+      {isLocked ? <UpgradeTooltip>{itemContent}</UpgradeTooltip> : itemContent}
     </SidebarMenuItem>
   );
 };
@@ -236,7 +239,8 @@ export default function AuthenticatedLayout({
           </SidebarHeader>
           <SidebarContent className="p-2">
             <SidebarMenu>
-              <NavMenuItem href="/home" icon={Home} label="Dashboard" plan={userPlan} />
+              <NavMenuItem href="/home" icon={Home} label="Home" plan={userPlan} />
+              <NavMenuItem href="/dashboard" icon={BarChartBig} label="Dashboard" plan={userPlan} />
               <NavMenuItem href="/chat" icon={MessageSquare} label="Chat / AI Assistant" plan={userPlan} isDisabled={true} />
               <NavMenuItem href="/analytics" icon={BarChart2} label="Analytics" plan={userPlan} isDisabled={true} />
               <NavMenuItem href="/integrations" icon={GitMerge} label="Integrations" plan={userPlan} isDisabled={true} />
@@ -275,34 +279,39 @@ export default function AuthenticatedLayout({
             </SidebarMenu>
           </SidebarContent>
           <SidebarFooter>
-            <div className="flex items-center gap-3 p-3 rounded-lg">
-                <Avatar>
-                    <AvatarImage src={user?.photoURL || ''} />
-                    <AvatarFallback>{user?.displayName?.[0] || user?.email?.[0]}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1 overflow-hidden">
-                    <p className="text-sm font-semibold truncate">{user?.displayName}</p>
-                    <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+             <TooltipProvider>
+                <div className="flex items-center gap-3 p-3 rounded-lg">
+                    <Avatar>
+                        <AvatarImage src={user?.photoURL || ''} />
+                        <AvatarFallback>{user?.displayName?.[0] || user?.email?.[0]}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 overflow-hidden">
+                        <p className="text-sm font-semibold truncate">{user?.displayName}</p>
+                        <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                    </div>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleLogout}>
+                                <LogOut className="h-4 w-4"/>
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" align="center">Logout</TooltipContent>
+                    </Tooltip>
                 </div>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleLogout}>
-                            <LogOut className="h-4 w-4"/>
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" align="center">Logout</TooltipContent>
-                </Tooltip>
-            </div>
+             </TooltipProvider>
           </SidebarFooter>
         </Sidebar>
         <main className="flex-1 flex flex-col">
             <header className="p-4 flex items-center gap-2 md:hidden sticky top-0 bg-background z-10 border-b">
                 <SidebarTrigger>
-                    <Sparkles className="w-5 h-5 text-primary" />
+                    <Menu className="w-6 h-6" />
                 </SidebarTrigger>
-                <h1 className="text-lg font-semibold">Savrii</h1>
+                <Link href="/home" className="flex items-center gap-2 font-semibold text-lg">
+                    <Sparkles className="w-5 h-5 text-primary" />
+                    <span>Savrii</span>
+                </Link>
             </header>
-            <div className="flex-1 p-4 md:p-8">
+            <div className="flex-1 overflow-y-auto">
                 {children}
             </div>
         </main>
