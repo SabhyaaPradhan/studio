@@ -34,7 +34,7 @@ export default function DashboardLayout({
   }
 
   if (!user) {
-    return null; // The hook will handle the redirect
+    return null; // The hook will handle the redirect, this prevents flashing the layout
   }
   
   return (
@@ -74,13 +74,13 @@ export default function DashboardLayout({
         <SidebarFooter>
           <SidebarMenu>
              <SidebarMenuItem>
-              <SidebarMenuButton href="#" tooltip="Settings">
+              <SidebarMenuButton href="/dashboard/settings" tooltip="Settings">
                 <Settings />
                 <span>Settings</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton href="#" tooltip="Billing">
+              <SidebarMenuButton href="/dashboard/billing" tooltip="Billing">
                 <CreditCard />
                 <span>Billing</span>
               </SidebarMenuButton>
