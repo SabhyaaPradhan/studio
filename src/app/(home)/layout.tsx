@@ -37,6 +37,7 @@ function Header() {
 
   const navLinks = [
     { href: '/home', label: 'Home' },
+    { href: '/dashboard', label: 'Dashboard' },
     { href: '/billing', label: 'Billing' },
     { href: '/settings', label: 'Settings' },
     { href: '/support', label: 'Support' },
