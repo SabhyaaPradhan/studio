@@ -1,13 +1,13 @@
 
 'use client';
 
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthContext } from '@/context/auth-context';
 import { DollarSign, BrainCircuit, MessageSquare, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
-export default function DashboardPage() {
+export default function DashboardHomePage() {
     const { user } = useAuthContext();
     const stats = [
         { title: "AI Replies Today", value: "1,204", icon: MessageSquare, change: "+12%" },
@@ -51,3 +51,4 @@ export default function DashboardPage() {
         </div>
     );
 }
+

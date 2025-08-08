@@ -2,14 +2,77 @@
 'use client';
 
 import { useAuthRedirectToLogin } from '@/hooks/use-auth-redirect-to-login';
-import { SidebarProvider, Sidebar, SidebarTrigger, SidebarInset, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter } from '@/components/ui/sidebar';
 import { useAuthContext } from '@/context/auth-context';
-import { Home, FileText, Bot, BarChart2, Settings, CreditCard, Mail, LogOut, Loader } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Loader, LogOut, Moon, Sun } from 'lucide-react';
+import Link from 'next/link';
+import { useTheme } from "next-themes";
 import { Button } from '@/components/ui/button';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
+import { usePathname } from 'next/navigation';
+
+function Header() {
+  const { theme, setTheme } = useTheme();
+  const { user } = useAuthContext();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    router.push('/login');
+  };
+
+  const navLinks = [
+    { href: '/dashboard', label: 'Home' },
+    { href: '/dashboard/billing', label: 'Billing' },
+    { href: '/dashboard/settings', label: 'Settings' },
+    { href: '/dashboard/faq', label: 'FAQ' },
+  ];
+
+  return (
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 items-center">
+        <div className="mr-4 hidden md:flex">
+          <Link href="/dashboard" className="mr-6 flex items-center space-x-2">
+             <span className="text-lg font-bold text-primary">Savrii</span>
+          </Link>
+          <nav className="flex items-center space-x-6 text-sm font-medium">
+            {navLinks.map(link => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  "transition-colors hover:text-foreground/80",
+                  pathname === link.href ? "text-foreground" : "text-foreground/60"
+                )}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
+        <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}>
+              {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+            </Button>
+            <Avatar>
+              <AvatarImage src={user?.photoURL || ''} />
+              <AvatarFallback>{user?.displayName?.[0] || user?.email?.[0]}</AvatarFallback>
+            </Avatar>
+            <Button variant="ghost" size="sm" onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
+            </Button>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
 
 export default function DashboardLayout({
   children,
@@ -17,13 +80,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { user, loading } = useAuthContext();
-  const router = useRouter();
   useAuthRedirectToLogin();
-
-  const handleLogout = async () => {
-    await signOut(auth);
-    router.push('/login');
-  };
 
   if (loading) {
     return (
@@ -34,82 +91,13 @@ export default function DashboardLayout({
   }
 
   if (!user) {
-    return null; // The hook will handle the redirect, this prevents flashing the layout
+    return null; // The hook will handle the redirect
   }
   
   return (
-    <SidebarProvider>
-      <Sidebar>
-        <SidebarHeader>
-          <SidebarTrigger />
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton href="/dashboard" isActive={true} tooltip="Dashboard">
-                <Home />
-                <span>Dashboard</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton href="#" tooltip="Templates">
-                <FileText />
-                <span>Templates</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton href="#" tooltip="Prompt Builder">
-                <Bot />
-                <span>Prompt Builder</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-             <SidebarMenuItem>
-              <SidebarMenuButton href="#" tooltip="Analytics">
-                <BarChart2 />
-                <span>Analytics</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarContent>
-        <SidebarFooter>
-          <SidebarMenu>
-             <SidebarMenuItem>
-              <SidebarMenuButton href="/dashboard/settings" tooltip="Settings">
-                <Settings />
-                <span>Settings</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton href="/dashboard/billing" tooltip="Billing">
-                <CreditCard />
-                <span>Billing</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-             <SidebarMenuItem>
-              <SidebarMenuButton href="/contact" tooltip="Contact">
-                <Mail />
-                <span>Contact</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-             <SidebarMenuItem>
-                <div className="flex items-center gap-2 p-2">
-                    <Avatar>
-                        <AvatarImage src={user?.photoURL || ''} />
-                        <AvatarFallback>{user?.displayName?.[0] || user?.email?.[0]}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col truncate">
-                        <span className="font-semibold text-sm truncate">{user?.displayName || 'User'}</span>
-                        <span className="text-xs text-muted-foreground truncate">{user?.email}</span>
-                    </div>
-                     <Button variant="ghost" size="icon" onClick={handleLogout} className="ml-auto">
-                        <LogOut className="h-5 w-5" />
-                    </Button>
-                </div>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarFooter>
-      </Sidebar>
-      <SidebarInset>{children}</SidebarInset>
-    </SidebarProvider>
+    <div className="relative flex min-h-screen flex-col">
+      <Header />
+      <main className="flex-1">{children}</main>
+    </div>
   );
 }
