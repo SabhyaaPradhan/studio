@@ -22,7 +22,6 @@ import { auth } from "@/lib/firebase";
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, updateProfile } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { Checkbox } from "../ui/checkbox";
-import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -41,8 +40,6 @@ export default function SignupForm() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
-
-  useAuthRedirect();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

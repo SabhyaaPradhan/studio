@@ -11,7 +11,8 @@ export function useAuthRedirect() {
 
   useEffect(() => {
     if (!loading && user) {
-      router.push('/dashboard');
+      // This hook is no longer responsible for redirecting.
+      // The redirect is now handled directly in the login/signup forms.
     }
   }, [user, loading, router]);
 }
