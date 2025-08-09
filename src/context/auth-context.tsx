@@ -24,15 +24,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    // This flag prevents the redirect logic from firing multiple times.
-    let isRedirecting = false;
-
     const processAuth = async () => {
       try {
         const result = await getRedirectResult(auth);
-        if (result && !isRedirecting) {
-          isRedirecting = true;
-          // This means the user has just signed in via redirect.
+        if (result) {
+          // User has just signed in via redirect.
           const loggedInUser = result.user;
           console.log("Redirect result user:", loggedInUser);
           setUser(loggedInUser);
@@ -52,11 +48,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       // onAuthStateChanged is the primary listener for auth state.
-      // It handles initial session checks and changes from other tabs.
+      // It handles initial session checks and subsequent auth changes.
       const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-        if (!isRedirecting) {
-            setUser(currentUser);
-        }
+        setUser(currentUser);
         setLoading(false);
       });
 
