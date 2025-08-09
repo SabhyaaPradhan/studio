@@ -32,11 +32,14 @@ export default function AnimatedFooter() {
 
     // Plane for water effect
     const geometry = new THREE.PlaneGeometry(30, 30, 50, 50);
-    const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary');
-    const color = `hsl(${primaryColor.trim()})`;
+    
+    const waveColor = resolvedTheme === 'dark' 
+        ? new THREE.Color(`hsl(${getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()})`)
+        : new THREE.Color('#000000');
+
 
     const material = new THREE.MeshBasicMaterial({
-      color: new THREE.Color(color),
+      color: waveColor,
       wireframe: true,
     });
     
@@ -97,7 +100,7 @@ export default function AnimatedFooter() {
   }, [resolvedTheme]);
 
   return (
-    <footer className="relative bg-primary/10 border-t overflow-hidden h-64 flex items-center justify-center text-center">
+    <footer className="relative bg-black border-t border-border/20 overflow-hidden h-64 flex items-center justify-center text-center">
       <div ref={mountRef} className="absolute inset-0 z-0 opacity-20" />
       <div className="relative z-10 container mx-auto px-4 md:px-6 footer-content">
         <div className="flex justify-center items-center gap-2">
