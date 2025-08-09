@@ -26,11 +26,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const processRedirectResult = async () => {
+        // Set loading to true when we start checking for a redirect result
         setLoading(true);
         try {
             const result = await getRedirectResult(auth);
             if (result) {
+                // Successfully signed in with redirect.
                 const loggedInUser = result.user;
+                console.log("User session established from redirect:", loggedInUser);
                 setUser(loggedInUser);
                 toast({
                     title: "Login Successful! 🎉",
@@ -44,9 +47,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 title: "Uh oh! Something went wrong.",
                 description: error.message,
             });
-        } finally {
-            // This runs regardless of whether there was a redirect result or not
-            // The onAuthStateChanged listener below will handle setting the final state
         }
     };
 
