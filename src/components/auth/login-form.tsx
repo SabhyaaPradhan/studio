@@ -67,11 +67,12 @@ export default function LoginForm() {
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
     try {
+      // Use signInWithRedirect for a more robust flow
       await signInWithRedirect(auth, provider);
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Uh oh! Something went wrong.",
+        title: "Uh oh! Something went wrong with Google Sign-In.",
         description: error.message,
       });
     }
