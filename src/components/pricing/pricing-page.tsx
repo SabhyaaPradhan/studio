@@ -38,7 +38,7 @@ const getPlans = (billingCycle: "monthly" | "yearly", currency: Currency) => {
     }
 
     const getPriceDetail = (planPrice: string) => {
-        if (planPrice.startsWith('Free')) return "";
+        if (planPrice.startsWith('Free')) return "14-day trial";
         if (planPrice === "Contact Us") return "";
         return billingCycle === 'monthly' ? '/month' : '/year';
     }
@@ -47,40 +47,49 @@ const getPlans = (billingCycle: "monthly" | "yearly", currency: Currency) => {
     const plans = [
         {
             name: "Starter",
-            price: "Free trial 14 days",
-            description: "Ideal for individuals to test out Savrii.",
+            price: "$0",
+            priceDetail: "/month",
+            description: "For individuals getting started.",
             features: [
-                "100 AI queries/month",
-                "Basic AI support",
-                "1 integration",
+                "100 queries / month",
+                "Basic AI responses",
                 "Email support",
+                "1 integration",
+                "Basic analytics",
             ],
             isPro: false,
         },
         {
             name: "Pro",
             price: "",
-            description: "Great for small teams",
+            priceDetail: "",
+            description: "For small teams and startups.",
             features: [
-                "Unlimited queries/month",
-                "Advanced AI replies",
-                "All integrations (Gmail, Outlook, Zapier, etc.)",
-                "Real-time analytics",
+                "Unlimited queries",
+                "Advanced AI responses",
                 "Priority support",
+                "All integrations",
+                "Advanced analytics",
+                "Custom prompts",
+                "Brand voice training",
             ],
             isPro: true,
         },
         {
             name: "Enterprise",
             price: "",
-            description: "Best for agencies and power users",
+            priceDetail: "",
+            description: "For growing businesses and agencies.",
             features: [
                 "Unlimited queries",
-                "Custom AI models + Prompt upload",
-                "White-label (branding, custom domain)",
-                "Workflow automation",
+                "Premium AI responses",
+                "24/7 phone support",
+                "All integrations",
+                "Real-time analytics",
+                "Custom prompts",
+                "Brand voice training",
                 "API access",
-                "24/7 dedicated support",
+                "White-label options",
             ],
             isPro: false,
         },
@@ -95,22 +104,20 @@ const getPlans = (billingCycle: "monthly" | "yearly", currency: Currency) => {
     }
 
 
-    return plans.map(plan => ({...plan, priceDetail: getPriceDetail(plan.price)}));
+    return plans.map(plan => ({...plan, priceDetail: getPriceDetail(plan.price) || plan.priceDetail }));
 };
 
 
 const allFeatures = [
-    { name: "AI queries/month", starter: "100", pro: "Unlimited", enterprise: "Unlimited" },
-    { name: "AI support", starter: "Basic", pro: "Advanced", enterprise: "Custom Models" },
+    { name: "Queries", starter: "100 / month", pro: "Unlimited", enterprise: "Unlimited" },
+    { name: "AI responses", starter: "Basic", pro: "Advanced", enterprise: "Premium" },
+    { name: "Support", starter: "Email support", pro: "Priority support", enterprise: "24/7 phone support" },
     { name: "Integrations", starter: "1", pro: "All", enterprise: "All" },
-    { name: "Email support", starter: true, pro: true, enterprise: true },
-    { name: "Real-time analytics", starter: false, pro: true, enterprise: true },
-    { name: "Priority support", starter: false, pro: true, enterprise: true },
-    { name: "Custom AI models + Prompt upload", starter: false, pro: false, enterprise: true },
-    { name: "White-labeling", starter: false, pro: false, enterprise: true },
-    { name: "Workflow automation", starter: false, pro: false, enterprise: true },
-    { name: "API access", starter: false, pro: false, enterprise: true },
-    { name: "24/7 dedicated support", starter: false, pro: false, enterprise: true },
+    { name: "Analytics", starter: "Basic", pro: "Advanced", enterprise: "Real-time" },
+    { name: "Custom Prompts", starter: false, pro: true, enterprise: true },
+    { name: "Brand Voice Training", starter: false, pro: true, enterprise: true },
+    { name: "API Access", starter: false, pro: false, enterprise: true },
+    { name: "White-label Options", starter: false, pro: false, enterprise: true },
 ];
 
 const faqs = [
@@ -222,9 +229,9 @@ export default function PricingPage() {
                                                 animate={{ opacity: 1, y: 0 }}
                                                 exit={{ opacity: 0, y: 10 }}
                                                 transition={{ duration: 0.2 }}
-                                                className="flex flex-col"
+                                                className="flex items-baseline justify-center gap-1"
                                             >
-                                                <span className={cn("font-bold", plan.price.startsWith('Free') ? 'text-3xl' : 'text-5xl')}>{plan.price}</span>
+                                                <span className={cn("font-bold", plan.price.startsWith('$0') ? 'text-3xl' : 'text-5xl')}>{plan.price}</span>
                                                 <span className="text-muted-foreground">{plan.priceDetail}</span>
                                             </motion.div>
                                         </AnimatePresence>

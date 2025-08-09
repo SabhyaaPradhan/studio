@@ -59,7 +59,7 @@ export default function BillingPage() {
                         <CardDescription>You are currently on the <span className="font-semibold capitalize text-primary">{currentPlan}</span> plan.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                       <p className="text-sm text-muted-foreground">All plans include unlimited AI queries. Manage your subscription and features below.</p>
+                       <p className="text-sm text-muted-foreground">Manage your subscription and features below.</p>
                     </CardContent>
                 </Card>
 
