@@ -382,7 +382,7 @@ export default function AuthenticatedLayout({
                                 </Button>
                             </SheetTrigger>
                             <SheetContent ref={mobileMenuRef}>
-                                <SheetHeader className="flex flex-row justify-between items-center border-b pb-4">
+                                <SheetHeader className="flex flex-row justify-between items-center border-b pb-4 px-4">
                                     <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
                                     <Link href="/home" className="flex items-center gap-2" onClick={() => setMobileMenuOpen(false)}>
                                         <span className="text-xl font-bold text-primary">Savrii</span>
@@ -393,7 +393,7 @@ export default function AuthenticatedLayout({
                                         </Button>
                                     </SheetClose>
                                 </SheetHeader>
-                                <nav className="flex flex-col gap-2 mt-8">
+                                <nav className="flex flex-col gap-2 mt-8 p-4">
                                     {navLinks.map(link => (
                                         <div key={link.href} data-mobile-nav-item>
                                             <SheetClose asChild>
