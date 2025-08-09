@@ -32,7 +32,6 @@ import {
   Lock,
   ChevronDown,
   LogOut,
-  Sparkles,
   Menu,
   BarChartBig,
   X,
@@ -210,7 +209,7 @@ export default function AuthenticatedLayout({
   const { theme, setTheme } = useTheme();
   const mobileMenuRef = useRef<HTMLDivElement>(null);
 
-  const showSidebar = !['/home', '/billing', '/settings', '/support'].includes(pathname);
+  const showSidebar = !['/home', '/billing', '/settings', '/support', '/contact'].includes(pathname);
 
   // MOCK: In a real app, this would come from your user's data
   const [userPlan] = useState<UserPlan>('starter');
@@ -265,6 +264,81 @@ export default function AuthenticatedLayout({
   return (
     <SidebarProvider>
       <div className="flex min-h-screen bg-background flex-col">
+        <header className="p-4 flex items-center justify-between gap-4 sticky top-0 bg-background/80 backdrop-blur-sm z-10 border-b">
+            <div className="flex items-center gap-2">
+                <SidebarTrigger className={cn("md:hidden", !showSidebar && "hidden")}>
+                    <Menu className="w-6 h-6" />
+                </SidebarTrigger>
+                <Link href="/home" className="font-semibold text-lg flex items-center gap-2">
+                    <span className='text-primary'>Savrii</span>
+                </Link>
+            </div>
+            <nav className="hidden md:flex flex-1 justify-center items-center gap-8 text-base font-medium">
+                {navLinks.map(link => (
+                    <Link key={link.href} href={link.href} className={cn(
+                        "transition-colors hover:text-primary",
+                        pathname === link.href ? "text-primary font-semibold" : "text-muted-foreground"
+                    )}>
+                        {link.label}
+                    </Link>
+                ))}
+            </nav>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="icon" onClick={toggleTheme}>
+                  {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                      <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-9 w-9 hidden md:inline-flex" onClick={handleLogout}>
+                              <LogOut className="h-4 w-4"/>
+                          </Button>
+                      </TooltipTrigger>
+                      <TooltipContent align="end">Logout</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                  <Avatar className="h-9 w-9">
+                    <AvatarImage src={user?.photoURL || ''} />
+                    <AvatarFallback>{user?.displayName?.[0] || user?.email?.[0]}</AvatarFallback>
+                </Avatar>
+                <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                    <SheetTrigger asChild>
+                        <Button variant="ghost" size="icon" className="md:hidden">
+                            <Menu className="w-6 h-6" />
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent ref={mobileMenuRef}>
+                        <SheetHeader className="flex flex-row justify-between items-center border-b pb-4 px-4">
+                            <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
+                            <Link href="/home" className="flex items-center gap-2" onClick={() => setMobileMenuOpen(false)}>
+                                <span className="text-xl font-bold text-primary">Savrii</span>
+                            </Link>
+                            <SheetClose asChild>
+                                <Button variant="ghost" size="icon">
+                                    <X className="h-6 w-6" />
+                                </Button>
+                            </SheetClose>
+                        </SheetHeader>
+                        <nav className="flex flex-col gap-2 mt-8 p-4">
+                            {navLinks.map(link => (
+                                <div key={link.href} data-mobile-nav-item>
+                                    <SheetClose asChild>
+                                        <Link href={link.href} className={cn(
+                                            "flex items-center gap-4 text-lg p-3 rounded-lg transition-colors hover:bg-secondary",
+                                            pathname === link.href ? "bg-secondary text-primary font-semibold" : "text-muted-foreground"
+                                        )}>
+                                            <link.icon className="h-5 w-5" />
+                                            {link.label}
+                                        </Link>
+                                    </SheetClose>
+                                </div>
+                            ))}
+                        </nav>
+                    </SheetContent>
+                </Sheet>
+            </div>
+        </header>
+
         <div className="flex flex-1">
             {showSidebar && (
               <Sidebar>
@@ -338,80 +412,6 @@ export default function AuthenticatedLayout({
               </Sidebar>
             )}
             <div className="flex-1 flex flex-col">
-                <header className="p-4 flex items-center justify-between gap-4 sticky top-0 bg-background/80 backdrop-blur-sm z-10 border-b">
-                    <div className="flex items-center gap-2">
-                        <SidebarTrigger className={cn("md:hidden", !showSidebar && "hidden")}>
-                            <Menu className="w-6 h-6" />
-                        </SidebarTrigger>
-                        <Link href="/home" className="font-semibold text-lg flex items-center gap-2">
-                            <span className={cn(showSidebar && 'md:hidden', 'text-primary')}>Savrii</span>
-                        </Link>
-                    </div>
-                    <nav className="hidden md:flex flex-1 justify-center items-center gap-8 text-base font-medium">
-                       {navLinks.map(link => (
-                            <Link key={link.href} href={link.href} className={cn(
-                                "transition-colors hover:text-primary",
-                                pathname === link.href ? "text-primary font-semibold" : "text-muted-foreground"
-                            )}>
-                                {link.label}
-                            </Link>
-                       ))}
-                    </nav>
-                     <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="icon" onClick={toggleTheme}>
-                          {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-                        </Button>
-                        <TooltipProvider>
-                          <Tooltip>
-                              <TooltipTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="h-9 w-9 hidden md:inline-flex" onClick={handleLogout}>
-                                      <LogOut className="h-4 w-4"/>
-                                  </Button>
-                              </TooltipTrigger>
-                              <TooltipContent align="end">Logout</TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                         <Avatar className="h-9 w-9">
-                            <AvatarImage src={user?.photoURL || ''} />
-                            <AvatarFallback>{user?.displayName?.[0] || user?.email?.[0]}</AvatarFallback>
-                        </Avatar>
-                        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-                            <SheetTrigger asChild>
-                                <Button variant="ghost" size="icon" className="md:hidden">
-                                    <Menu className="w-6 h-6" />
-                                </Button>
-                            </SheetTrigger>
-                            <SheetContent ref={mobileMenuRef}>
-                                <SheetHeader className="flex flex-row justify-between items-center border-b pb-4 px-4">
-                                    <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
-                                    <Link href="/home" className="flex items-center gap-2" onClick={() => setMobileMenuOpen(false)}>
-                                        <span className="text-xl font-bold text-primary">Savrii</span>
-                                    </Link>
-                                    <SheetClose asChild>
-                                        <Button variant="ghost" size="icon">
-                                            <X className="h-6 w-6" />
-                                        </Button>
-                                    </SheetClose>
-                                </SheetHeader>
-                                <nav className="flex flex-col gap-2 mt-8 p-4">
-                                    {navLinks.map(link => (
-                                        <div key={link.href} data-mobile-nav-item>
-                                            <SheetClose asChild>
-                                                <Link href={link.href} className={cn(
-                                                    "flex items-center gap-4 text-lg p-3 rounded-lg transition-colors hover:bg-secondary",
-                                                    pathname === link.href ? "bg-secondary text-primary font-semibold" : "text-muted-foreground"
-                                                )}>
-                                                    <link.icon className="h-5 w-5" />
-                                                    {link.label}
-                                                </Link>
-                                            </SheetClose>
-                                        </div>
-                                    ))}
-                                </nav>
-                            </SheetContent>
-                        </Sheet>
-                    </div>
-                </header>
                 <main className="flex-1 overflow-y-auto">
                     {children}
                 </main>
