@@ -11,7 +11,7 @@ const plans = {
         name: "Starter",
         price: "$0",
         description: "For individuals getting started.",
-        features: ["Unlimited queries", "Basic AI responses", "Email support", "1 integration", "Basic analytics"],
+        features: ["100 queries / month", "Basic AI responses", "Email support", "1 integration", "Basic analytics"],
         cta: "Current Plan"
     },
     pro: {
