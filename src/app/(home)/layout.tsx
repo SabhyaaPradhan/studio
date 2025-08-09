@@ -263,172 +263,171 @@ export default function AuthenticatedLayout({
 
   return (
     <SidebarProvider>
-       <div className="flex min-h-screen bg-background">
-        
-        {showSidebar && (
-          <Sidebar>
-            <SidebarContent>
-              <SidebarMenu>
-                 <div className="p-2 mb-2">
-                    <Link href="/home" className="font-semibold text-lg flex items-center gap-2 text-primary">
-                        <span>Savrii</span>
-                    </Link>
-                </div>
-                <NavMenuItem href="/dashboard" icon={BarChartBig} label="Dashboard" plan={userPlan} />
-                <NavMenuItem href="/chat" icon={MessageSquare} label="Chat / AI Assistant" plan={userPlan} isDisabled={true} />
-                <NavMenuItem href="/analytics" icon={BarChart2} label="Analytics" plan={userPlan} requiredPlan="pro" />
-                <NavMenuItem href="/integrations" icon={GitMerge} label="Integrations" plan={userPlan} />
-                
-                <NavMenuCollapsible icon={FileText} label="Content Mgmt" plan={userPlan} items={[
-                    { href: "/custom-prompts", label: "Custom Prompts", requiredPlan: "pro" },
-                    { href: "/brand-voice", label: "Brand Voice Training", requiredPlan: "pro" },
-                    { href: "/prompt-library", label: "Prompt Library", requiredPlan: "pro", isDisabled: true },
-                ]} />
-                
-                <NavMenuCollapsible icon={Users} label="Productivity" plan={userPlan} items={[
-                    { href: "/daily-summary", label: "Daily Summary", requiredPlan: "pro", isDisabled: true },
-                    { href: "/collaboration", label: "Collaboration Tools", requiredPlan: "pro", isDisabled: true },
-                    { href: "/lead-capture", label: "Lead Capture Options", requiredPlan: "pro", isDisabled: true },
-                    { href: "/export", label: "Export Conversations", requiredPlan: "pro", isDisabled: true },
-                ]} />
-
-                <NavMenuCollapsible icon={Settings} label="Advanced" plan={userPlan} items={[
-                    { href: "/real-time-analytics", label: "Real-Time Analytics", requiredPlan: "enterprise" },
-                    { href: "/api-access", label: "API Access", requiredPlan: "enterprise" },
-                    { href: "/workflow-builder", label: "Workflow Builder", requiredPlan: "enterprise", isDisabled: true },
-                    { href: "/custom-model", label: "Custom AI Model", requiredPlan: "enterprise", isDisabled: true },
-                    { href: "/security", label: "Security & Compliance", requiredPlan: "enterprise", isDisabled: true },
-                    { href: "/white-label", label: "White-label Settings", requiredPlan: "enterprise" },
-                    { href: "/webhooks", label: "Webhooks & Zapier", requiredPlan: "enterprise", isDisabled: true },
-                ]} />
-              </SidebarMenu>
-            </SidebarContent>
-            <SidebarFooter>
-                <div className='px-4 py-2 text-sm'>
-                    <p className='font-semibold'>Current Plan</p>
-                    <p className='text-muted-foreground capitalize'>{userPlan}</p>
-                </div>
-                <SidebarMenu>
-                    <NavMenuItem href="/billing" icon={CreditCard} label="Billing" plan={userPlan} />
-                    <NavMenuItem href="/settings" icon={Settings} label="Settings" plan={userPlan} />
-                    <NavMenuItem href="/support" icon={HelpCircle} label="Support" plan={userPlan} />
-                </SidebarMenu>
-              <TooltipProvider>
-                  <div className="flex items-center gap-3 p-3 rounded-lg border m-2">
-                      <Avatar className="h-9 w-9">
-                          <AvatarImage src={user?.photoURL || ''} />
-                          <AvatarFallback>{user?.displayName?.[0] || user?.email?.[0]}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 overflow-hidden">
-                          <p className="text-sm font-semibold truncate">{user?.displayName}</p>
-                          <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
-                      </div>
-                      <Tooltip>
-                          <TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleLogout}>
-                                  <LogOut className="h-4 w-4"/>
-                              </Button>
-                          </TooltipTrigger>
-                          <TooltipContent side="right" align="center">Logout</TooltipContent>
-                      </Tooltip>
-                  </div>
-              </TooltipProvider>
-            </SidebarFooter>
-          </Sidebar>
-        )}
-        <div className="flex-1 flex flex-col">
-            <header className="p-4 flex items-center justify-between gap-4 sticky top-0 bg-background/80 backdrop-blur-sm z-10 border-b">
-                <div className="flex items-center gap-2">
-                    <SidebarTrigger className={cn("md:hidden", !showSidebar && "hidden")}>
+      <div className="flex flex-col min-h-screen bg-background">
+        <header className="p-4 flex items-center justify-between gap-4 sticky top-0 bg-background/80 backdrop-blur-sm z-10 border-b">
+            <div className="flex items-center gap-2">
+                {showSidebar ? (
+                    <SidebarTrigger className="md:hidden">
                         <Menu className="w-6 h-6" />
                     </SidebarTrigger>
-                    {!showSidebar && (
-                         <Link href="/home" className="font-semibold text-lg flex items-center gap-2 text-primary">
-                            <span>Savrii</span>
-                        </Link>
-                    )}
-                </div>
-                <nav className="hidden md:flex flex-1 justify-center items-center gap-8 text-base font-medium">
-                    {navLinks.map(link => (
-                        <Link key={link.href} href={link.href} className={cn(
-                            "transition-colors hover:text-primary",
-                            pathname === link.href ? "text-primary font-semibold" : "text-muted-foreground"
-                        )}>
-                            {link.label}
-                        </Link>
-                    ))}
-                </nav>
-                <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" onClick={toggleTheme} className="relative h-9 w-9 overflow-hidden">
-                        <AnimatePresence mode="wait" initial={false}>
-                            <motion.div
-                                key={theme === 'light' ? 'moon' : 'sun'}
-                                initial={{ y: -20, opacity: 0, rotate: -90 }}
-                                animate={{ y: 0, opacity: 1, rotate: 0 }}
-                                exit={{ y: 20, opacity: 0, rotate: 90 }}
-                                transition={{ duration: 0.3 }}
-                                className="absolute"
-                            >
-                                {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-                            </motion.div>
-                        </AnimatePresence>
-                    </Button>
-                    <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-9 w-9 hidden md:inline-flex" onClick={handleLogout}>
-                                <LogOut className="h-4 w-4"/>
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent align="end">Logout</TooltipContent>
-                    </Tooltip>
-                    </TooltipProvider>
-                    <Avatar className="h-9 w-9">
-                        <AvatarImage src={user?.photoURL || ''} />
-                        <AvatarFallback>{user?.displayName?.[0] || user?.email?.[0]}</AvatarFallback>
-                    </Avatar>
-                    <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-                        <SheetTrigger asChild>
-                            <Button variant="ghost" size="icon" className="md:hidden">
-                                <Menu className="w-6 h-6" />
-                            </Button>
-                        </SheetTrigger>
-                        <SheetContent ref={mobileMenuRef}>
-                            <SheetHeader className="flex flex-row justify-between items-center border-b pb-4 px-4">
-                                <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
-                                <Link href="/home" className="flex items-center gap-2" onClick={() => setMobileMenuOpen(false)}>
-                                    <span className="text-xl font-bold text-primary">Savrii</span>
-                                </Link>
-                                <SheetClose asChild>
-                                    <Button variant="ghost" size="icon">
-                                        <X className="h-6 w-6" />
-                                    </Button>
-                                </SheetClose>
-                            </SheetHeader>
-                            <nav className="flex flex-col gap-2 mt-8 p-4">
-                                {navLinks.map(link => (
-                                    <div key={link.href} data-mobile-nav-item>
-                                        <SheetClose asChild>
-                                            <Link href={link.href} className={cn(
-                                                "flex items-center gap-4 text-lg p-3 rounded-lg transition-colors hover:bg-secondary",
-                                                pathname === link.href ? "bg-secondary text-primary font-semibold" : "text-muted-foreground"
-                                            )}>
-                                                <link.icon className="h-5 w-5" />
-                                                {link.label}
-                                            </Link>
-                                        </SheetClose>
-                                    </div>
-                                ))}
-                            </nav>
-                        </SheetContent>
-                    </Sheet>
-                </div>
-            </header>
-            <main className="flex-1 overflow-y-auto">
-                {children}
-            </main>
+                ) : (
+                    <Link href="/home" className="font-semibold text-lg flex items-center gap-2 text-primary">
+                       <span>Savrii</span>
+                    </Link>
+                )}
+            </div>
+            <nav className="hidden md:flex flex-1 justify-center items-center gap-8 text-base font-medium">
+                {navLinks.map(link => (
+                    <Link key={link.href} href={link.href} className={cn(
+                        "transition-colors hover:text-primary",
+                        pathname === link.href ? "text-primary font-semibold" : "text-muted-foreground"
+                    )}>
+                        {link.label}
+                    </Link>
+                ))}
+            </nav>
+            <div className="flex items-center gap-2">
+                <Button variant="ghost" size="icon" onClick={toggleTheme} className="relative h-9 w-9 overflow-hidden">
+                    <AnimatePresence mode="wait" initial={false}>
+                        <motion.div
+                            key={theme === 'light' ? 'moon' : 'sun'}
+                            initial={{ y: -20, opacity: 0, rotate: -90 }}
+                            animate={{ y: 0, opacity: 1, rotate: 0 }}
+                            exit={{ y: 20, opacity: 0, rotate: 90 }}
+                            transition={{ duration: 0.3 }}
+                            className="absolute"
+                        >
+                            {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+                        </motion.div>
+                    </AnimatePresence>
+                </Button>
+                <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-9 w-9 hidden md:inline-flex" onClick={handleLogout}>
+                            <LogOut className="h-4 w-4"/>
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent align="end">Logout</TooltipContent>
+                </Tooltip>
+                </TooltipProvider>
+                <Avatar className="h-9 w-9">
+                    <AvatarImage src={user?.photoURL || ''} />
+                    <AvatarFallback>{user?.displayName?.[0] || user?.email?.[0]}</AvatarFallback>
+                </Avatar>
+                <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                    <SheetTrigger asChild>
+                        <Button variant="ghost" size="icon" className="md:hidden">
+                            <Menu className="w-6 h-6" />
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent ref={mobileMenuRef}>
+                        <SheetHeader className="flex flex-row justify-between items-center border-b pb-4 px-4">
+                            <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
+                            <Link href="/home" className="flex items-center gap-2" onClick={() => setMobileMenuOpen(false)}>
+                                <span className="text-xl font-bold text-primary">Savrii</span>
+                            </Link>
+                            <SheetClose asChild>
+                                <Button variant="ghost" size="icon">
+                                    <X className="h-6 w-6" />
+                                </Button>
+                            </SheetClose>
+                        </SheetHeader>
+                        <nav className="flex flex-col gap-2 mt-8 p-4">
+                            {navLinks.map(link => (
+                                <div key={link.href} data-mobile-nav-item>
+                                    <SheetClose asChild>
+                                        <Link href={link.href} className={cn(
+                                            "flex items-center gap-4 text-lg p-3 rounded-lg transition-colors hover:bg-secondary",
+                                            pathname === link.href ? "bg-secondary text-primary font-semibold" : "text-muted-foreground"
+                                        )}>
+                                            <link.icon className="h-5 w-5" />
+                                            {link.label}
+                                        </Link>
+                                    </SheetClose>
+                                </div>
+                            ))}
+                        </nav>
+                    </SheetContent>
+                </Sheet>
+            </div>
+        </header>
+        <div className="flex flex-1">
+          {showSidebar && (
+            <Sidebar>
+              <SidebarContent>
+                <SidebarMenu>
+                  <div className="p-2 mb-2">
+                      <Link href="/home" className="font-semibold text-lg flex items-center gap-2 text-primary">
+                          <span>Savrii</span>
+                      </Link>
+                  </div>
+                  <NavMenuItem href="/dashboard" icon={BarChartBig} label="Dashboard" plan={userPlan} />
+                  <NavMenuItem href="/chat" icon={MessageSquare} label="Chat / AI Assistant" plan={userPlan} isDisabled={true} />
+                  <NavMenuItem href="/analytics" icon={BarChart2} label="Analytics" plan={userPlan} requiredPlan="pro" />
+                  <NavMenuItem href="/integrations" icon={GitMerge} label="Integrations" plan={userPlan} />
+                  
+                  <NavMenuCollapsible icon={FileText} label="Content Mgmt" plan={userPlan} items={[
+                      { href: "/custom-prompts", label: "Custom Prompts", requiredPlan: "pro" },
+                      { href: "/brand-voice", label: "Brand Voice Training", requiredPlan: "pro" },
+                      { href: "/prompt-library", label: "Prompt Library", requiredPlan: "pro", isDisabled: true },
+                  ]} />
+                  
+                  <NavMenuCollapsible icon={Users} label="Productivity" plan={userPlan} items={[
+                      { href: "/daily-summary", label: "Daily Summary", requiredPlan: "pro", isDisabled: true },
+                      { href: "/collaboration", label: "Collaboration Tools", requiredPlan: "pro", isDisabled: true },
+                      { href: "/lead-capture", label: "Lead Capture Options", requiredPlan: "pro", isDisabled: true },
+                      { href: "/export", label: "Export Conversations", requiredPlan: "pro", isDisabled: true },
+                  ]} />
+
+                  <NavMenuCollapsible icon={Settings} label="Advanced" plan={userPlan} items={[
+                      { href: "/real-time-analytics", label: "Real-Time Analytics", requiredPlan: "enterprise" },
+                      { href: "/api-access", label: "API Access", requiredPlan: "enterprise" },
+                      { href: "/workflow-builder", label: "Workflow Builder", requiredPlan: "enterprise", isDisabled: true },
+                      { href: "/custom-model", label: "Custom AI Model", requiredPlan: "enterprise", isDisabled: true },
+                      { href: "/security", label: "Security & Compliance", requiredPlan: "enterprise", isDisabled: true },
+                      { href: "/white-label", label: "White-label Settings", requiredPlan: "enterprise" },
+                      { href: "/webhooks", label: "Webhooks & Zapier", requiredPlan: "enterprise", isDisabled: true },
+                  ]} />
+                </SidebarMenu>
+              </SidebarContent>
+              <SidebarFooter>
+                  <div className='px-4 py-2 text-sm'>
+                      <p className='font-semibold'>Current Plan</p>
+                      <p className='text-muted-foreground capitalize'>{userPlan}</p>
+                  </div>
+                  <SidebarMenu>
+                      <NavMenuItem href="/billing" icon={CreditCard} label="Billing" plan={userPlan} />
+                      <NavMenuItem href="/settings" icon={Settings} label="Settings" plan={userPlan} />
+                      <NavMenuItem href="/support" icon={HelpCircle} label="Support" plan={userPlan} />
+                  </SidebarMenu>
+                <TooltipProvider>
+                    <div className="flex items-center gap-3 p-3 rounded-lg border m-2">
+                        <Avatar className="h-9 w-9">
+                            <AvatarImage src={user?.photoURL || ''} />
+                            <AvatarFallback>{user?.displayName?.[0] || user?.email?.[0]}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 overflow-hidden">
+                            <p className="text-sm font-semibold truncate">{user?.displayName}</p>
+                            <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                        </div>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleLogout}>
+                                    <LogOut className="h-4 w-4"/>
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="right" align="center">Logout</TooltipContent>
+                        </Tooltip>
+                    </div>
+                </TooltipProvider>
+              </SidebarFooter>
+            </Sidebar>
+          )}
+          <main className="flex-1 overflow-y-auto">
+              {children}
+          </main>
         </div>
-        
       </div>
       <AnimatedFooter />
     </SidebarProvider>
