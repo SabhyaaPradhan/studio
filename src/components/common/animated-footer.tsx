@@ -89,7 +89,14 @@ export default function AnimatedFooter() {
          gsap.utils.toArray<HTMLAnchorElement>('.social-icon').forEach(icon => {
             const tween = gsap.to(icon, { rotation: 360, duration: 0.4, paused: true, ease: 'power1.inOut' });
             icon.addEventListener('mouseenter', () => tween.play());
-            icon.addEventListener('mouseleave', () => tween.reverse());
+            icon.addEventListener('mouseleave', () => {
+                // To ensure the rotation completes to 0 if reversed mid-animation
+                if (tween.progress() > 0 && tween.progress() < 1) {
+                    tween.reverse().then(() => tween.progress(0));
+                } else {
+                    tween.reverse();
+                }
+            });
         });
     }, footerRef);
 
