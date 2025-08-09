@@ -24,46 +24,49 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    const processAuth = async () => {
-        try {
-            const result = await getRedirectResult(auth);
-            if (result) {
-                // This means the user has just signed in via redirect.
-                console.log("Redirect result user:", result.user);
-                setUser(result.user);
-                toast({
-                    title: "Login Successful! 🎉",
-                    description: `Welcome back, ${result.user.displayName || 'friend'}!`,
-                });
-                router.push("/home");
-                // We don't set loading to false here yet, we let the onAuthStateChanged handle it
-            }
-        } catch (error) {
-            console.error("Error getting redirect result:", error);
-            // Handle specific errors if needed
-        }
+    // This flag prevents the redirect logic from firing multiple times.
+    let isRedirecting = false;
 
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-          // Check if it's a new user login (not just a state refresh)
-          if (!user && currentUser) {
-            console.log("User session established via onAuthStateChanged:", currentUser);
-            toast({
-              title: "Login Successful! 🎉",
-              description: `Welcome back, ${currentUser.displayName || 'friend'}!`,
-            });
-            router.push("/home");
-          }
-          setUser(currentUser);
-          setLoading(false);
+    const processAuth = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result && !isRedirecting) {
+          isRedirecting = true;
+          // This means the user has just signed in via redirect.
+          const loggedInUser = result.user;
+          console.log("Redirect result user:", loggedInUser);
+          setUser(loggedInUser);
+          toast({
+            title: "Login Successful! 🎉",
+            description: `Welcome back, ${loggedInUser.displayName || 'friend'}!`,
+          });
+          router.push("/home");
+        }
+      } catch (error) {
+        console.error("Error getting redirect result:", error);
+        toast({
+            variant: "destructive",
+            title: "Uh oh! Something went wrong with Google Sign-In.",
+            description: "Please try again.",
         });
-        
-        // Return the unsubscribe function to be called on cleanup
-        return unsubscribe;
+      }
+
+      // onAuthStateChanged is the primary listener for auth state.
+      // It handles initial session checks and changes from other tabs.
+      const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        if (!isRedirecting) {
+            setUser(currentUser);
+        }
+        setLoading(false);
+      });
+
+      // Cleanup the listener on component unmount
+      return unsubscribe;
     };
 
     processAuth();
     
-  }, [router, toast]); // Removed `user` from dependency array to prevent re-running on user state change
+  }, [router, toast]);
   
   return (
     <AuthContext.Provider value={{ user, loading }}>

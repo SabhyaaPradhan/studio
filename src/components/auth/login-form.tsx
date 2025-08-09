@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { auth } from "@/lib/firebase";
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithRedirect } from "firebase/auth";
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect } from "firebase/auth";
 import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
@@ -62,22 +62,7 @@ export default function LoginForm() {
 
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
-    try {
-        await signInWithPopup(auth, provider);
-        // The auth context will handle the redirect and toast on success.
-    } catch (error: any) {
-        // This specific error code indicates the user closed the popup or it was blocked.
-        if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/popup-blocked-by-browser') {
-            // Fallback to redirect method if popup fails
-            await signInWithRedirect(auth, provider);
-        } else {
-             toast({
-                variant: "destructive",
-                title: "Uh oh! Something went wrong with Google Sign-In.",
-                description: error.message,
-            });
-        }
-    }
+    await signInWithRedirect(auth, provider);
   };
 
   return (
