@@ -2,14 +2,14 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { DollarSign, BrainCircuit, MessageSquare } from 'lucide-react';
+import { DollarSign, BrainCircuit, MessageSquare, CalendarDays } from 'lucide-react';
 
 export default function DashboardPage() {
     const stats = [
         { title: "AI Replies Today", value: "1,204", icon: MessageSquare, change: "+12%" },
         { title: "Plan", value: "Pro", icon: DollarSign, change: "Monthly" },
         { title: "Knowledge Sources", value: "5", icon: BrainCircuit, change: "+1" },
-        { title: "Trial Ends In", value: "12 days", icon: DollarSign, change: "" }
+        { title: "Trial Ends In", value: "12 days", icon: CalendarDays, change: "" }
     ];
     
     return (

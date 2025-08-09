@@ -56,12 +56,7 @@ export default function SignupForm() {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       await updateProfile(userCredential.user, { displayName: values.name });
-      
-      toast({
-        title: "Account Created! 🎉",
-        description: "Welcome to Savrii!",
-      });
-      router.push("/home");
+      // The auth context will handle the redirect and toast.
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -73,24 +68,20 @@ export default function SignupForm() {
     }
   }
 
-  const handleGoogleSignIn = () => {
+  const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
-    signInWithPopup(auth, provider)
-      .then((result) => {
-        console.log("User session established from popup:", result.user);
-        toast({
-          title: "Account Created! 🎉",
-          description: "Welcome to Savrii!",
-        });
-        router.push("/home");
-      })
-      .catch((error) => {
-        toast({
-          variant: "destructive",
-          title: "Uh oh! Something went wrong with Google Sign-In.",
-          description: error.message,
-        });
-      });
+    try {
+      await signInWithPopup(auth, provider);
+      // The auth context will handle the redirect and toast.
+    } catch (error: any) {
+        if (error.code !== 'auth/popup-closed-by-user') {
+            toast({
+                variant: "destructive",
+                title: "Uh oh! Something went wrong with Google Sign-In.",
+                description: error.message,
+            });
+        }
+    }
   };
 
   return (

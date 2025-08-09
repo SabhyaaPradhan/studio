@@ -48,11 +48,7 @@ export default function LoginForm() {
     setIsSubmitting(true);
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
-      toast({
-        title: "Login Successful! 🎉",
-        description: "Welcome back!",
-      });
-      router.push("/home");
+      // The auth context will handle the redirect and toast.
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -64,24 +60,21 @@ export default function LoginForm() {
     }
   }
 
-  const handleGoogleSignIn = () => {
+  const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
-    signInWithPopup(auth, provider)
-      .then((result) => {
-        console.log("User session established from popup:", result.user);
-        toast({
-          title: "Login Successful! 🎉",
-          description: "Welcome back!",
-        });
-        router.push("/home");
-      })
-      .catch((error) => {
-        toast({
-          variant: "destructive",
-          title: "Uh oh! Something went wrong with Google Sign-In.",
-          description: error.message,
-        });
-      });
+    try {
+        await signInWithPopup(auth, provider);
+        // The auth context will handle the redirect and toast.
+    } catch (error: any) {
+        // Only show toast for actual errors, not for user closing the popup.
+        if (error.code !== 'auth/popup-closed-by-user') {
+            toast({
+                variant: "destructive",
+                title: "Uh oh! Something went wrong with Google Sign-In.",
+                description: error.message,
+            });
+        }
+    }
   };
 
   return (
