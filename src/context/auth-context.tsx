@@ -2,7 +2,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { onAuthStateChanged, User, getRedirectResult } from 'firebase/auth';
+import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -24,56 +24,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    let isMounted = true;
-    let redirectResultProcessed = false;
-
-    const processRedirectResult = async () => {
-      // This block runs only once to process the redirect result from Google Sign-In
-      try {
-        const result = await getRedirectResult(auth);
-        redirectResultProcessed = true;
-        
-        if (result && result.user && isMounted) {
-          console.log("Redirect result user object:", result.user);
-          setUser(result.user);
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        // This condition is met on both login and signup
+        if (!user) { // Only show toast and redirect if user state is changing from null
           toast({
             title: "Login Successful! 🎉",
-            description: `Welcome back, ${result.user.displayName || 'friend'}!`,
+            description: `Welcome back, ${currentUser.displayName || 'friend'}!`,
           });
           router.push("/home");
         }
-      } catch (error: any) {
-        console.error("Error processing redirect result:", error);
-        toast({
-            variant: "destructive",
-            title: "Uh oh! Login failed.",
-            description: "There was a problem with the sign-in process. Please try again.",
-        });
+        setUser(currentUser);
+      } else {
+        setUser(null);
       }
-    };
-
-    // First, process any pending redirect result.
-    processRedirectResult();
-
-    // Then, set up the listener for ongoing auth state changes.
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (!isMounted) return;
-
-      setUser(currentUser);
-      
-      // We can only stop loading after we know there's no pending redirect.
-      // If we are still waiting for getRedirectResult, we keep loading.
-      if (redirectResultProcessed) {
-        setLoading(false);
-      }
+      setLoading(false);
     });
 
-    // Cleanup function to prevent memory leaks
-    return () => {
-      isMounted = false;
-      unsubscribe();
-    };
-  }, [router, toast]);
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, [router, toast, user]);
   
   return (
     <AuthContext.Provider value={{ user, loading }}>
