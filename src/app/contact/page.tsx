@@ -2,7 +2,7 @@
 import ContactPage from '@/components/contact/contact-page';
 import { HeaderThemeProvider } from '@/components/landing/header-theme-provider';
 import Header from '@/components/landing/header';
-import Footer from '@/components/landing/footer';
+import AnimatedFooter from '@/components/common/animated-footer';
 
 export const metadata = {
     title: 'Contact Us – Savrii AI',
@@ -17,7 +17,7 @@ export default function Contact() {
                 <main className="flex-grow pt-20">
                     <ContactPage />
                 </main>
-                <Footer />
+                <AnimatedFooter />
             </div>
         </HeaderThemeProvider>
     );

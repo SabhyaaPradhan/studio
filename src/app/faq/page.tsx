@@ -2,7 +2,7 @@
 import FaqPage from '@/components/faq/faq-page';
 import { HeaderThemeProvider } from '@/components/landing/header-theme-provider';
 import Header from '@/components/landing/header';
-import Footer from '@/components/landing/footer';
+import AnimatedFooter from '@/components/common/animated-footer';
 import Cta from '@/components/landing/cta';
 
 export const metadata = {
@@ -19,7 +19,7 @@ export default function FAQ() {
                     <FaqPage />
                     <Cta />
                 </main>
-                <Footer />
+                <AnimatedFooter />
             </div>
         </HeaderThemeProvider>
     );

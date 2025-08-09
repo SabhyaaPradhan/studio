@@ -4,7 +4,7 @@
 import LoginForm from '@/components/auth/login-form';
 import { HeaderThemeProvider } from '@/components/landing/header-theme-provider';
 import Header from '@/components/landing/header';
-import Footer from '@/components/landing/footer';
+import AnimatedFooter from '@/components/common/animated-footer';
 import GridBackground from '@/components/landing/grid-background';
 import { useAuthRedirect } from '@/hooks/use-auth-redirect';
 
@@ -19,7 +19,7 @@ export default function LoginPage() {
                 <main className="flex-grow flex items-center justify-center pt-20 z-10">
                     <LoginForm />
                 </main>
-                <Footer />
+                <AnimatedFooter />
             </div>
         </HeaderThemeProvider>
     );

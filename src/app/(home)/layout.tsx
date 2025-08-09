@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Link from 'next/link';
@@ -58,6 +59,7 @@ import {
 } from '@/components/ui/collapsible';
 import { useTheme } from 'next-themes';
 import { Sun, Moon } from "lucide-react";
+import AnimatedFooter from '@/components/common/animated-footer';
 
 
 type UserPlan = 'starter' | 'pro' | 'enterprise';
@@ -240,122 +242,125 @@ export default function AuthenticatedLayout({
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen bg-background">
-        {showSidebar && (
-          <Sidebar>
-            <SidebarHeader>
-              <Link href="/home" className="flex items-center gap-2">
-                  <span className="text-xl font-semibold text-accent">Savrii</span>
-              </Link>
-            </SidebarHeader>
-            <SidebarContent>
-              <SidebarMenu>
-                <NavMenuItem href="/dashboard" icon={BarChartBig} label="Dashboard" plan={userPlan} />
-                <NavMenuItem href="/chat" icon={MessageSquare} label="Chat / AI Assistant" plan={userPlan} isDisabled={true} />
-                <NavMenuItem href="/analytics" icon={BarChart2} label="Analytics" plan={userPlan} requiredPlan="pro" />
-                <NavMenuItem href="/integrations" icon={GitMerge} label="Integrations" plan={userPlan} />
-                
-                <NavMenuCollapsible icon={FileText} label="Content Mgmt" plan={userPlan} items={[
-                    { href: "/custom-prompts", label: "Custom Prompts", requiredPlan: "pro" },
-                    { href: "/brand-voice", label: "Brand Voice Training", requiredPlan: "pro" },
-                    { href: "/prompt-library", label: "Prompt Library", requiredPlan: "pro", isDisabled: true },
-                ]} />
-                
-                <NavMenuCollapsible icon={Users} label="Productivity" plan={userPlan} items={[
-                    { href: "/daily-summary", label: "Daily Summary", requiredPlan: "pro", isDisabled: true },
-                    { href: "/collaboration", label: "Collaboration Tools", requiredPlan: "pro", isDisabled: true },
-                    { href: "/lead-capture", label: "Lead Capture Options", requiredPlan: "pro", isDisabled: true },
-                    { href: "/export", label: "Export Conversations", requiredPlan: "pro", isDisabled: true },
-                ]} />
+      <div className="flex min-h-screen bg-background flex-col">
+        <div className="flex flex-1">
+            {showSidebar && (
+              <Sidebar>
+                <SidebarHeader>
+                  <Link href="/home" className="flex items-center gap-2">
+                      <span className="text-xl font-semibold text-accent">Savrii</span>
+                  </Link>
+                </SidebarHeader>
+                <SidebarContent>
+                  <SidebarMenu>
+                    <NavMenuItem href="/dashboard" icon={BarChartBig} label="Dashboard" plan={userPlan} />
+                    <NavMenuItem href="/chat" icon={MessageSquare} label="Chat / AI Assistant" plan={userPlan} isDisabled={true} />
+                    <NavMenuItem href="/analytics" icon={BarChart2} label="Analytics" plan={userPlan} requiredPlan="pro" />
+                    <NavMenuItem href="/integrations" icon={GitMerge} label="Integrations" plan={userPlan} />
+                    
+                    <NavMenuCollapsible icon={FileText} label="Content Mgmt" plan={userPlan} items={[
+                        { href: "/custom-prompts", label: "Custom Prompts", requiredPlan: "pro" },
+                        { href: "/brand-voice", label: "Brand Voice Training", requiredPlan: "pro" },
+                        { href: "/prompt-library", label: "Prompt Library", requiredPlan: "pro", isDisabled: true },
+                    ]} />
+                    
+                    <NavMenuCollapsible icon={Users} label="Productivity" plan={userPlan} items={[
+                        { href: "/daily-summary", label: "Daily Summary", requiredPlan: "pro", isDisabled: true },
+                        { href: "/collaboration", label: "Collaboration Tools", requiredPlan: "pro", isDisabled: true },
+                        { href: "/lead-capture", label: "Lead Capture Options", requiredPlan: "pro", isDisabled: true },
+                        { href: "/export", label: "Export Conversations", requiredPlan: "pro", isDisabled: true },
+                    ]} />
 
-                <NavMenuCollapsible icon={Settings} label="Advanced" plan={userPlan} items={[
-                    { href: "/real-time-analytics", label: "Real-Time Analytics", requiredPlan: "enterprise" },
-                    { href: "/api-access", label: "API Access", requiredPlan: "enterprise" },
-                    { href: "/workflow-builder", label: "Workflow Builder", requiredPlan: "enterprise", isDisabled: true },
-                    { href: "/custom-model", label: "Custom AI Model", requiredPlan: "enterprise", isDisabled: true },
-                    { href: "/security", label: "Security & Compliance", requiredPlan: "enterprise", isDisabled: true },
-                    { href: "/white-label", label: "White-label Settings", requiredPlan: "enterprise" },
-                    { href: "/webhooks", label: "Webhooks & Zapier", requiredPlan: "enterprise", isDisabled: true },
-                ]} />
-              </SidebarMenu>
-            </SidebarContent>
-            <SidebarFooter>
-                <div className='px-4 py-2 text-sm'>
-                    <p className='font-semibold'>Current Plan</p>
-                    <p className='text-muted-foreground capitalize'>{userPlan}</p>
-                </div>
-                <SidebarMenu>
-                    <NavMenuItem href="/billing" icon={CreditCard} label="Billing" plan={userPlan} />
-                    <NavMenuItem href="/settings" icon={Settings} label="Settings" plan={userPlan} />
-                    <NavMenuItem href="/support" icon={HelpCircle} label="Support" plan={userPlan} />
-                </SidebarMenu>
-              <TooltipProvider>
-                  <div className="flex items-center gap-3 p-3 rounded-lg border m-2">
-                      <Avatar className="h-9 w-9">
-                          <AvatarImage src={user?.photoURL || ''} />
-                          <AvatarFallback>{user?.displayName?.[0] || user?.email?.[0]}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 overflow-hidden">
-                          <p className="text-sm font-semibold truncate">{user?.displayName}</p>
-                          <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                    <NavMenuCollapsible icon={Settings} label="Advanced" plan={userPlan} items={[
+                        { href: "/real-time-analytics", label: "Real-Time Analytics", requiredPlan: "enterprise" },
+                        { href: "/api-access", label: "API Access", requiredPlan: "enterprise" },
+                        { href: "/workflow-builder", label: "Workflow Builder", requiredPlan: "enterprise", isDisabled: true },
+                        { href: "/custom-model", label: "Custom AI Model", requiredPlan: "enterprise", isDisabled: true },
+                        { href: "/security", label: "Security & Compliance", requiredPlan: "enterprise", isDisabled: true },
+                        { href: "/white-label", label: "White-label Settings", requiredPlan: "enterprise" },
+                        { href: "/webhooks", label: "Webhooks & Zapier", requiredPlan: "enterprise", isDisabled: true },
+                    ]} />
+                  </SidebarMenu>
+                </SidebarContent>
+                <SidebarFooter>
+                    <div className='px-4 py-2 text-sm'>
+                        <p className='font-semibold'>Current Plan</p>
+                        <p className='text-muted-foreground capitalize'>{userPlan}</p>
+                    </div>
+                    <SidebarMenu>
+                        <NavMenuItem href="/billing" icon={CreditCard} label="Billing" plan={userPlan} />
+                        <NavMenuItem href="/settings" icon={Settings} label="Settings" plan={userPlan} />
+                        <NavMenuItem href="/support" icon={HelpCircle} label="Support" plan={userPlan} />
+                    </SidebarMenu>
+                  <TooltipProvider>
+                      <div className="flex items-center gap-3 p-3 rounded-lg border m-2">
+                          <Avatar className="h-9 w-9">
+                              <AvatarImage src={user?.photoURL || ''} />
+                              <AvatarFallback>{user?.displayName?.[0] || user?.email?.[0]}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 overflow-hidden">
+                              <p className="text-sm font-semibold truncate">{user?.displayName}</p>
+                              <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                          </div>
+                          <Tooltip>
+                              <TooltipTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleLogout}>
+                                      <LogOut className="h-4 w-4"/>
+                                  </Button>
+                              </TooltipTrigger>
+                              <TooltipContent side="right" align="center">Logout</TooltipContent>
+                          </Tooltip>
                       </div>
-                      <Tooltip>
-                          <TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleLogout}>
-                                  <LogOut className="h-4 w-4"/>
-                              </Button>
-                          </TooltipTrigger>
-                          <TooltipContent side="right" align="center">Logout</TooltipContent>
-                      </Tooltip>
-                  </div>
-              </TooltipProvider>
-            </SidebarFooter>
-          </Sidebar>
-        )}
-        <div className="flex-1 flex flex-col">
-            <header className="p-4 flex items-center gap-4 sticky top-0 bg-background/80 backdrop-blur-sm z-10 border-b">
-                <div className="flex items-center">
-                    <SidebarTrigger className={cn("md:hidden", !showSidebar && "hidden")}>
-                        <Menu className="w-6 h-6" />
-                    </SidebarTrigger>
-                    <Link href="/home" className={cn("font-semibold text-lg", showSidebar && 'md:hidden')}>
-                        <span className="text-accent">Savrii</span>
-                    </Link>
-                </div>
-                <nav className="hidden md:flex flex-1 justify-center items-center gap-8 text-base font-medium">
-                   {navLinks.map(link => (
-                        <Link key={link.href} href={link.href} className={cn(
-                            "transition-colors hover:text-primary",
-                            pathname === link.href ? "text-primary font-semibold" : "text-muted-foreground"
-                        )}>
-                            {link.label}
+                  </TooltipProvider>
+                </SidebarFooter>
+              </Sidebar>
+            )}
+            <div className="flex-1 flex flex-col">
+                <header className="p-4 flex items-center gap-4 sticky top-0 bg-background/80 backdrop-blur-sm z-10 border-b">
+                    <div className="flex items-center">
+                        <SidebarTrigger className={cn("md:hidden", !showSidebar && "hidden")}>
+                            <Menu className="w-6 h-6" />
+                        </SidebarTrigger>
+                        <Link href="/home" className={cn("font-semibold text-lg", showSidebar && 'md:hidden')}>
+                            <span className="text-accent">Savrii</span>
                         </Link>
-                   ))}
-                </nav>
-                 <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" onClick={toggleTheme}>
-                      {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-                    </Button>
-                    <TooltipProvider>
-                      <Tooltip>
-                          <TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-9 w-9 hidden md:inline-flex" onClick={handleLogout}>
-                                  <LogOut className="h-4 w-4"/>
-                              </Button>
-                          </TooltipTrigger>
-                          <TooltipContent align="end">Logout</TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                     <Avatar className="h-9 w-9">
-                        <AvatarImage src={user?.photoURL || ''} />
-                        <AvatarFallback>{user?.displayName?.[0] || user?.email?.[0]}</AvatarFallback>
-                    </Avatar>
-                </div>
-            </header>
-            <main className="flex-1 overflow-y-auto">
-                {children}
-            </main>
+                    </div>
+                    <nav className="hidden md:flex flex-1 justify-center items-center gap-8 text-base font-medium">
+                       {navLinks.map(link => (
+                            <Link key={link.href} href={link.href} className={cn(
+                                "transition-colors hover:text-primary",
+                                pathname === link.href ? "text-primary font-semibold" : "text-muted-foreground"
+                            )}>
+                                {link.label}
+                            </Link>
+                       ))}
+                    </nav>
+                     <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="icon" onClick={toggleTheme}>
+                          {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+                        </Button>
+                        <TooltipProvider>
+                          <Tooltip>
+                              <TooltipTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-9 w-9 hidden md:inline-flex" onClick={handleLogout}>
+                                      <LogOut className="h-4 w-4"/>
+                                  </Button>
+                              </TooltipTrigger>
+                              <TooltipContent align="end">Logout</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                         <Avatar className="h-9 w-9">
+                            <AvatarImage src={user?.photoURL || ''} />
+                            <AvatarFallback>{user?.displayName?.[0] || user?.email?.[0]}</AvatarFallback>
+                        </Avatar>
+                    </div>
+                </header>
+                <main className="flex-1 overflow-y-auto">
+                    {children}
+                </main>
+            </div>
         </div>
+        <AnimatedFooter />
       </div>
     </SidebarProvider>
   );

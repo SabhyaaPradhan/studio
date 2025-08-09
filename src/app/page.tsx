@@ -8,7 +8,7 @@ import UseCases from '@/components/landing/use-cases';
 import Testimonials from '@/components/landing/testimonials';
 import Cta from '@/components/landing/cta';
 import { HeaderThemeProvider } from '@/components/landing/header-theme-provider';
-import Footer from '@/components/landing/footer';
+import AnimatedFooter from '@/components/common/animated-footer';
 import Features from '@/components/landing/features';
 
 export default function Home() {
@@ -26,7 +26,7 @@ export default function Home() {
           <Testimonials />
           <Cta />
         </main>
-        <Footer />
+        <AnimatedFooter />
       </div>
     </HeaderThemeProvider>
   );

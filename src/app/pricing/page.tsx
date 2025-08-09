@@ -2,7 +2,7 @@
 import PricingPage from '@/components/pricing/pricing-page';
 import { HeaderThemeProvider } from '@/components/landing/header-theme-provider';
 import Header from '@/components/landing/header';
-import Footer from '@/components/landing/footer';
+import AnimatedFooter from '@/components/common/animated-footer';
 
 export const metadata = {
     title: 'Savrii – Smart AI for Customer Communication | Pricing',
@@ -17,7 +17,7 @@ export default function Pricing() {
                 <main className="flex-grow pt-20">
                     <PricingPage />
                 </main>
-                <Footer />
+                <AnimatedFooter />
             </div>
         </HeaderThemeProvider>
     );
