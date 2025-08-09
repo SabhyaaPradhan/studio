@@ -10,9 +10,9 @@ export function useAuthRedirect() {
   const router = useRouter();
 
   useEffect(() => {
+    // If loading is finished and there IS a user, redirect them away from auth pages
     if (!loading && user) {
-      // This hook is no longer responsible for redirecting.
-      // The redirect is now handled directly in the login/signup forms.
+      router.push('/home');
     }
   }, [user, loading, router]);
 }

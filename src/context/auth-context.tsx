@@ -4,7 +4,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { onAuthStateChanged, User, getRedirectResult } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { Loader } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 
@@ -26,13 +25,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    const handleRedirectResult = async () => {
+    const processRedirectResult = async () => {
+        setLoading(true);
         try {
             const result = await getRedirectResult(auth);
             if (result) {
-                // This is the signed-in user
-                const user = result.user;
-                setUser(user);
+                const loggedInUser = result.user;
+                setUser(loggedInUser);
                 toast({
                     title: "Login Successful! 🎉",
                     description: "Welcome back!",
@@ -45,17 +44,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 title: "Uh oh! Something went wrong.",
                 description: error.message,
             });
+        } finally {
+            // This runs regardless of whether there was a redirect result or not
+            // The onAuthStateChanged listener below will handle setting the final state
         }
     };
 
-    handleRedirectResult();
+    processRedirectResult();
 
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            setUser(user);
-        } else {
-            setUser(null);
-        }
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+        setUser(currentUser);
         setLoading(false);
     });
 

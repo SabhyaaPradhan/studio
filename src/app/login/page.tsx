@@ -1,16 +1,16 @@
 
+'use client';
+
 import LoginForm from '@/components/auth/login-form';
 import { HeaderThemeProvider } from '@/components/landing/header-theme-provider';
 import Header from '@/components/landing/header';
 import Footer from '@/components/landing/footer';
 import GridBackground from '@/components/landing/grid-background';
-
-export const metadata = {
-    title: 'Login – Savrii AI',
-    description: 'Log in to your Savrii account to manage your AI assistant.',
-};
+import { useAuthRedirect } from '@/hooks/use-auth-redirect';
 
 export default function LoginPage() {
+    useAuthRedirect();
+    
     return (
         <HeaderThemeProvider>
             <div className="flex flex-col min-h-screen bg-background relative">

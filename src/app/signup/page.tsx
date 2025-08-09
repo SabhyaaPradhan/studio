@@ -1,16 +1,16 @@
 
+'use client';
+
 import SignupForm from '@/components/auth/signup-form';
 import { HeaderThemeProvider } from '@/components/landing/header-theme-provider';
 import Header from '@/components/landing/header';
 import Footer from '@/components/landing/footer';
 import GridBackground from '@/components/landing/grid-background';
-
-export const metadata = {
-    title: 'Sign Up – Savrii AI',
-    description: 'Create an account to start your free trial with Savrii AI.',
-};
+import { useAuthRedirect } from '@/hooks/use-auth-redirect';
 
 export default function SignupPage() {
+    useAuthRedirect();
+    
     return (
         <HeaderThemeProvider>
             <div className="flex flex-col min-h-screen bg-background relative">
