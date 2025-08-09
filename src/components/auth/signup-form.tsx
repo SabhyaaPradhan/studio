@@ -68,6 +68,7 @@ export default function SignupForm() {
 
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
+    // Use signInWithRedirect for a more reliable flow
     await signInWithRedirect(auth, provider);
   };
 

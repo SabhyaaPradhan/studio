@@ -24,37 +24,45 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
+    let isMounted = true; // Prevent state updates on unmounted component
+
     const processAuth = async () => {
       try {
         const result = await getRedirectResult(auth);
-        if (result && result.user) {
-          // User has just signed in via redirect.
+        if (result && result.user && isMounted) {
+          // This means a user has just signed in via redirect.
           // The onAuthStateChanged listener below will handle setting the user state.
           // We can show the toast and redirect from here.
+          console.log("Redirect result user object:", result.user);
           toast({
             title: "Login Successful! 🎉",
             description: `Welcome back, ${result.user.displayName || 'friend'}!`,
           });
           router.push("/home");
         }
-      } catch (error) {
-        console.error("Error getting redirect result:", error);
+      } catch (error: any) {
+        console.error("Error processing redirect result:", error);
         toast({
             variant: "destructive",
-            title: "Uh oh! Something went wrong with Google Sign-In.",
-            description: "Please try again.",
+            title: "Uh oh! Login failed.",
+            description: "There was a problem with the sign-in process. Please try again.",
         });
-      } finally {
-        // This is crucial. We only stop the main loading state
-        // AFTER the redirect check is complete.
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-          setUser(currentUser);
-          setLoading(false);
-        });
-        
-        // Cleanup the listener on component unmount
-        return () => unsubscribe();
       }
+
+      // After processing the redirect, set up the regular auth state listener.
+      // This listener handles all other cases, like an existing session on page load.
+      const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        if (isMounted) {
+          setUser(currentUser);
+          // We are done loading only after the listener has fired its initial value.
+          setLoading(false);
+        }
+      });
+
+      return () => {
+        isMounted = false;
+        unsubscribe();
+      };
     };
 
     processAuth();
