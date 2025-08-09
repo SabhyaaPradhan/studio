@@ -6,10 +6,12 @@ import * as THREE from "three";
 import { gsap } from "gsap";
 import Link from "next/link";
 import { useTheme } from "next-themes";
+import { cn } from "@/lib/utils";
 
 export default function AnimatedFooter() {
   const mountRef = useRef<HTMLDivElement>(null);
   const { resolvedTheme } = useTheme();
+  const footerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!mountRef.current || typeof window === 'undefined') return;
@@ -33,8 +35,9 @@ export default function AnimatedFooter() {
     // Plane for water effect
     const geometry = new THREE.PlaneGeometry(30, 30, 50, 50);
     
+    const primaryHSL = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
     const waveColor = resolvedTheme === 'dark' 
-        ? new THREE.Color(`hsl(${getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()})`)
+        ? new THREE.Color(`hsl(${primaryHSL})`)
         : new THREE.Color('#000000');
 
 
@@ -100,16 +103,37 @@ export default function AnimatedFooter() {
   }, [resolvedTheme]);
 
   return (
-    <footer className="relative bg-black border-t border-border/20 overflow-hidden h-64 flex items-center justify-center text-center">
+    <footer 
+        ref={footerRef}
+        className={cn(
+            "relative border-t border-border/20 overflow-hidden h-64 flex items-center justify-center text-center",
+            resolvedTheme === 'dark' ? 'bg-black' : 'bg-white'
+        )}
+    >
       <div ref={mountRef} className="absolute inset-0 z-0 opacity-20" />
       <div className="relative z-10 container mx-auto px-4 md:px-6 footer-content">
         <div className="flex justify-center items-center gap-2">
             <span className="text-2xl font-semibold text-primary">Savrii</span>
         </div>
-        <p className="mt-2 text-sm text-muted-foreground">&copy; {new Date().getFullYear()} Savrii. All rights reserved.</p>
+        <p className={cn(
+            "mt-2 text-sm",
+            resolvedTheme === 'dark' ? 'text-muted-foreground' : 'text-neutral-600'
+        )}>
+            &copy; {new Date().getFullYear()} Savrii. All rights reserved.
+        </p>
         <div className="mt-4 flex justify-center gap-4">
-          <Link href="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Privacy</Link>
-          <Link href="/terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Terms</Link>
+          <Link href="/privacy" className={cn(
+            "text-sm transition-colors",
+            resolvedTheme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-neutral-600 hover:text-black'
+          )}>
+            Privacy
+          </Link>
+          <Link href="/terms" className={cn(
+            "text-sm transition-colors",
+            resolvedTheme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-neutral-600 hover:text-black'
+          )}>
+            Terms
+          </Link>
         </div>
       </div>
     </footer>
