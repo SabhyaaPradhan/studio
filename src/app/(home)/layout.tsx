@@ -204,7 +204,7 @@ export default function AuthenticatedLayout({
   useAuthRedirectToLogin();
   const { theme, setTheme } = useTheme();
 
-  const showSidebar = !['/home', '/billing'].includes(pathname);
+  const showSidebar = !['/home', '/billing', '/settings', '/support'].includes(pathname);
 
   // MOCK: In a real app, this would come from your user's data
   const [userPlan] = useState<UserPlan>('starter');
