@@ -7,7 +7,6 @@ import { usePathname } from 'next/navigation';
 import {
   SidebarProvider,
   Sidebar,
-  SidebarHeader,
   SidebarContent,
   SidebarTrigger,
   SidebarMenu,
@@ -263,7 +262,7 @@ export default function AuthenticatedLayout({
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen bg-background flex-col">
+       <div className="flex min-h-screen bg-background flex-col">
         <header className="p-4 flex items-center justify-between gap-4 sticky top-0 bg-background/80 backdrop-blur-sm z-10 border-b">
             <div className="flex items-center gap-2">
                 <SidebarTrigger className={cn("md:hidden", !showSidebar && "hidden")}>
@@ -342,11 +341,6 @@ export default function AuthenticatedLayout({
         <div className="flex flex-1">
             {showSidebar && (
               <Sidebar>
-                <SidebarHeader>
-                  <Link href="/home" className="flex items-center gap-2">
-                      <span className="text-xl font-semibold text-primary">Savrii</span>
-                  </Link>
-                </SidebarHeader>
                 <SidebarContent>
                   <SidebarMenu>
                     <NavMenuItem href="/dashboard" icon={BarChartBig} label="Dashboard" plan={userPlan} />
