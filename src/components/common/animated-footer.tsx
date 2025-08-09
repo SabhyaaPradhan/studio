@@ -53,9 +53,8 @@ export default function AnimatedFooter() {
     const clock = new THREE.Clock();
 
     // Animation loop
+    let animationFrameId: number;
     const animate = () => {
-      if (!mountRef.current) return;
-      
       const t = clock.getElapsedTime();
       const positions = plane.geometry.attributes.position;
 
@@ -69,13 +68,12 @@ export default function AnimatedFooter() {
       positions.needsUpdate = true;
       
       renderer.render(scene, camera);
-      requestAnimationFrame(animate);
+      animationFrameId = requestAnimationFrame(animate);
     };
 
     animate();
 
     const ctx = gsap.context(() => {
-        // GSAP animations for text
         gsap.fromTo(
           ".footer-content > *",
           { y: 30, opacity: 0 },
@@ -108,6 +106,7 @@ export default function AnimatedFooter() {
 
     return () => {
       window.removeEventListener("resize", handleResize);
+      cancelAnimationFrame(animationFrameId);
       if (currentMount) {
         currentMount.removeChild(renderer.domElement);
       }
@@ -133,7 +132,6 @@ export default function AnimatedFooter() {
       <div className="relative z-10 container mx-auto px-4 md:px-6 footer-content">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
             
-            {/* Left side */}
             <div className="space-y-4">
                 <Link href="/" className="text-2xl font-bold text-primary">Savrii</Link>
                 <p className="text-sm text-muted-foreground">
@@ -141,7 +139,6 @@ export default function AnimatedFooter() {
                 </p>
             </div>
 
-            {/* Center */}
             <div className="space-y-4">
                 <h4 className="font-semibold text-foreground">Quick Links</h4>
                 <ul className="space-y-2">
@@ -153,7 +150,6 @@ export default function AnimatedFooter() {
                 </ul>
             </div>
 
-            {/* Right side */}
             <div className="space-y-4">
                 <h4 className="font-semibold text-foreground">Get in Touch</h4>
                  <ul className="space-y-2">
