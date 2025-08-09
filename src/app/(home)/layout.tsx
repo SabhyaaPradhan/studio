@@ -344,7 +344,6 @@ export default function AuthenticatedLayout({
                             <Menu className="w-6 h-6" />
                         </SidebarTrigger>
                         <Link href="/home" className="font-semibold text-lg flex items-center gap-2">
-                            <Sparkles className="h-6 w-6 text-accent" />
                             <span className={cn(showSidebar && 'md:hidden')}>Savrii</span>
                         </Link>
                     </div>
@@ -386,7 +385,6 @@ export default function AuthenticatedLayout({
                                 <SheetHeader className="flex flex-row justify-between items-center border-b pb-4">
                                     <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
                                     <Link href="/home" className="flex items-center gap-2" onClick={() => setMobileMenuOpen(false)}>
-                                        <Sparkles className="h-6 w-6 text-accent" />
                                         <span className="text-xl font-bold">Savrii</span>
                                     </Link>
                                     <SheetClose asChild>
