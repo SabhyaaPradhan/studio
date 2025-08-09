@@ -71,10 +71,15 @@ export default function SignupForm() {
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
-      // The auth context will handle the redirect and toast.
+        await signInWithPopup(auth, provider);
+        // The auth context will handle the redirect and toast on success.
     } catch (error: any) {
-        if (error.code !== 'auth/popup-closed-by-user') {
+        if (error.code === 'auth/popup-closed-by-user') {
+             toast({
+                title: "Sign-in popup closed",
+                description: "The Google Sign-In popup was closed before completing. If it was blocked, please try again.",
+            });
+        } else {
             toast({
                 variant: "destructive",
                 title: "Uh oh! Something went wrong with Google Sign-In.",
