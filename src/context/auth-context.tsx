@@ -2,7 +2,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { onAuthStateChanged, User, getRedirectResult } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -24,24 +24,46 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setLoading(true);
-      if (user === null && currentUser) {
-        // This means the user just logged in.
-        toast({
-            title: "Login Successful! 🎉",
-            description: `Welcome back, ${currentUser.displayName || 'friend'}!`,
-        });
-        console.log("User session established:", currentUser);
-        router.push("/home");
-      }
-      setUser(currentUser);
-      setLoading(false);
-    });
+    const processAuth = async () => {
+        try {
+            const result = await getRedirectResult(auth);
+            if (result) {
+                // This means the user has just signed in via redirect.
+                console.log("Redirect result user:", result.user);
+                setUser(result.user);
+                toast({
+                    title: "Login Successful! 🎉",
+                    description: `Welcome back, ${result.user.displayName || 'friend'}!`,
+                });
+                router.push("/home");
+                // We don't set loading to false here yet, we let the onAuthStateChanged handle it
+            }
+        } catch (error) {
+            console.error("Error getting redirect result:", error);
+            // Handle specific errors if needed
+        }
 
-    // Cleanup subscription on unmount
-    return () => unsubscribe();
-  }, [user, router, toast]);
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+          // Check if it's a new user login (not just a state refresh)
+          if (!user && currentUser) {
+            console.log("User session established via onAuthStateChanged:", currentUser);
+            toast({
+              title: "Login Successful! 🎉",
+              description: `Welcome back, ${currentUser.displayName || 'friend'}!`,
+            });
+            router.push("/home");
+          }
+          setUser(currentUser);
+          setLoading(false);
+        });
+        
+        // Return the unsubscribe function to be called on cleanup
+        return unsubscribe;
+    };
+
+    processAuth();
+    
+  }, [router, toast]); // Removed `user` from dependency array to prevent re-running on user state change
   
   return (
     <AuthContext.Provider value={{ user, loading }}>
