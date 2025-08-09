@@ -10,12 +10,12 @@ export function useAuthRedirectToLogin() {
   const router = useRouter();
 
   useEffect(() => {
-    // Do not redirect while the auth state is still being determined.
+    // Wait until the authentication state is fully resolved.
     if (loading) {
       return;
     }
     
-    // Only redirect if loading is complete and there is no user.
+    // If loading is complete and there's no user, redirect to login.
     if (!user) {
       router.push('/login');
     }

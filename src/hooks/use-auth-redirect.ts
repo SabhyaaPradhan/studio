@@ -10,12 +10,12 @@ export function useAuthRedirect() {
   const router = useRouter();
 
   useEffect(() => {
-    // Do not redirect while the auth state is still being determined.
+    // Wait until the authentication state is fully resolved.
     if (loading) {
       return;
     }
 
-    // If loading is finished and there IS a user, redirect them away from auth pages
+    // If loading is finished and there IS a user, redirect them away from auth pages.
     if (user) {
       router.push('/home');
     }

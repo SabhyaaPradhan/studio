@@ -60,6 +60,7 @@ export default function LoginForm() {
 
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
+    // The AuthContext will handle the redirect result.
     await signInWithRedirect(auth, provider);
   };
 

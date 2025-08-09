@@ -1,7 +1,7 @@
 
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { onAuthStateChanged, User, getRedirectResult } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
@@ -22,27 +22,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const router = useRouter();
-  const isProcessingRedirect = useRef(false);
 
   useEffect(() => {
-    // This function will run once on component mount
-    const processAuth = async () => {
-      // Prevent running the redirect check multiple times
-      if (isProcessingRedirect.current) return;
-      isProcessingRedirect.current = true;
-      
+    let isMounted = true;
+    let redirectResultProcessed = false;
+
+    const processRedirectResult = async () => {
+      // This block runs only once to process the redirect result from Google Sign-In
       try {
         const result = await getRedirectResult(auth);
-        // If the user has just signed in via redirect, `result` will be populated
-        if (result && result.user) {
+        redirectResultProcessed = true;
+        
+        if (result && result.user && isMounted) {
           console.log("Redirect result user object:", result.user);
-          // Set user state immediately to avoid race conditions with the listener
           setUser(result.user);
           toast({
             title: "Login Successful! 🎉",
             description: `Welcome back, ${result.user.displayName || 'friend'}!`,
           });
-          // Redirect to the main app page
           router.push("/home");
         }
       } catch (error: any) {
@@ -52,30 +49,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             title: "Uh oh! Login failed.",
             description: "There was a problem with the sign-in process. Please try again.",
         });
-      } finally {
-        // Now that the redirect has been processed (or there was none),
-        // we can safely set up the normal listener and finalize loading.
-        
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-          setUser(currentUser);
-          // The auth state is now definitive, so we can stop loading.
-          setLoading(false);
-        });
-        
-        // Return the unsubscribe function for cleanup
-        return unsubscribe;
       }
     };
 
-    const unsubscribePromise = processAuth();
+    // First, process any pending redirect result.
+    processRedirectResult();
 
+    // Then, set up the listener for ongoing auth state changes.
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (!isMounted) return;
+
+      setUser(currentUser);
+      
+      // We can only stop loading after we know there's no pending redirect.
+      // If we are still waiting for getRedirectResult, we keep loading.
+      if (redirectResultProcessed) {
+        setLoading(false);
+      }
+    });
+
+    // Cleanup function to prevent memory leaks
     return () => {
-      // Cleanup function to unsubscribe from the onAuthStateChanged listener
-      unsubscribePromise.then(unsubscribe => {
-        if (unsubscribe) {
-          unsubscribe();
-        }
-      });
+      isMounted = false;
+      unsubscribe();
     };
   }, [router, toast]);
   
