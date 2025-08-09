@@ -25,11 +25,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    const processAuth = async () => {
-      setLoading(true);
+    const processRedirectResult = async () => {
       try {
         const result = await getRedirectResult(auth);
         if (result) {
+          // This means the user has just signed in via redirect.
           const loggedInUser = result.user;
           console.log("User session established from redirect:", loggedInUser);
           setUser(loggedInUser);
@@ -37,9 +37,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             title: "Login Successful! 🎉",
             description: "Welcome back!",
           });
+          // Redirect to home page after successful login from redirect
           router.push('/home');
+          // We can set loading to false here because we have a user.
           setLoading(false);
-          return; // Stop execution since we handled the redirect user
+          // Return true to indicate a redirect was handled.
+          return true;
         }
       } catch (error: any) {
         toast({
@@ -47,20 +50,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           title: "Uh oh! Something went wrong during Google sign-in.",
           description: error.message,
         });
-      }
-      
-      // If no redirect result, set up the regular auth state listener
-      const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-        setUser(currentUser);
         setLoading(false);
-      });
-
-      return () => unsubscribe();
+      }
+      // Return false if no redirect was handled.
+      return false;
     };
 
-    processAuth();
-    // We only want this effect to run once on mount.
-  }, [toast, router]);
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      // Check for redirect result first only on initial load
+      if (loading) {
+        const redirectHandled = await processRedirectResult();
+        // If redirect was handled, currentUser from onAuthStateChanged might be stale.
+        // The user state is already set inside processRedirectResult.
+        // So we can skip the rest of the logic for this initial call.
+        if (redirectHandled) {
+          return;
+        }
+      }
+      
+      // If no redirect, or on subsequent auth state changes, just update the user.
+      setUser(currentUser);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+    // The dependency array is empty to ensure this effect runs only once on mount.
+  }, []);
   
   return (
     <AuthContext.Provider value={{ user, loading }}>
