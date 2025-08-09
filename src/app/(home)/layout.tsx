@@ -310,13 +310,15 @@ export default function AuthenticatedLayout({
         )}
         <div className="flex-1 flex flex-col">
             <header className="p-4 flex items-center gap-4 sticky top-0 bg-background/80 backdrop-blur-sm z-10 border-b">
-                <SidebarTrigger className={cn("md:hidden", !showSidebar && "hidden")}>
-                    <Menu className="w-6 h-6" />
-                </SidebarTrigger>
-                <Link href="/home" className={cn("font-semibold text-lg", showSidebar && 'md:hidden')}>
-                    <span className="text-accent">Savrii</span>
-                </Link>
-                <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+                <div className="flex items-center">
+                    <SidebarTrigger className={cn("md:hidden", !showSidebar && "hidden")}>
+                        <Menu className="w-6 h-6" />
+                    </SidebarTrigger>
+                    <Link href="/home" className={cn("font-semibold text-lg", showSidebar && 'md:hidden')}>
+                        <span className="text-accent">Savrii</span>
+                    </Link>
+                </div>
+                <nav className="hidden md:flex flex-1 justify-center items-center gap-8 text-base font-medium">
                    {navLinks.map(link => (
                         <Link key={link.href} href={link.href} className={cn(
                             "transition-colors hover:text-primary",
@@ -326,7 +328,7 @@ export default function AuthenticatedLayout({
                         </Link>
                    ))}
                 </nav>
-                 <div className="ml-auto flex items-center gap-2">
+                 <div className="flex items-center gap-2">
                     <Button variant="ghost" size="icon" onClick={toggleTheme}>
                       {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
                     </Button>
