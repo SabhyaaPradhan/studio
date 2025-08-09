@@ -35,6 +35,7 @@ import {
   Sparkles,
   Menu,
   BarChartBig,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -60,6 +61,7 @@ import {
 import { useTheme } from 'next-themes';
 import { Sun, Moon } from "lucide-react";
 import AnimatedFooter from '@/components/common/animated-footer';
+import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 
 type UserPlan = 'starter' | 'pro' | 'enterprise';
@@ -210,6 +212,8 @@ export default function AuthenticatedLayout({
 
   // MOCK: In a real app, this would come from your user's data
   const [userPlan] = useState<UserPlan>('starter');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -316,13 +320,14 @@ export default function AuthenticatedLayout({
               </Sidebar>
             )}
             <div className="flex-1 flex flex-col">
-                <header className="p-4 flex items-center gap-4 sticky top-0 bg-background/80 backdrop-blur-sm z-10 border-b">
-                    <div className="flex items-center">
+                <header className="p-4 flex items-center justify-between gap-4 sticky top-0 bg-background/80 backdrop-blur-sm z-10 border-b">
+                    <div className="flex items-center gap-2">
                         <SidebarTrigger className={cn("md:hidden", !showSidebar && "hidden")}>
                             <Menu className="w-6 h-6" />
                         </SidebarTrigger>
-                        <Link href="/home" className={cn("font-semibold text-lg", showSidebar && 'md:hidden')}>
-                            <span className="text-accent">Savrii</span>
+                        <Link href="/home" className="font-semibold text-lg flex items-center gap-2">
+                            <Sparkles className="h-6 w-6 text-accent" />
+                            <span className={cn(showSidebar && 'md:hidden')}>Savrii</span>
                         </Link>
                     </div>
                     <nav className="hidden md:flex flex-1 justify-center items-center gap-8 text-base font-medium">
@@ -353,6 +358,39 @@ export default function AuthenticatedLayout({
                             <AvatarImage src={user?.photoURL || ''} />
                             <AvatarFallback>{user?.displayName?.[0] || user?.email?.[0]}</AvatarFallback>
                         </Avatar>
+                        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                            <SheetTrigger asChild>
+                                <Button variant="ghost" size="icon" className="md:hidden">
+                                    <Menu className="w-6 h-6" />
+                                </Button>
+                            </SheetTrigger>
+                            <SheetContent>
+                                <SheetHeader>
+                                    <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
+                                    <Link href="/home" className="flex items-center gap-2" onClick={() => setMobileMenuOpen(false)}>
+                                        <Sparkles className="h-6 w-6 text-accent" />
+                                        <span className="text-xl font-bold">Savrii</span>
+                                    </Link>
+                                    <SheetClose asChild>
+                                        <Button variant="ghost" size="icon">
+                                            <X className="h-6 w-6" />
+                                        </Button>
+                                    </SheetClose>
+                                </SheetHeader>
+                                <nav className="flex flex-col gap-4 mt-8">
+                                    {navLinks.map(link => (
+                                        <SheetClose asChild key={link.href}>
+                                            <Link href={link.href} className={cn(
+                                                "text-lg transition-colors hover:text-primary",
+                                                pathname === link.href ? "text-primary font-semibold" : "text-muted-foreground"
+                                            )}>
+                                                {link.label}
+                                            </Link>
+                                        </SheetClose>
+                                    ))}
+                                </nav>
+                            </SheetContent>
+                        </Sheet>
                     </div>
                 </header>
                 <main className="flex-1 overflow-y-auto">
