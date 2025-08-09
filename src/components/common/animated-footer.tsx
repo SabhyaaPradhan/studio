@@ -13,7 +13,7 @@ import { Button } from "../ui/button";
 export default function AnimatedFooter() {
   const mountRef = useRef<HTMLDivElement>(null);
   const { resolvedTheme } = useTheme();
-  const footerRef = useRef<HTMLDivElement>(null);
+  const footerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (!mountRef.current || typeof window === 'undefined') return;
@@ -40,7 +40,6 @@ export default function AnimatedFooter() {
     const waveColor = resolvedTheme === 'dark' 
         ? new THREE.Color('hsl(130 90% 45%)')
         : new THREE.Color('hsl(0 0% 3.9%)');
-
 
     const material = new THREE.MeshBasicMaterial({
       color: waveColor,
