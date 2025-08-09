@@ -64,24 +64,25 @@ export default function LoginForm() {
     }
   }
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignIn = () => {
     const provider = new GoogleAuthProvider();
-    try {
-      const result = await signInWithPopup(auth, provider);
-      console.log("User session established from popup:", result.user);
-      toast({
-        title: "Login Successful! 🎉",
-        description: "Welcome back!",
+    signInWithPopup(auth, provider)
+      .then((result) => {
+        console.log("User session established from popup:", result.user);
+        toast({
+          title: "Login Successful! 🎉",
+          description: "Welcome back!",
+        });
+        router.push("/home");
+      })
+      .catch((error) => {
+        toast({
+          variant: "destructive",
+          title: "Uh oh! Something went wrong with Google Sign-In.",
+          description: error.message,
+        });
       });
-      router.push("/home");
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Uh oh! Something went wrong with Google Sign-In.",
-        description: error.message,
-      });
-    }
-  }
+  };
 
   return (
     <motion.div

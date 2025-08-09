@@ -73,24 +73,25 @@ export default function SignupForm() {
     }
   }
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignIn = () => {
     const provider = new GoogleAuthProvider();
-    try {
-      const result = await signInWithPopup(auth, provider);
-      console.log("User session established from popup:", result.user);
-      toast({
-        title: "Account Created! 🎉",
-        description: "Welcome to Savrii!",
+    signInWithPopup(auth, provider)
+      .then((result) => {
+        console.log("User session established from popup:", result.user);
+        toast({
+          title: "Account Created! 🎉",
+          description: "Welcome to Savrii!",
+        });
+        router.push("/home");
+      })
+      .catch((error) => {
+        toast({
+          variant: "destructive",
+          title: "Uh oh! Something went wrong with Google Sign-In.",
+          description: error.message,
+        });
       });
-      router.push("/home");
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Uh oh! Something went wrong with Google Sign-In.",
-        description: error.message,
-      });
-    }
-  }
+  };
 
   return (
     <motion.div
