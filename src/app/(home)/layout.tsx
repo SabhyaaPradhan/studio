@@ -204,10 +204,10 @@ export default function AuthenticatedLayout({
   useAuthRedirectToLogin();
   const { theme, setTheme } = useTheme();
 
-  const showSidebar = pathname !== '/home';
+  const showSidebar = !['/home', '/billing'].includes(pathname);
 
   // MOCK: In a real app, this would come from your user's data
-  const [userPlan] = useState<UserPlan>('pro');
+  const [userPlan] = useState<UserPlan>('starter');
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -252,12 +252,12 @@ export default function AuthenticatedLayout({
               <SidebarMenu>
                 <NavMenuItem href="/dashboard" icon={BarChartBig} label="Dashboard" plan={userPlan} />
                 <NavMenuItem href="/chat" icon={MessageSquare} label="Chat / AI Assistant" plan={userPlan} isDisabled={true} />
-                <NavMenuItem href="/analytics" icon={BarChart2} label="Analytics" plan={userPlan} isDisabled={true} />
-                <NavMenuItem href="/integrations" icon={GitMerge} label="Integrations" plan={userPlan} isDisabled={true} />
+                <NavMenuItem href="/analytics" icon={BarChart2} label="Analytics" plan={userPlan} requiredPlan="pro" />
+                <NavMenuItem href="/integrations" icon={GitMerge} label="Integrations" plan={userPlan} />
                 
                 <NavMenuCollapsible icon={FileText} label="Content Mgmt" plan={userPlan} items={[
-                    { href: "/custom-prompts", label: "Custom Prompts", requiredPlan: "pro", isDisabled: true },
-                    { href: "/brand-voice", label: "Brand Voice Training", requiredPlan: "pro", isDisabled: true },
+                    { href: "/custom-prompts", label: "Custom Prompts", requiredPlan: "pro" },
+                    { href: "/brand-voice", label: "Brand Voice Training", requiredPlan: "pro" },
                     { href: "/prompt-library", label: "Prompt Library", requiredPlan: "pro", isDisabled: true },
                 ]} />
                 
@@ -269,17 +269,21 @@ export default function AuthenticatedLayout({
                 ]} />
 
                 <NavMenuCollapsible icon={Settings} label="Advanced" plan={userPlan} items={[
-                    { href: "/real-time-analytics", label: "Real-Time Analytics", requiredPlan: "enterprise", isDisabled: true },
-                    { href: "/api-access", label: "API Access", requiredPlan: "enterprise", isDisabled: true },
+                    { href: "/real-time-analytics", label: "Real-Time Analytics", requiredPlan: "enterprise" },
+                    { href: "/api-access", label: "API Access", requiredPlan: "enterprise" },
                     { href: "/workflow-builder", label: "Workflow Builder", requiredPlan: "enterprise", isDisabled: true },
                     { href: "/custom-model", label: "Custom AI Model", requiredPlan: "enterprise", isDisabled: true },
                     { href: "/security", label: "Security & Compliance", requiredPlan: "enterprise", isDisabled: true },
-                    { href: "/white-label", label: "White-label Settings", requiredPlan: "enterprise", isDisabled: true },
+                    { href: "/white-label", label: "White-label Settings", requiredPlan: "enterprise" },
                     { href: "/webhooks", label: "Webhooks & Zapier", requiredPlan: "enterprise", isDisabled: true },
                 ]} />
               </SidebarMenu>
             </SidebarContent>
             <SidebarFooter>
+                <div className='px-4 py-2 text-sm'>
+                    <p className='font-semibold'>Current Plan</p>
+                    <p className='text-muted-foreground capitalize'>{userPlan}</p>
+                </div>
                 <SidebarMenu>
                     <NavMenuItem href="/billing" icon={CreditCard} label="Billing" plan={userPlan} />
                     <NavMenuItem href="/settings" icon={Settings} label="Settings" plan={userPlan} />
