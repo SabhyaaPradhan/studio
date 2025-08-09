@@ -3,6 +3,8 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DollarSign, BrainCircuit, MessageSquare, CalendarDays } from 'lucide-react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 export default function DashboardPage() {
     const stats = [
@@ -13,8 +15,10 @@ export default function DashboardPage() {
     ];
     
     return (
-        <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
-            <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+        <div className="flex-1 space-y-8 p-4 pt-6 md:p-8">
+            <div className="flex items-center justify-between space-y-2">
+                <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+            </div>
              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {stats.map((stat) => (
                     <Card key={stat.title}>
@@ -29,6 +33,15 @@ export default function DashboardPage() {
                     </Card>
                 ))}
             </div>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Recent Activity</CardTitle>
+                    <CardDescription>A log of recent AI interactions.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-muted-foreground">No recent activity to display.</p>
+                </CardContent>
+            </Card>
         </div>
     );
 }

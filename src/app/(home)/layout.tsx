@@ -27,24 +27,13 @@ import {
   Settings,
   HelpCircle,
   FileText,
-  Mic,
-  Library,
-  Calendar,
   Users,
-  MousePointerClick,
-  Download,
-  BarChartBig,
-  Code,
-  Workflow,
-  UploadCloud,
-  Shield,
-  Palette,
-  Zap,
   Lock,
   ChevronDown,
   LogOut,
   Sparkles,
   Menu,
+  BarChartBig,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -67,6 +56,9 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { useTheme } from 'next-themes';
+import { Sun, Moon } from "lucide-react";
+
 
 type UserPlan = 'starter' | 'pro' | 'enterprise';
 
@@ -125,12 +117,12 @@ const NavMenuItem = ({
     <SidebarMenuButton
       asChild
       isActive={isActive}
-      className={cn(isLocked || isDisabled ? 'cursor-not-allowed opacity-60' : '')}
+      className={cn('h-10', isLocked || isDisabled ? 'cursor-not-allowed opacity-60' : '')}
       tooltip={label}
     >
       <Link href={isLocked || isDisabled ? '#' : href}>
-        <Icon />
-        <span>{label}</span>
+        <Icon className="h-5 w-5" />
+        <span className="flex-1">{label}</span>
         {isLocked && <Lock className="ml-auto h-3.5 w-3.5" />}
       </Link>
     </SidebarMenuButton>
@@ -162,36 +154,38 @@ const NavMenuCollapsible = ({
   const Icon = icon;
   const { state } = useSidebar();
   const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
+
+  const isAnyChildActive = items.some(item => pathname.startsWith(item.href));
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <CollapsibleTrigger asChild>
-        <SidebarMenuButton className="group">
-          <Icon />
-          <span>{label}</span>
-          <ChevronDown
-            className={cn(
-              'ml-auto h-4 w-4 transition-transform duration-200',
-              isOpen ? 'rotate-180' : '',
-              state === 'collapsed' && 'hidden'
-            )}
-          />
+        <SidebarMenuButton className={cn("h-10", isAnyChildActive && 'bg-secondary')}>
+            <Icon className="h-5 w-5" />
+            <span className="flex-1">{label}</span>
+            <ChevronDown
+              className={cn(
+                'ml-auto h-4 w-4 transition-transform duration-200',
+                isOpen ? 'rotate-180' : '',
+                state === 'collapsed' && 'hidden'
+              )}
+            />
         </SidebarMenuButton>
       </CollapsibleTrigger>
       <CollapsibleContent asChild>
         <SidebarMenuSub>
           {items.map((item) => (
-            <SidebarMenuSubItem key={item.href}>
-              <NavMenuItem
+             <NavMenuItem
+                key={item.href}
                 href={item.href}
-                icon={() => <div className="w-1 h-1 rounded-full bg-muted-foreground/80" />}
+                icon={() => <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/80 group-hover:bg-foreground" />}
                 label={item.label}
                 plan={plan}
                 requiredPlan={item.requiredPlan}
                 isDisabled={item.isDisabled}
                 isSubItem
               />
-            </SidebarMenuSubItem>
           ))}
         </SidebarMenuSub>
       </CollapsibleContent>
@@ -208,7 +202,8 @@ export default function AuthenticatedLayout({
   const router = useRouter();
   const pathname = usePathname();
   useAuthRedirectToLogin();
-  
+  const { theme, setTheme } = useTheme();
+
   const showSidebar = pathname !== '/home';
 
   // MOCK: In a real app, this would come from your user's data
@@ -219,9 +214,14 @@ export default function AuthenticatedLayout({
     router.push('/login');
   };
 
+  const toggleTheme = () => {
+    setTheme(theme === "light" ? "dark" : "light");
+  };
+
+
   if (loading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center">
+      <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader className="h-10 w-10 animate-spin" />
       </div>
     );
@@ -240,7 +240,7 @@ export default function AuthenticatedLayout({
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen bg-secondary/50">
+      <div className="flex min-h-screen bg-background">
         {showSidebar && (
           <Sidebar>
             <SidebarHeader>
@@ -249,9 +249,8 @@ export default function AuthenticatedLayout({
                   <h1 className="text-xl font-semibold">Savrii</h1>
               </Link>
             </SidebarHeader>
-            <SidebarContent className="p-2">
+            <SidebarContent>
               <SidebarMenu>
-                <NavMenuItem href="/home" icon={Home} label="Home" plan={userPlan} />
                 <NavMenuItem href="/dashboard" icon={BarChartBig} label="Dashboard" plan={userPlan} />
                 <NavMenuItem href="/chat" icon={MessageSquare} label="Chat / AI Assistant" plan={userPlan} isDisabled={true} />
                 <NavMenuItem href="/analytics" icon={BarChart2} label="Analytics" plan={userPlan} isDisabled={true} />
@@ -279,21 +278,17 @@ export default function AuthenticatedLayout({
                     { href: "/white-label", label: "White-label Settings", requiredPlan: "enterprise", isDisabled: true },
                     { href: "/webhooks", label: "Webhooks & Zapier", requiredPlan: "enterprise", isDisabled: true },
                 ]} />
-
-
-                <SidebarMenuItem className="mt-auto" />
-                <SidebarMenuSub>
-                    <hr className="my-2 border-border" />
-                </SidebarMenuSub>
-                <NavMenuItem href="/billing" icon={CreditCard} label="Billing" plan={userPlan} />
-                <NavMenuItem href="/settings" icon={Settings} label="Settings" plan={userPlan} />
-                <NavMenuItem href="/support" icon={HelpCircle} label="Support" plan={userPlan} />
               </SidebarMenu>
             </SidebarContent>
             <SidebarFooter>
+                <SidebarMenu>
+                    <NavMenuItem href="/billing" icon={CreditCard} label="Billing" plan={userPlan} />
+                    <NavMenuItem href="/settings" icon={Settings} label="Settings" plan={userPlan} />
+                    <NavMenuItem href="/support" icon={HelpCircle} label="Support" plan={userPlan} />
+                </SidebarMenu>
               <TooltipProvider>
-                  <div className="flex items-center gap-3 p-3 rounded-lg">
-                      <Avatar>
+                  <div className="flex items-center gap-3 p-3 rounded-lg border m-2">
+                      <Avatar className="h-9 w-9">
                           <AvatarImage src={user?.photoURL || ''} />
                           <AvatarFallback>{user?.displayName?.[0] || user?.email?.[0]}</AvatarFallback>
                       </Avatar>
@@ -314,12 +309,12 @@ export default function AuthenticatedLayout({
             </SidebarFooter>
           </Sidebar>
         )}
-        <main className="flex-1 flex flex-col">
-            <header className="p-4 flex items-center gap-4 sticky top-0 bg-background z-10 border-b">
+        <div className="flex-1 flex flex-col">
+            <header className="p-4 flex items-center gap-4 sticky top-0 bg-background/80 backdrop-blur-sm z-10 border-b">
                 <SidebarTrigger className={cn("md:hidden", !showSidebar && "hidden")}>
                     <Menu className="w-6 h-6" />
                 </SidebarTrigger>
-                <Link href="/home" className="flex items-center gap-2 font-semibold text-lg md:hidden">
+                <Link href="/home" className={cn("flex items-center gap-2 font-semibold text-lg", showSidebar && 'md:hidden')}>
                     <Sparkles className="w-5 h-5 text-primary" />
                     <span>Savrii</span>
                 </Link>
@@ -333,27 +328,30 @@ export default function AuthenticatedLayout({
                         </Link>
                    ))}
                 </nav>
-                 <div className="ml-auto flex items-center gap-4">
+                 <div className="ml-auto flex items-center gap-2">
+                    <Button variant="ghost" size="icon" onClick={toggleTheme}>
+                      {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+                    </Button>
                     <TooltipProvider>
                       <Tooltip>
                           <TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleLogout}>
+                              <Button variant="ghost" size="icon" className="h-9 w-9 hidden md:inline-flex" onClick={handleLogout}>
                                   <LogOut className="h-4 w-4"/>
                               </Button>
                           </TooltipTrigger>
                           <TooltipContent align="end">Logout</TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                     <Avatar>
+                     <Avatar className="h-9 w-9">
                         <AvatarImage src={user?.photoURL || ''} />
                         <AvatarFallback>{user?.displayName?.[0] || user?.email?.[0]}</AvatarFallback>
                     </Avatar>
                 </div>
             </header>
-            <div className="flex-1 overflow-y-auto">
+            <main className="flex-1 overflow-y-auto">
                 {children}
-            </div>
-        </main>
+            </main>
+        </div>
       </div>
     </SidebarProvider>
   );

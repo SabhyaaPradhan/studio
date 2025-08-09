@@ -3,6 +3,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { Check } from "lucide-react";
 
 const plans = [
@@ -31,23 +32,35 @@ const plans = [
 
 export default function BillingPage() {
     return (
-        <div className="container mx-auto max-w-5xl py-8 px-4">
-            <h1 className="text-3xl font-bold tracking-tight mb-4">Billing</h1>
-            <p className="text-muted-foreground mb-8">Manage your plan, payment methods, and view your invoice history.</p>
-
+        <div className="flex-1 space-y-8 p-4 pt-6 md:p-8">
+            <div className="space-y-2">
+                <h1 className="text-3xl font-bold tracking-tight">Billing</h1>
+                <p className="text-muted-foreground">Manage your plan, payment methods, and view your invoice history.</p>
+            </div>
+            
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
                 <Card className="lg:col-span-1">
                     <CardHeader>
                         <CardTitle>Current Plan</CardTitle>
                         <CardDescription>You are currently on the <span className="font-semibold text-primary">Free</span> plan.</CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        <p className="mb-2 font-semibold">Usage:</p>
-                        <div className="space-y-2">
-                            <p className="text-sm">AI Replies: 45 / 100</p>
-                            <div className="w-full bg-secondary rounded-full h-2.5">
-                                <div className="bg-primary h-2.5 rounded-full" style={{width: '45%'}}></div>
+                    <CardContent className="space-y-4">
+                        <div>
+                            <p className="mb-2 font-semibold">Usage:</p>
+                            <div className="space-y-2">
+                                <p className="text-sm flex justify-between">
+                                    <span>AI Replies:</span>
+                                    <span>45 / 100</span>
+                                </p>
+                                <Progress value={45} />
                             </div>
+                        </div>
+                         <div>
+                            <p className="text-sm flex justify-between">
+                                <span>Knowledge Sources:</span>
+                                <span>1 / 1</span>
+                            </p>
+                            <Progress value={100} />
                         </div>
                     </CardContent>
                 </Card>
@@ -63,9 +76,11 @@ export default function BillingPage() {
                 </Card>
             </div>
 
-            <div className="my-12">
-                <h2 className="text-2xl font-bold tracking-tight text-center mb-2">Choose Your Plan</h2>
-                <p className="text-muted-foreground text-center mb-8">Upgrade your plan to unlock more features.</p>
+            <div className="my-8">
+                <div className="text-center mb-12">
+                    <h2 className="text-2xl font-bold tracking-tight">Choose Your Plan</h2>
+                    <p className="text-muted-foreground">Upgrade your plan to unlock more features.</p>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     {plans.map(plan => (
                         <Card key={plan.name} className="flex flex-col">

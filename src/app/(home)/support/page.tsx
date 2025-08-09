@@ -24,28 +24,30 @@ const faqs = [
     },
     {
         question: "How do I add more knowledge sources?",
-        answer: "You can manage your knowledge sources from the 'Templates' or 'Prompt Builder' sections in the main dashboard sidebar (coming soon)."
+        answer: "You can manage your knowledge sources from the 'Content Management' sections in the sidebar once those features are enabled."
     },
 ];
 
 export default function SupportPage() {
     return (
-        <div className="container mx-auto max-w-3xl py-8 px-4">
+        <div className="flex-1 space-y-8 p-4 pt-6 md:p-8">
             <div className="text-center mb-12">
                 <h1 className="text-4xl font-bold tracking-tight">Support & FAQ</h1>
                 <p className="mt-4 text-lg text-muted-foreground">Find answers to common questions about your Savrii account.</p>
             </div>
             
-            <Accordion type="single" collapsible className="w-full">
-                {faqs.map((faq, index) => (
-                    <AccordionItem value={`item-${index}`} key={index}>
-                        <AccordionTrigger className="text-lg text-left">{faq.question}</AccordionTrigger>
-                        <AccordionContent className="text-base text-muted-foreground">
-                            {faq.answer}
-                        </AccordionContent>
-                    </AccordionItem>
-                ))}
-            </Accordion>
+            <div className="max-w-3xl mx-auto">
+                <Accordion type="single" collapsible className="w-full">
+                    {faqs.map((faq, index) => (
+                        <AccordionItem value={`item-${index}`} key={index}>
+                            <AccordionTrigger className="text-lg text-left">{faq.question}</AccordionTrigger>
+                            <AccordionContent className="text-base text-muted-foreground">
+                                {faq.answer}
+                            </AccordionContent>
+                        </AccordionItem>
+                    ))}
+                </Accordion>
+            </div>
 
             <div className="mt-12 text-center">
                 <h2 className="text-2xl font-semibold mb-2">Still have questions?</h2>
