@@ -84,15 +84,15 @@ export default function AnimatedFooter() {
         );
 
         gsap.utils.toArray<HTMLAnchorElement>('.footer-link').forEach(link => {
-            gsap.fromTo(link, { y: 0 }, { y: -3, duration: 0.2, paused: true, ease: 'power1.inOut' });
-            link.addEventListener('mouseenter', () => gsap.getTweensOf(link)[0].play());
-            link.addEventListener('mouseleave', () => gsap.getTweensOf(link)[0].reverse());
+            const tween = gsap.fromTo(link, { y: 0 }, { y: -3, duration: 0.2, paused: true, ease: 'power1.inOut' });
+            link.addEventListener('mouseenter', () => tween.play());
+            link.addEventListener('mouseleave', () => tween.reverse());
         });
 
          gsap.utils.toArray<HTMLAnchorElement>('.social-icon').forEach(icon => {
-            gsap.to(icon, { rotation: 360, duration: 0.4, paused: true, ease: 'power1.inOut' });
-            icon.addEventListener('mouseenter', () => gsap.getTweensOf(icon)[0].play());
-            icon.addEventListener('mouseleave', () => gsap.getTweensOf(icon)[0].reverse());
+            const tween = gsap.to(icon, { rotation: 360, duration: 0.4, paused: true, ease: 'power1.inOut' });
+            icon.addEventListener('mouseenter', () => tween.play());
+            icon.addEventListener('mouseleave', () => tween.reverse());
         });
     }, footerRef);
 
