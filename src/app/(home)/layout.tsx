@@ -206,6 +206,7 @@ export default function AuthenticatedLayout({
 }) {
   const { user, loading } = useAuthContext();
   const router = useRouter();
+  const pathname = usePathname();
   useAuthRedirectToLogin();
   
   // MOCK: In a real app, this would come from your user's data
@@ -227,6 +228,13 @@ export default function AuthenticatedLayout({
   if (!user) {
     return null; // The hook will handle the redirect
   }
+  
+  const navLinks = [
+      { href: "/home", label: "Home" },
+      { href: "/billing", label: "Billing" },
+      { href: "/settings", label: "Settings" },
+      { href: "/support", label: "FAQ" },
+  ];
 
   return (
     <SidebarProvider>
@@ -303,14 +311,24 @@ export default function AuthenticatedLayout({
           </SidebarFooter>
         </Sidebar>
         <main className="flex-1 flex flex-col">
-            <header className="p-4 flex items-center gap-2 md:hidden sticky top-0 bg-background z-10 border-b">
-                <SidebarTrigger>
+            <header className="p-4 flex items-center gap-4 sticky top-0 bg-background z-10 border-b">
+                <SidebarTrigger className="md:hidden">
                     <Menu className="w-6 h-6" />
                 </SidebarTrigger>
-                <Link href="/home" className="flex items-center gap-2 font-semibold text-lg">
+                <Link href="/home" className="flex items-center gap-2 font-semibold text-lg md:hidden">
                     <Sparkles className="w-5 h-5 text-primary" />
                     <span>Savrii</span>
                 </Link>
+                <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+                   {navLinks.map(link => (
+                        <Link key={link.href} href={link.href} className={cn(
+                            "transition-colors hover:text-primary",
+                            pathname === link.href ? "text-primary font-semibold" : "text-muted-foreground"
+                        )}>
+                            {link.label}
+                        </Link>
+                   ))}
+                </nav>
             </header>
             <div className="flex-1 overflow-y-auto">
                 {children}
@@ -320,3 +338,5 @@ export default function AuthenticatedLayout({
     </SidebarProvider>
   );
 }
+
+    
