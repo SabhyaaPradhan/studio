@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { auth } from "@/lib/firebase";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification, signOut } from "firebase/auth";
 import { Checkbox } from "../ui/checkbox";
 import { useRouter } from "next/navigation";
 
@@ -56,14 +56,26 @@ export default function SignupForm() {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       await updateProfile(userCredential.user, { displayName: values.name });
-      // The AuthContext will handle the redirect and success toast
+      
+      await sendEmailVerification(userCredential.user);
+      
+      await signOut(auth);
+
+      toast({
+        title: "Account Created! 🎉",
+        description: "A verification email has been sent. Please check your inbox to activate your account.",
+      });
+
+      router.push("/login");
+
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Uh oh! Something went wrong.",
         description: error.message,
       });
-      setIsSubmitting(false);
+    } finally {
+        setIsSubmitting(false);
     }
   }
 

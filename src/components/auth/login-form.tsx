@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { auth } from "@/lib/firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
@@ -47,13 +47,29 @@ export default function LoginForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
-      // The AuthContext will handle the redirect and success toast
+      const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+      
+      if (!userCredential.user.emailVerified) {
+        await signOut(auth); // Sign out the user immediately
+        toast({
+          variant: "destructive",
+          title: "Email not verified.",
+          description: "Please check your inbox and verify your email before logging in.",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // The AuthContext will handle the redirect and success toast on successful login
     } catch (error: any) {
+       let description = "There was a problem with your request.";
+       if (error.code === 'auth/invalid-credential') {
+           description = "Invalid credentials. Please check your email and password.";
+       }
       toast({
         variant: "destructive",
         title: "Uh oh! Something went wrong.",
-        description: error.message,
+        description: description,
       });
       setIsSubmitting(false);
     }

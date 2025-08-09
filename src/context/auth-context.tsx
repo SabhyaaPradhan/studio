@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
+      if (currentUser && currentUser.emailVerified) {
         // This condition is met on both login and signup
         if (!user) { // Only show toast and redirect if user state is changing from null
           toast({
