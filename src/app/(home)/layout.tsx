@@ -52,7 +52,7 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from '@/components/ui/tooltip';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Collapsible,
   CollapsibleContent,
@@ -62,6 +62,7 @@ import { useTheme } from 'next-themes';
 import { Sun, Moon } from "lucide-react";
 import AnimatedFooter from '@/components/common/animated-footer';
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { gsap } from 'gsap';
 
 
 type UserPlan = 'starter' | 'pro' | 'enterprise';
@@ -207,6 +208,7 @@ export default function AuthenticatedLayout({
   const pathname = usePathname();
   useAuthRedirectToLogin();
   const { theme, setTheme } = useTheme();
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   const showSidebar = !['/home', '/billing', '/settings', '/support'].includes(pathname);
 
@@ -225,6 +227,22 @@ export default function AuthenticatedLayout({
   };
 
 
+  useEffect(() => {
+    if (mobileMenuOpen) {
+        const ctx = gsap.context(() => {
+            gsap.from("[data-mobile-nav-item]", {
+                duration: 0.5,
+                x: -30,
+                opacity: 0,
+                stagger: 0.1,
+                ease: "power3.out"
+            });
+        }, mobileMenuRef);
+        return () => ctx.revert();
+    }
+  }, [mobileMenuOpen]);
+
+
   if (loading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -238,10 +256,10 @@ export default function AuthenticatedLayout({
   }
   
   const navLinks = [
-      { href: "/home", label: "Home" },
-      { href: "/billing", label: "Billing" },
-      { href: "/settings", label: "Settings" },
-      { href: "/support", label: "FAQ" },
+      { href: "/home", label: "Home", icon: Home },
+      { href: "/billing", label: "Billing", icon: CreditCard },
+      { href: "/settings", label: "Settings", icon: Settings },
+      { href: "/support", label: "FAQ", icon: HelpCircle },
   ];
 
   return (
@@ -364,8 +382,8 @@ export default function AuthenticatedLayout({
                                     <Menu className="w-6 h-6" />
                                 </Button>
                             </SheetTrigger>
-                            <SheetContent>
-                                <SheetHeader>
+                            <SheetContent ref={mobileMenuRef}>
+                                <SheetHeader className="flex flex-row justify-between items-center border-b pb-4">
                                     <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
                                     <Link href="/home" className="flex items-center gap-2" onClick={() => setMobileMenuOpen(false)}>
                                         <Sparkles className="h-6 w-6 text-accent" />
@@ -377,16 +395,19 @@ export default function AuthenticatedLayout({
                                         </Button>
                                     </SheetClose>
                                 </SheetHeader>
-                                <nav className="flex flex-col gap-4 mt-8">
+                                <nav className="flex flex-col gap-2 mt-8">
                                     {navLinks.map(link => (
-                                        <SheetClose asChild key={link.href}>
-                                            <Link href={link.href} className={cn(
-                                                "text-lg transition-colors hover:text-primary",
-                                                pathname === link.href ? "text-primary font-semibold" : "text-muted-foreground"
-                                            )}>
-                                                {link.label}
-                                            </Link>
-                                        </SheetClose>
+                                        <div key={link.href} data-mobile-nav-item>
+                                            <SheetClose asChild>
+                                                <Link href={link.href} className={cn(
+                                                    "flex items-center gap-4 text-lg p-3 rounded-lg transition-colors hover:bg-secondary",
+                                                    pathname === link.href ? "bg-secondary text-primary font-semibold" : "text-muted-foreground"
+                                                )}>
+                                                    <link.icon className="h-5 w-5" />
+                                                    {link.label}
+                                                </Link>
+                                            </SheetClose>
+                                        </div>
                                     ))}
                                 </nav>
                             </SheetContent>
