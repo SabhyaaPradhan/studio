@@ -35,9 +35,8 @@ export default function AnimatedFooter() {
     // Plane for water effect
     const geometry = new THREE.PlaneGeometry(30, 30, 50, 50);
     
-    const primaryHSL = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
     const waveColor = resolvedTheme === 'dark' 
-        ? new THREE.Color(`hsl(${primaryHSL})`)
+        ? new THREE.Color('hsl(82, 100%, 50%)') // neon green
         : new THREE.Color('#000000');
 
 
@@ -110,7 +109,7 @@ export default function AnimatedFooter() {
             resolvedTheme === 'dark' ? 'bg-black' : 'bg-white'
         )}
     >
-      <div ref={mountRef} className="absolute inset-0 z-0 opacity-20" />
+      <div ref={mountRef} className="absolute inset-0 z-0 opacity-40" />
       <div className="relative z-10 container mx-auto px-4 md:px-6 footer-content">
         <div className="flex justify-center items-center gap-2">
             <span className="text-2xl font-semibold text-primary">Savrii</span>
