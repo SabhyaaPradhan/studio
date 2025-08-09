@@ -245,8 +245,7 @@ export default function AuthenticatedLayout({
           <Sidebar>
             <SidebarHeader>
               <Link href="/home" className="flex items-center gap-2">
-                  <Sparkles className="w-6 h-6 text-primary" />
-                  <h1 className="text-xl font-semibold">Savrii</h1>
+                  <span className="text-xl font-semibold text-accent">Savrii</span>
               </Link>
             </SidebarHeader>
             <SidebarContent>
@@ -314,9 +313,8 @@ export default function AuthenticatedLayout({
                 <SidebarTrigger className={cn("md:hidden", !showSidebar && "hidden")}>
                     <Menu className="w-6 h-6" />
                 </SidebarTrigger>
-                <Link href="/home" className={cn("flex items-center gap-2 font-semibold text-lg", showSidebar && 'md:hidden')}>
-                    <Sparkles className="w-5 h-5 text-primary" />
-                    <span>Savrii</span>
+                <Link href="/home" className={cn("font-semibold text-lg", showSidebar && 'md:hidden')}>
+                    <span className="text-accent">Savrii</span>
                 </Link>
                 <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
                    {navLinks.map(link => (
