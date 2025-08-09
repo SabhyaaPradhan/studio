@@ -38,8 +38,8 @@ export default function AnimatedFooter() {
     const geometry = new THREE.PlaneGeometry(30, 30, 50, 50);
     
     const waveColor = resolvedTheme === 'dark' 
-        ? new THREE.Color('hsl(130 90% 45%)')
-        : new THREE.Color('hsl(0 0% 3.9%)');
+        ? new THREE.Color('hsl(130 90% 45%)') // neon green
+        : new THREE.Color('hsl(0 0% 3.9%)'); // black
 
     const material = new THREE.MeshBasicMaterial({
       color: waveColor,
@@ -73,6 +73,7 @@ export default function AnimatedFooter() {
 
     animate();
 
+    // GSAP animations for content
     const ctx = gsap.context(() => {
         gsap.fromTo(
           ".footer-content > *",
@@ -90,12 +91,7 @@ export default function AnimatedFooter() {
             const tween = gsap.to(icon, { rotation: 360, duration: 0.4, paused: true, ease: 'power1.inOut' });
             icon.addEventListener('mouseenter', () => tween.play());
             icon.addEventListener('mouseleave', () => {
-                // To ensure the rotation completes to 0 if reversed mid-animation
-                if (tween.progress() > 0 && tween.progress() < 1) {
-                    tween.reverse().then(() => tween.progress(0));
-                } else {
-                    tween.reverse();
-                }
+                tween.reverse();
             });
         });
     }, footerRef);
@@ -111,10 +107,11 @@ export default function AnimatedFooter() {
     };
     window.addEventListener("resize", handleResize);
 
+    // Cleanup function
     return () => {
       window.removeEventListener("resize", handleResize);
       cancelAnimationFrame(animationFrameId);
-      if (currentMount) {
+      if (currentMount && renderer.domElement) {
         currentMount.removeChild(renderer.domElement);
       }
       ctx.revert();
@@ -122,7 +119,7 @@ export default function AnimatedFooter() {
       material.dispose();
       renderer.dispose();
     };
-  }, [resolvedTheme]);
+  }, [resolvedTheme]); // Re-run effect when theme changes
 
   const footerLinkClasses = "footer-link text-sm transition-colors text-muted-foreground hover:text-foreground";
   const socialIconClasses = "social-icon text-muted-foreground transition-colors hover:text-primary";
