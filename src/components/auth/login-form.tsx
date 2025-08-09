@@ -20,7 +20,6 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { auth } from "@/lib/firebase";
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect } from "firebase/auth";
-import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   email: z.string().email({
@@ -34,7 +33,6 @@ const formSchema = z.object({
 export default function LoginForm() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -48,8 +46,7 @@ export default function LoginForm() {
     setIsSubmitting(true);
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
-      // The auth context will handle the redirect and toast for email/password login.
-      // This is now consistent with Google Sign-In.
+      // The auth context now handles the redirect and toast for all login types.
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -63,7 +60,6 @@ export default function LoginForm() {
 
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
-    // Use signInWithRedirect for a more robust flow in all environments.
     await signInWithRedirect(auth, provider);
   };
 

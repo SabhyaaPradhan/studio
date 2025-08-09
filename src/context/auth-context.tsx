@@ -27,14 +27,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const processAuth = async () => {
       try {
         const result = await getRedirectResult(auth);
-        if (result) {
+        if (result && result.user) {
           // User has just signed in via redirect.
-          const loggedInUser = result.user;
-          console.log("Redirect result user:", loggedInUser);
-          setUser(loggedInUser);
+          // The onAuthStateChanged listener below will handle setting the user state.
+          // We can show the toast and redirect from here.
           toast({
             title: "Login Successful! 🎉",
-            description: `Welcome back, ${loggedInUser.displayName || 'friend'}!`,
+            description: `Welcome back, ${result.user.displayName || 'friend'}!`,
           });
           router.push("/home");
         }
@@ -45,17 +44,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             title: "Uh oh! Something went wrong with Google Sign-In.",
             description: "Please try again.",
         });
+      } finally {
+        // This is crucial. We only stop the main loading state
+        // AFTER the redirect check is complete.
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+          setUser(currentUser);
+          setLoading(false);
+        });
+        
+        // Cleanup the listener on component unmount
+        return () => unsubscribe();
       }
-
-      // onAuthStateChanged is the primary listener for auth state.
-      // It handles initial session checks and subsequent auth changes.
-      const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-        setUser(currentUser);
-        setLoading(false);
-      });
-
-      // Cleanup the listener on component unmount
-      return unsubscribe;
     };
 
     processAuth();

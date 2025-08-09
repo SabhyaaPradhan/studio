@@ -20,7 +20,6 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { auth } from "@/lib/firebase";
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect, updateProfile } from "firebase/auth";
-import { useRouter } from "next/navigation";
 import { Checkbox } from "../ui/checkbox";
 
 const formSchema = z.object({
@@ -39,7 +38,6 @@ const formSchema = z.object({
 export default function SignupForm() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -56,7 +54,7 @@ export default function SignupForm() {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       await updateProfile(userCredential.user, { displayName: values.name });
-      // The auth context will handle the redirect and toast.
+      // The auth context now handles the redirect and toast.
     } catch (error: any) {
       toast({
         variant: "destructive",

@@ -10,6 +10,7 @@ export function useAuthRedirectToLogin() {
   const router = useRouter();
 
   useEffect(() => {
+    // Only redirect if the initial loading is complete and there is no user.
     if (!loading && !user) {
       router.push('/login');
     }
