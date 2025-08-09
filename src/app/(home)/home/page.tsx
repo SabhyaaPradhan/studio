@@ -87,7 +87,9 @@ export default function HomePage() {
     return (
         <div ref={containerRef} className="flex-1 space-y-12 p-4 pt-6 md:p-8">
             <div className="space-y-2">
-                <h2 data-animate="welcome-title" className="text-3xl md:text-4xl font-bold tracking-tight">Welcome back, {user?.displayName?.split(' ')[0] || 'User'}!</h2>
+                <h2 data-animate="welcome-title" className="text-3xl md:text-4xl font-bold tracking-tight">
+                    Welcome back, <span className="text-accent">{user?.displayName?.split(' ')[0] || 'User'}</span>!
+                </h2>
                 <p data-animate="welcome-desc" className="text-lg text-muted-foreground">Here's a quick overview of your account today.</p>
             </div>
              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
