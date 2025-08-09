@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { auth } from "@/lib/firebase";
-import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect, updateProfile } from "firebase/auth";
+import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, updateProfile } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { Checkbox } from "../ui/checkbox";
 
@@ -76,8 +76,13 @@ export default function SignupForm() {
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
     try {
-      // Use signInWithRedirect for a more robust flow
-      await signInWithRedirect(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      console.log("User session established from popup:", result.user);
+      toast({
+        title: "Account Created! 🎉",
+        description: "Welcome to Savrii!",
+      });
+      router.push("/home");
     } catch (error: any) {
       toast({
         variant: "destructive",
