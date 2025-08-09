@@ -270,7 +270,7 @@ export default function AuthenticatedLayout({
               <Sidebar>
                 <SidebarHeader>
                   <Link href="/home" className="flex items-center gap-2">
-                      <span className="text-xl font-semibold text-accent">Savrii</span>
+                      <span className="text-xl font-semibold text-primary">Savrii</span>
                   </Link>
                 </SidebarHeader>
                 <SidebarContent>
@@ -344,7 +344,7 @@ export default function AuthenticatedLayout({
                             <Menu className="w-6 h-6" />
                         </SidebarTrigger>
                         <Link href="/home" className="font-semibold text-lg flex items-center gap-2">
-                            <span className={cn(showSidebar && 'md:hidden')}>Savrii</span>
+                            <span className={cn(showSidebar && 'md:hidden', 'text-primary')}>Savrii</span>
                         </Link>
                     </div>
                     <nav className="hidden md:flex flex-1 justify-center items-center gap-8 text-base font-medium">
@@ -385,7 +385,7 @@ export default function AuthenticatedLayout({
                                 <SheetHeader className="flex flex-row justify-between items-center border-b pb-4">
                                     <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
                                     <Link href="/home" className="flex items-center gap-2" onClick={() => setMobileMenuOpen(false)}>
-                                        <span className="text-xl font-bold">Savrii</span>
+                                        <span className="text-xl font-bold text-primary">Savrii</span>
                                     </Link>
                                     <SheetClose asChild>
                                         <Button variant="ghost" size="icon">
