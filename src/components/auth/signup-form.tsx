@@ -54,7 +54,7 @@ export default function SignupForm() {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       await updateProfile(userCredential.user, { displayName: values.name });
-      // The auth context now handles the redirect and toast.
+      // AuthProvider will handle success toast and redirect
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -68,7 +68,6 @@ export default function SignupForm() {
 
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
-    // Use signInWithRedirect for a more reliable flow
     await signInWithRedirect(auth, provider);
   };
 

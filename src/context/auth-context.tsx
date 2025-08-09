@@ -1,7 +1,7 @@
 
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react';
 import { onAuthStateChanged, User, getRedirectResult } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
@@ -22,22 +22,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const router = useRouter();
+  const isProcessingRedirect = useRef(false);
 
   useEffect(() => {
-    let isMounted = true; // Prevent state updates on unmounted component
-
+    // This function will run once on component mount
     const processAuth = async () => {
+      // Prevent running the redirect check multiple times
+      if (isProcessingRedirect.current) return;
+      isProcessingRedirect.current = true;
+      
       try {
         const result = await getRedirectResult(auth);
-        if (result && result.user && isMounted) {
-          // This means a user has just signed in via redirect.
-          // The onAuthStateChanged listener below will handle setting the user state.
-          // We can show the toast and redirect from here.
+        // If the user has just signed in via redirect, `result` will be populated
+        if (result && result.user) {
           console.log("Redirect result user object:", result.user);
+          // Set user state immediately to avoid race conditions with the listener
+          setUser(result.user);
           toast({
             title: "Login Successful! 🎉",
             description: `Welcome back, ${result.user.displayName || 'friend'}!`,
           });
+          // Redirect to the main app page
           router.push("/home");
         }
       } catch (error: any) {
@@ -47,26 +52,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             title: "Uh oh! Login failed.",
             description: "There was a problem with the sign-in process. Please try again.",
         });
-      }
-
-      // After processing the redirect, set up the regular auth state listener.
-      // This listener handles all other cases, like an existing session on page load.
-      const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-        if (isMounted) {
+      } finally {
+        // Now that the redirect has been processed (or there was none),
+        // we can safely set up the normal listener and finalize loading.
+        
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
           setUser(currentUser);
-          // We are done loading only after the listener has fired its initial value.
+          // The auth state is now definitive, so we can stop loading.
           setLoading(false);
-        }
-      });
-
-      return () => {
-        isMounted = false;
-        unsubscribe();
-      };
+        });
+        
+        // Return the unsubscribe function for cleanup
+        return unsubscribe;
+      }
     };
 
-    processAuth();
-    
+    const unsubscribePromise = processAuth();
+
+    return () => {
+      // Cleanup function to unsubscribe from the onAuthStateChanged listener
+      unsubscribePromise.then(unsubscribe => {
+        if (unsubscribe) {
+          unsubscribe();
+        }
+      });
+    };
   }, [router, toast]);
   
   return (

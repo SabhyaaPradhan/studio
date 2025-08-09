@@ -46,7 +46,7 @@ export default function LoginForm() {
     setIsSubmitting(true);
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
-      // The auth context now handles the redirect and toast for all login types.
+      // AuthProvider will handle success toast and redirect
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -60,7 +60,6 @@ export default function LoginForm() {
 
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
-    // Use signInWithRedirect for a more reliable flow
     await signInWithRedirect(auth, provider);
   };
 
