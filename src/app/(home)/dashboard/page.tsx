@@ -9,7 +9,7 @@ import { ArrowRight, Bot, BrainCircuit, CalendarDays, DollarSign, Lightbulb, Plu
 import Link from 'next/link';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend, ScatterChart, Scatter, ZAxis } from 'recharts';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -23,6 +23,26 @@ const chartData = [
   { date: 'Sat', replies: 75 },
   { date: 'Sun', replies: 88 },
 ];
+
+const pieChartData = [
+    { name: 'General', value: 400 },
+    { name: 'E-commerce', value: 300 },
+    { name: 'Coaching', value: 300 },
+    { name: 'SaaS Support', value: 200 },
+];
+
+const PIE_CHART_COLORS = ['#7CFC00', '#F5B700', '#00C49F', '#FF8042'];
+
+const confidenceData = [
+  { day: 'Mon', confidence: 92, count: 10 },
+  { day: 'Tue', confidence: 85, count: 15 },
+  { day: 'Wed', confidence: 78, count: 8 },
+  { day: 'Thu', confidence: 95, count: 20 },
+  { day: 'Fri', confidence: 88, count: 25 },
+  { day: 'Sat', confidence: 91, count: 30 },
+  { day: 'Sun', confidence: 96, count: 35 },
+];
+
 
 const activityFeed = [
     { icon: MessageSquare, text: "New AI reply generated to 'hello@example.com'", time: "2m ago" },
@@ -68,6 +88,8 @@ export default function DashboardPage() {
              gsap.from("[data-animate='activity-card']", { duration: 1, y: 50, opacity: 0, ease: 'power3.out', scrollTrigger: { trigger: "[data-animate='activity-card']", start: 'top 85%' }});
              gsap.from("[data-animate='quick-actions-card']", { duration: 1, y: 50, opacity: 0, ease: 'power3.out', scrollTrigger: { trigger: "[data-animate='quick-actions-card']", start: 'top 85%' }});
              gsap.from("[data-animate='announcements-card']", { duration: 1, y: 50, opacity: 0, ease: 'power3.out', scrollTrigger: { trigger: "[data-animate='announcements-card']", start: 'top 85%' }});
+             gsap.from("[data-animate='pie-chart-card']", { duration: 1, y: 50, opacity: 0, ease: 'power3.out', scrollTrigger: { trigger: "[data-animate='pie-chart-card']", start: 'top 85%' }});
+             gsap.from("[data-animate='heatmap-card']", { duration: 1, y: 50, opacity: 0, ease: 'power3.out', scrollTrigger: { trigger: "[data-animate='heatmap-card']", start: 'top 85%' }});
             
              gsap.from(".activity-item", {
                 duration: 0.5,
@@ -169,6 +191,69 @@ export default function DashboardPage() {
                 </Card>
             </div>
             
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                 <Card data-animate="pie-chart-card">
+                    <CardHeader>
+                        <CardTitle>Usage Breakdown</CardTitle>
+                        <CardDescription>Proportion of queries by category.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="h-80">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={pieChartData}
+                                    cx="50%"
+                                    cy="50%"
+                                    labelLine={false}
+                                    outerRadius={100}
+                                    fill="#8884d8"
+                                    dataKey="value"
+                                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                >
+                                    {pieChartData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={PIE_CHART_COLORS[index % PIE_CHART_COLORS.length]} />
+                                    ))}
+                                </Pie>
+                                <Tooltip
+                                    contentStyle={{
+                                        backgroundColor: 'hsl(var(--card))',
+                                        borderColor: 'hsl(var(--border))',
+                                        borderRadius: 'var(--radius)',
+                                    }}
+                                />
+                                <Legend />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
+
+                 <Card data-animate="heatmap-card">
+                    <CardHeader>
+                        <CardTitle>AI Confidence Score</CardTitle>
+                        <CardDescription>Confidence levels for responses over time.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="h-80">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                                <XAxis dataKey="day" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                                <YAxis type="number" dataKey="confidence" name="confidence" unit="%" domain={[0, 100]} tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                                <ZAxis type="number" dataKey="count" range={[60, 400]} name="queries" unit="q" />
+                                <Tooltip 
+                                    cursor={{ strokeDasharray: '3 3' }} 
+                                    contentStyle={{
+                                        backgroundColor: 'hsl(var(--card))',
+                                        borderColor: 'hsl(var(--border))',
+                                        borderRadius: 'var(--radius)',
+                                    }}
+                                />
+                                <Scatter name="Confidence Scores" data={confidenceData} fill="hsl(var(--primary))" />
+                            </ScatterChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                  <Card data-animate="quick-actions-card">
                     <CardHeader>
