@@ -1,74 +1,69 @@
 
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthContext } from '@/context/auth-context';
-import { ArrowRight, Bot, BrainCircuit, CalendarDays, DollarSign, Lightbulb, PlusCircle, Settings, MessageSquare, Newspaper, Bell } from 'lucide-react';
+import { ArrowRight, Bot, BrainCircuit, CalendarDays, DollarSign, Lightbulb, PlusCircle, Settings, MessageSquare, Newspaper, Bell, AlertTriangle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend, ScatterChart, Scatter, ZAxis } from 'recharts';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { getDashboardData, DashboardData } from '@/services/dashboard-service';
+import { Skeleton } from '@/components/ui/skeleton';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const chartData = [
-  { date: 'Mon', replies: 32 },
-  { date: 'Tue', replies: 45 },
-  { date: 'Wed', replies: 28 },
-  { date: 'Thu', replies: 55 },
-  { date: 'Fri', replies: 62 },
-  { date: 'Sat', replies: 75 },
-  { date: 'Sun', replies: 88 },
-];
-
-const pieChartData = [
-    { name: 'General', value: 400 },
-    { name: 'E-commerce', value: 300 },
-    { name: 'Coaching', value: 300 },
-    { name: 'SaaS Support', value: 200 },
-];
-
 const PIE_CHART_COLORS = ['#7CFC00', '#F5B700', '#00C49F', '#FF8042'];
 
-const confidenceData = [
-  { day: 'Mon', confidence: 92, count: 10 },
-  { day: 'Tue', confidence: 85, count: 15 },
-  { day: 'Wed', confidence: 78, count: 8 },
-  { day: 'Thu', confidence: 95, count: 20 },
-  { day: 'Fri', confidence: 88, count: 25 },
-  { day: 'Sat', confidence: 91, count: 30 },
-  { day: 'Sun', confidence: 96, count: 35 },
-];
+const LoadingSkeleton = () => (
+    <div className="space-y-4">
+        <Skeleton className="h-8 w-3/4" />
+        <Skeleton className="h-4 w-1/2" />
+    </div>
+);
 
-
-const activityFeed = [
-    { icon: MessageSquare, text: "New AI reply generated to 'hello@example.com'", time: "2m ago" },
-    { icon: BrainCircuit, text: "Knowledge source 'Product FAQ.pdf' was added", time: "1h ago" },
-    { icon: Settings, text: "Your profile information was updated", time: "3h ago" },
-    { icon: DollarSign, text: "Your plan has been upgraded to 'Pro'", time: "1d ago" },
-];
-
-const announcements = [
-    { title: "🚀 New Feature: Real-time Analytics!", content: "Enterprise users can now access real-time analytics for deeper insights into customer interactions. Check it out in the new 'Analytics' tab." },
-    { title: "💡 Tip of the Week: Train Your Brand Voice", content: "Improve AI consistency by training it on your brand's unique tone. Upload examples of your communication style in the 'Brand Voice' section." }
-]
-
+const ErrorDisplay = ({ error }: { error: string }) => (
+    <div className="flex flex-col items-center justify-center h-full text-destructive">
+        <AlertTriangle className="h-8 w-8 mb-2" />
+        <p className="font-semibold">Error loading data</p>
+        <p className="text-sm text-center">{error}</p>
+    </div>
+);
 
 export default function DashboardPage() {
     const { user } = useAuthContext();
     const containerRef = useRef<HTMLDivElement>(null);
-
-    const stats = [
-        { title: "AI Replies Today", value: 45, icon: Bot, change: "+5 from yesterday", link: "#", linkText: "View Details" },
-        { title: "Plan", value: "Free", icon: DollarSign, change: "Upgrade to Pro", link: "/billing", linkText: "Upgrade" },
-        { title: "Knowledge Sources", value: 1, icon: BrainCircuit, change: "+0 this week", link: "#", linkText: "Manage" },
-        { title: "Trial Ends In", value: "N/A", icon: CalendarDays, change: "", link: "/home", linkText: "View Full Dashboard" }
-    ];
+    const [data, setData] = useState<DashboardData | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const result = await getDashboardData();
+                setData(result);
+                setError(null);
+            } catch (err: any) {
+                setError(err.message || "Failed to fetch dashboard data.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+
+        const intervalId = setInterval(fetchData, 60000); // Refresh every 60 seconds
+
+        return () => clearInterval(intervalId);
+    }, []);
+    
+
+    useEffect(() => {
+        if (loading || !data) return;
+
         const ctx = gsap.context(() => {
             gsap.from("[data-animate='welcome-title']", { duration: 0.8, y: 30, opacity: 0, ease: 'power3.out', delay: 0.2 });
             gsap.from("[data-animate='welcome-desc']", { duration: 0.8, y: 30, opacity: 0, ease: 'power3.out', delay: 0.4 });
@@ -105,7 +100,40 @@ export default function DashboardPage() {
 
         }, containerRef);
         return () => ctx.revert();
-    }, []);
+    }, [loading, data]);
+
+    const stats = data ? [
+        { title: "AI Replies Today", value: data.stats.repliesToday.value, icon: Bot, change: data.stats.repliesToday.change, link: "#", linkText: "View Details" },
+        { title: "Plan", value: data.stats.plan.value, icon: DollarSign, change: data.stats.plan.change, link: "/billing", linkText: "Upgrade" },
+        { title: "Knowledge Sources", value: data.stats.knowledgeSources.value, icon: BrainCircuit, change: data.stats.knowledgeSources.change, link: "#", linkText: "Manage" },
+        { title: "Trial Ends In", value: data.stats.trialEnds.value, icon: CalendarDays, change: data.stats.trialEnds.change, link: "/home", linkText: "View Full Dashboard" }
+    ] : [];
+
+    if (loading) {
+        return (
+            <div className="flex-1 space-y-12 p-4 pt-6 md:p-8">
+                 <div className="space-y-2">
+                    <Skeleton className="h-10 w-1/2" />
+                    <Skeleton className="h-6 w-3/4" />
+                </div>
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                    {[...Array(4)].map((_, i) => <Card key={i}><CardContent className="p-6"><LoadingSkeleton /></CardContent></Card>)}
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <Card className="lg:col-span-2"><CardContent className="p-6 h-96"><Skeleton className="h-full w-full" /></CardContent></Card>
+                    <Card><CardContent className="p-6 h-96"><Skeleton className="h-full w-full" /></CardContent></Card>
+                </div>
+            </div>
+        )
+    }
+
+    if (error) {
+        return <div className="flex items-center justify-center h-screen"><ErrorDisplay error={error} /></div>
+    }
+
+    if (!data) {
+        return <div className="flex items-center justify-center h-screen"><p>No data available.</p></div>
+    }
 
     return (
         <div ref={containerRef} className="flex-1 space-y-12 p-4 pt-6 md:p-8">
@@ -143,7 +171,7 @@ export default function DashboardPage() {
                     </CardHeader>
                     <CardContent className="h-80">
                          <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                            <AreaChart data={data.charts.replies.data} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                                 <defs>
                                     <linearGradient id="colorReplies" x1="0" y1="0" x2="0" y2="1">
                                     <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
@@ -175,7 +203,7 @@ export default function DashboardPage() {
                     </CardHeader>
                     <CardContent>
                         <ul className="space-y-4 activity-feed">
-                            {activityFeed.map((item, index) => (
+                            {data.activityFeed.map((item, index) => (
                                 <li key={index} className="flex items-start gap-4 activity-item">
                                     <div className="p-2 bg-secondary rounded-full">
                                         <item.icon className="h-5 w-5 text-muted-foreground" />
@@ -201,7 +229,7 @@ export default function DashboardPage() {
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
-                                    data={pieChartData}
+                                    data={data.charts.usage.data}
                                     cx="50%"
                                     cy="50%"
                                     labelLine={false}
@@ -210,7 +238,7 @@ export default function DashboardPage() {
                                     dataKey="value"
                                     label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                                 >
-                                    {pieChartData.map((entry, index) => (
+                                    {data.charts.usage.data.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={PIE_CHART_COLORS[index % PIE_CHART_COLORS.length]} />
                                     ))}
                                 </Pie>
@@ -247,7 +275,7 @@ export default function DashboardPage() {
                                         borderRadius: 'var(--radius)',
                                     }}
                                 />
-                                <Scatter name="Confidence Scores" data={confidenceData} fill="hsl(var(--primary))" />
+                                <Scatter name="Confidence Scores" data={data.charts.confidence.data} fill="hsl(var(--primary))" />
                             </ScatterChart>
                         </ResponsiveContainer>
                     </CardContent>
@@ -275,11 +303,11 @@ export default function DashboardPage() {
                     </CardHeader>
                     <CardContent>
                        <Accordion type="single" collapsible className="w-full">
-                           {announcements.map((item, index) => (
+                           {data.announcements.map((item, index) => (
                                 <AccordionItem value={`item-${index}`} key={index}>
                                     <AccordionTrigger>
                                         <div className='flex items-center gap-2'>
-                                            {index === 0 ? <Newspaper className="h-4 w-4 text-primary" /> : <Lightbulb className="h-4 w-4 text-primary" />}
+                                            {item.type === 'feature' ? <Newspaper className="h-4 w-4 text-primary" /> : <Lightbulb className="h-4 w-4 text-primary" />}
                                             {item.title}
                                         </div>
                                     </AccordionTrigger>
@@ -295,3 +323,5 @@ export default function DashboardPage() {
         </div>
     );
 }
+
+    
