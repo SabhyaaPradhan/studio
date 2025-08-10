@@ -56,18 +56,19 @@ export default function DashboardPage() {
         let graphListener: (() => void) | undefined;
         let userListener: (() => void) | undefined;
         
-        const fetchData = async () => {
-            let staticDataLoaded = false;
-            let graphsLoaded = false;
-            let userProfileLoaded = false;
+        let staticDataLoaded = false;
+        let graphsLoaded = false;
+        let userProfileLoaded = false;
 
-            const checkCompletion = () => {
-                if (staticDataLoaded && graphsLoaded && userProfileLoaded && active) {
-                    setLoading(false);
-                }
-            };
-            
+        const checkCompletion = () => {
+            if (staticDataLoaded && graphsLoaded && userProfileLoaded && active) {
+                setLoading(false);
+            }
+        };
+
+        const fetchData = async () => {
             try {
+                // Static Data
                 getDashboardData().then(result => {
                     if (active) {
                         setStaticData(result);
@@ -78,6 +79,7 @@ export default function DashboardPage() {
                     if (active) setError(err.message || "Failed to fetch dashboard data.");
                 });
 
+                // Real-time Graph Data
                 graphListener = listenToGraphs(user.uid, (newGraphs) => {
                     if (active) {
                         setGraphs(newGraphs);
@@ -86,6 +88,7 @@ export default function DashboardPage() {
                     }
                 });
 
+                // Real-time User Profile Data
                 userListener = listenToUser(user.uid, (profile) => {
                     if (active) {
                         setUserProfile(profile);
@@ -348,3 +351,5 @@ export default function DashboardPage() {
             </div>
         </div>
     );
+}
+    
