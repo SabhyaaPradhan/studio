@@ -57,8 +57,8 @@ const generateRepliesToday = (): StatCard => {
 
 const generatePlan = (): StatCard => {
     return {
-        value: "Free",
-        change: "Upgrade to Pro",
+        value: "Enterprise",
+        change: "You have access to all features",
     };
 }
 
