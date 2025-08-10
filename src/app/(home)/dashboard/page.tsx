@@ -68,6 +68,8 @@ export default function DashboardPage() {
 
         const fetchData = async () => {
             try {
+                if (!active) return;
+                
                 // Static Data
                 getDashboardData().then(result => {
                     if (active) {
@@ -162,7 +164,7 @@ export default function DashboardPage() {
             return days > 0 ? `${days} days` : 'Ended';
         }
         return 'N/A';
-    }
+    };
     
     const chartDataFromGraphs = (graphs || []).map(g => ({
         date: format(g.createdAt.toDate(), 'MMM d'),
@@ -192,15 +194,15 @@ export default function DashboardPage() {
                     <Card><CardContent className="p-6 h-96"><Skeleton className="h-full w-full" /></CardContent></Card>
                 </div>
             </div>
-        )
+        );
     }
 
     if (error) {
-        return <div className="flex items-center justify-center h-screen"><ErrorDisplay error={error} /></div>
+        return <div className="flex items-center justify-center h-screen"><ErrorDisplay error={error} /></div>;
     }
 
     if (!staticData || !userProfile || !graphs) {
-        return <div className="flex items-center justify-center h-screen"><p>No data available.</p></div>
+        return <div className="flex items-center justify-center h-screen"><p>No data available.</p></div>;
     }
 
     return (
@@ -352,4 +354,3 @@ export default function DashboardPage() {
         </div>
     );
 }
-    

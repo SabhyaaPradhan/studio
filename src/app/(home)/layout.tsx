@@ -63,6 +63,7 @@ import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger 
 import { gsap } from 'gsap';
 import { motion, AnimatePresence } from 'framer-motion';
 import { listenToUser, UserProfile } from '@/services/user-service';
+import { Skeleton } from '@/components/ui/skeleton';
 
 
 type UserPlan = 'starter' | 'pro' | 'enterprise' | 'free';
@@ -250,7 +251,7 @@ export default function AuthenticatedLayout({
   }, [mobileMenuOpen]);
 
 
-  if (loading || !userProfile) {
+  if (loading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader className="h-10 w-10 animate-spin" />
@@ -258,10 +259,6 @@ export default function AuthenticatedLayout({
     );
   }
 
-  if (!user) {
-    return null; // The hook will handle the redirect
-  }
-  
   const navLinks = [
       { href: "/dashboard", label: "Dashboard", icon: BarChartBig },
       { href: "/billing", label: "Billing", icon: CreditCard },
@@ -269,7 +266,7 @@ export default function AuthenticatedLayout({
       { href: "/support", label: "FAQ", icon: HelpCircle },
   ];
 
-  const userPlan = userProfile.plan as UserPlan;
+  const userPlan = userProfile?.plan as UserPlan | undefined;
 
   return (
     <SidebarProvider>
@@ -323,7 +320,7 @@ export default function AuthenticatedLayout({
                 </TooltipProvider>
                 <Avatar className="h-9 w-9">
                     <AvatarImage src={user?.photoURL || ''} />
-                    <AvatarFallback>{userProfile.first_name?.[0] || user?.email?.[0]}</AvatarFallback>
+                    <AvatarFallback>{userProfile?.first_name?.[0] || user?.email?.[0]}</AvatarFallback>
                 </Avatar>
                 <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                     <SheetTrigger asChild>
@@ -363,7 +360,7 @@ export default function AuthenticatedLayout({
             </div>
         </header>
         <div className="flex flex-1">
-          {showSidebar && (
+          {showSidebar && userPlan && (
             <Sidebar>
               <SidebarContent>
                 <SidebarMenu>
@@ -404,7 +401,11 @@ export default function AuthenticatedLayout({
               <SidebarFooter>
                   <div className='px-4 py-2 text-sm'>
                       <p className='font-semibold'>Current Plan</p>
-                      <p className='text-muted-foreground capitalize'>{userPlan}</p>
+                      {userProfile ? (
+                        <p className='text-muted-foreground capitalize'>{userProfile.plan}</p>
+                      ) : (
+                        <Skeleton className="h-4 w-1/2 mt-1" />
+                      )}
                   </div>
                   <SidebarMenu>
                       <NavMenuItem href="/billing" icon={CreditCard} label="Billing" plan={userPlan} />
@@ -415,11 +416,20 @@ export default function AuthenticatedLayout({
                     <div className="flex items-center gap-3 p-3 rounded-lg border m-2">
                         <Avatar className="h-9 w-9">
                             <AvatarImage src={user?.photoURL || ''} />
-                            <AvatarFallback>{userProfile.first_name?.[0] || user?.email?.[0]}</AvatarFallback>
+                            <AvatarFallback>{userProfile?.first_name?.[0] || user?.email?.[0]}</AvatarFallback>
                         </Avatar>
                         <div className="flex-1 overflow-hidden">
-                            <p className="text-sm font-semibold truncate">{userProfile.first_name} {userProfile.last_name}</p>
-                            <p className="text-xs text-muted-foreground truncate">{userProfile.email}</p>
+                           {userProfile ? (
+                                <>
+                                    <p className="text-sm font-semibold truncate">{userProfile.first_name} {userProfile.last_name}</p>
+                                    <p className="text-xs text-muted-foreground truncate">{userProfile.email}</p>
+                                </>
+                           ) : (
+                                <div className="space-y-1">
+                                    <Skeleton className="h-4 w-3/4" />
+                                    <Skeleton className="h-3 w-full" />
+                                </div>
+                           )}
                         </div>
                         <Tooltip>
                             <TooltipTrigger asChild>
@@ -443,5 +453,3 @@ export default function AuthenticatedLayout({
     </SidebarProvider>
   );
 }
-
-    
