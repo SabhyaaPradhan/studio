@@ -40,11 +40,12 @@ const ErrorDisplay = ({ error }: { error: string }) => (
 export default function DashboardPage() {
     const { user } = useAuthContext();
     const containerRef = useRef<HTMLDivElement>(null);
-    const [graphs, setGraphs] = useState<Graph[]>([]);
+    const [graphs, setGraphs] = useState<Graph[] | null>(null);
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [staticData, setStaticData] = useState<Omit<DashboardData, 'stats' | 'charts'> | null>(null);
-    const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    const isLoading = graphs === null || userProfile === null || staticData === null;
 
     useEffect(() => {
         if (!user) return;
@@ -54,34 +55,22 @@ export default function DashboardPage() {
         const fetchData = async () => {
             try {
                 const result = await getDashboardData();
-                if(active) {
-                    setStaticData(result);
-                }
+                if (active) setStaticData(result);
             } catch (err: any) {
-                 if(active) {
-                    setError(err.message || "Failed to fetch dashboard data.");
-                 }
+                 if (active) setError(err.message || "Failed to fetch dashboard data.");
             }
         };
 
         const unsubscribers = [
             listenToGraphs(user.uid, (newGraphs) => {
-                if (active) {
-                    setGraphs(newGraphs);
-                }
+                if (active) setGraphs(newGraphs);
             }),
             listenToUser(user.uid, (profile) => {
-                if (active) {
-                    setUserProfile(profile);
-                }
+                if (active) setUserProfile(profile);
             })
         ];
 
-        Promise.all([fetchData()]).then(() => {
-            if(active) {
-                setLoading(false);
-            }
-        });
+        fetchData();
         
         return () => {
             active = false;
@@ -91,7 +80,7 @@ export default function DashboardPage() {
     
 
     useEffect(() => {
-        if (loading || !staticData) return;
+        if (isLoading) return;
 
         const ctx = gsap.context(() => {
             gsap.from("[data-animate='welcome-title']", { duration: 0.8, y: 30, opacity: 0, ease: 'power3.out', delay: 0.2 });
@@ -129,7 +118,7 @@ export default function DashboardPage() {
 
         }, containerRef);
         return () => ctx.revert();
-    }, [loading, staticData]);
+    }, [isLoading]);
 
     const getTrialDaysLeft = () => {
         if (userProfile?.trial_end_date) {
@@ -139,20 +128,20 @@ export default function DashboardPage() {
         return 'N/A';
     }
     
-    const chartDataFromGraphs = graphs.map(g => ({
+    const chartDataFromGraphs = (graphs || []).map(g => ({
         date: format(g.createdAt.toDate(), 'MMM d'),
         replies: g.data?.points?.length || 0
     })).slice(-7);
 
 
-    const stats = userProfile ? [
+    const stats = userProfile && graphs ? [
         { title: "AI Replies Today", value: "N/A", icon: Bot, change: "Data not available", link: "#", linkText: "View Details" },
         { title: "Plan", value: userProfile.plan.charAt(0).toUpperCase() + userProfile.plan.slice(1), icon: DollarSign, change: "Manage your subscription", link: "/billing", linkText: "Upgrade" },
         { title: "Knowledge Sources", value: graphs.length, icon: BrainCircuit, change: "+0 this week", link: "#", linkText: "Manage" },
         { title: "Trial Ends In", value: getTrialDaysLeft(), icon: CalendarDays, change: `Ends on ${userProfile.trial_end_date ? format(new Date(userProfile.trial_end_date), 'MMM d, yyyy') : 'N/A'}`, link: "/billing", linkText: "View Plans" }
     ] : [];
 
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="flex-1 space-y-12 p-4 pt-6 md:p-8">
                  <div className="space-y-2">
@@ -174,7 +163,7 @@ export default function DashboardPage() {
         return <div className="flex items-center justify-center h-screen"><ErrorDisplay error={error} /></div>
     }
 
-    if (!staticData || !userProfile) {
+    if (!staticData || !userProfile || !graphs) {
         return <div className="flex items-center justify-center h-screen"><p>No data available.</p></div>
     }
 
@@ -326,6 +315,5 @@ export default function DashboardPage() {
             </div>
         </div>
     );
-}
 
     
