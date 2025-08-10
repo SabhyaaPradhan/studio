@@ -140,13 +140,6 @@ export const getDashboardData = (): Promise<DashboardData> => {
 
     return new Promise((resolve, reject) => {
         setTimeout(() => {
-            // Simulate a potential failure
-            if (Math.random() < 0.05) { // 5% chance of failure
-                console.error("Simulated API error.");
-                reject(new Error("A simulated network error occurred. Please try again."));
-                return;
-            }
-
             const data: DashboardData = {
                 stats: {
                     repliesToday: generateRepliesToday(),
