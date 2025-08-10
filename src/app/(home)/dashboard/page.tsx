@@ -44,43 +44,76 @@ export default function DashboardPage() {
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [staticData, setStaticData] = useState<Omit<DashboardData, 'stats' | 'charts'> | null>(null);
     const [error, setError] = useState<string | null>(null);
-
-    const isLoading = graphs === null || userProfile === null || staticData === null;
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (!user) return;
+        if (!user) {
+            setLoading(false);
+            return;
+        }
 
         let active = true;
+        let graphListener: (() => void) | undefined;
+        let userListener: (() => void) | undefined;
         
         const fetchData = async () => {
+            let staticDataLoaded = false;
+            let graphsLoaded = false;
+            let userProfileLoaded = false;
+
+            const checkCompletion = () => {
+                if (staticDataLoaded && graphsLoaded && userProfileLoaded && active) {
+                    setLoading(false);
+                }
+            };
+            
             try {
-                const result = await getDashboardData();
-                if (active) setStaticData(result);
+                getDashboardData().then(result => {
+                    if (active) {
+                        setStaticData(result);
+                        staticDataLoaded = true;
+                        checkCompletion();
+                    }
+                }).catch(err => {
+                    if (active) setError(err.message || "Failed to fetch dashboard data.");
+                });
+
+                graphListener = listenToGraphs(user.uid, (newGraphs) => {
+                    if (active) {
+                        setGraphs(newGraphs);
+                        graphsLoaded = true;
+                        checkCompletion();
+                    }
+                });
+
+                userListener = listenToUser(user.uid, (profile) => {
+                    if (active) {
+                        setUserProfile(profile);
+                        userProfileLoaded = true;
+                        checkCompletion();
+                    }
+                });
+
             } catch (err: any) {
-                 if (active) setError(err.message || "Failed to fetch dashboard data.");
+                if (active) {
+                    setError(err.message || "An unexpected error occurred.");
+                    setLoading(false);
+                }
             }
         };
-
-        const unsubscribers = [
-            listenToGraphs(user.uid, (newGraphs) => {
-                if (active) setGraphs(newGraphs);
-            }),
-            listenToUser(user.uid, (profile) => {
-                if (active) setUserProfile(profile);
-            })
-        ];
 
         fetchData();
         
         return () => {
             active = false;
-            unsubscribers.forEach(unsub => unsub());
+            if (graphListener) graphListener();
+            if (userListener) userListener();
         };
     }, [user]);
     
 
     useEffect(() => {
-        if (isLoading) return;
+        if (loading) return;
 
         const ctx = gsap.context(() => {
             gsap.from("[data-animate='welcome-title']", { duration: 0.8, y: 30, opacity: 0, ease: 'power3.out', delay: 0.2 });
@@ -118,7 +151,7 @@ export default function DashboardPage() {
 
         }, containerRef);
         return () => ctx.revert();
-    }, [isLoading]);
+    }, [loading]);
 
     const getTrialDaysLeft = () => {
         if (userProfile?.trial_end_date) {
@@ -141,7 +174,7 @@ export default function DashboardPage() {
         { title: "Trial Ends In", value: getTrialDaysLeft(), icon: CalendarDays, change: `Ends on ${userProfile.trial_end_date ? format(new Date(userProfile.trial_end_date), 'MMM d, yyyy') : 'N/A'}`, link: "/billing", linkText: "View Plans" }
     ] : [];
 
-    if (isLoading) {
+    if (loading) {
         return (
             <div className="flex-1 space-y-12 p-4 pt-6 md:p-8">
                  <div className="space-y-2">
@@ -281,7 +314,7 @@ export default function DashboardPage() {
                     </CardHeader>
                     <CardContent className="grid grid-cols-2 gap-4">
                         <Button variant="outline"><Bot className="mr-2 h-4 w-4" />Ask AI</Button>
-                        <Button variant="outline" onClick={() => user && addGraph(user.uid, `New Graph #${graphs.length + 1}`, { points: [] })}>
+                        <Button variant="outline" onClick={() => user && graphs && addGraph(user.uid, `New Graph #${graphs.length + 1}`, { points: [] })}>
                             <PlusCircle className="mr-2 h-4 w-4" />Add Knowledge
                         </Button>
                         <Button variant="outline" asChild><Link href="/billing"><DollarSign className="mr-2 h-4 w-4" />Upgrade Plan</Link></Button>
@@ -315,4 +348,3 @@ export default function DashboardPage() {
             </div>
         </div>
     );
-}
