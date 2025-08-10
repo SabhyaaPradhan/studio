@@ -49,30 +49,45 @@ export default function DashboardPage() {
     useEffect(() => {
         if (!user) return;
 
-        const unsubscribers = [
-            listenToGraphs(user.uid, (newGraphs) => {
-                setGraphs(newGraphs);
-                if (loading) setLoading(false);
-            }),
-            listenToUser(user.uid, (profile) => {
-                setUserProfile(profile);
-                if (loading) setLoading(false);
-            })
-        ];
-
-        const fetchStaticData = async () => {
+        let active = true;
+        
+        const fetchData = async () => {
             try {
                 const result = await getDashboardData();
-                setStaticData(result);
+                if(active) {
+                    setStaticData(result);
+                }
             } catch (err: any) {
-                setError(err.message || "Failed to fetch dashboard data.");
+                 if(active) {
+                    setError(err.message || "Failed to fetch dashboard data.");
+                 }
             }
         };
 
-        fetchStaticData();
+        const unsubscribers = [
+            listenToGraphs(user.uid, (newGraphs) => {
+                if (active) {
+                    setGraphs(newGraphs);
+                }
+            }),
+            listenToUser(user.uid, (profile) => {
+                if (active) {
+                    setUserProfile(profile);
+                }
+            })
+        ];
+
+        Promise.all([fetchData()]).then(() => {
+            if(active) {
+                setLoading(false);
+            }
+        });
         
-        return () => unsubscribers.forEach(unsub => unsub());
-    }, [user, loading]);
+        return () => {
+            active = false;
+            unsubscribers.forEach(unsub => unsub());
+        };
+    }, [user]);
     
 
     useEffect(() => {
@@ -312,3 +327,5 @@ export default function DashboardPage() {
         </div>
     );
 }
+
+    

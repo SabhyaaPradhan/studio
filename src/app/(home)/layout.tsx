@@ -263,7 +263,7 @@ export default function AuthenticatedLayout({
   }
   
   const navLinks = [
-      { href: "/home", label: "Home", icon: Home },
+      { href: "/dashboard", label: "Dashboard", icon: BarChartBig },
       { href: "/billing", label: "Billing", icon: CreditCard },
       { href: "/settings", label: "Settings", icon: Settings },
       { href: "/support", label: "FAQ", icon: HelpCircle },
@@ -281,7 +281,7 @@ export default function AuthenticatedLayout({
                         <Menu className="w-6 h-6" />
                     </SidebarTrigger>
                 ) : (
-                    <Link href="/home" className="font-semibold text-lg flex items-center gap-2 text-primary">
+                    <Link href="/dashboard" className="font-semibold text-lg flex items-center gap-2 text-primary">
                        <span>Savrii</span>
                     </Link>
                 )}
@@ -334,7 +334,7 @@ export default function AuthenticatedLayout({
                     <SheetContent ref={mobileMenuRef}>
                         <SheetHeader className="flex flex-row justify-between items-center border-b pb-4 px-4">
                             <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
-                            <Link href="/home" className="flex items-center gap-2" onClick={() => setMobileMenuOpen(false)}>
+                            <Link href="/dashboard" className="flex items-center gap-2" onClick={() => setMobileMenuOpen(false)}>
                                 <span className="text-xl font-bold text-primary">Savrii</span>
                             </Link>
                             <SheetClose asChild>
@@ -368,7 +368,7 @@ export default function AuthenticatedLayout({
               <SidebarContent>
                 <SidebarMenu>
                   <div className="p-2 mb-2">
-                      <Link href="/home" className="font-semibold text-lg flex items-center gap-2 text-primary">
+                      <Link href="/dashboard" className="font-semibold text-lg flex items-center gap-2 text-primary">
                           <span>Savrii</span>
                       </Link>
                   </div>
@@ -443,3 +443,5 @@ export default function AuthenticatedLayout({
     </SidebarProvider>
   );
 }
+
+    
