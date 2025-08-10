@@ -6,10 +6,10 @@ import {
     addDoc, 
     serverTimestamp, 
     query, 
-    where, 
     onSnapshot,
     Timestamp,
-    DocumentData
+    DocumentData,
+    collectionGroup
 } from 'firebase/firestore';
 
 const db = getFirestore(app);
@@ -18,7 +18,6 @@ const db = getFirestore(app);
 
 export interface Graph {
     id: string; // Document ID
-    userId: string;
     title: string;
     data: any; // object or array for graph dataset
     createdAt: Timestamp;
@@ -26,8 +25,7 @@ export interface Graph {
 }
 
 export interface AiRequest {
-    id: string; // Document ID
-    userId: string;
+    id:string;
     input: string | object;
     output: string | object;
     createdAt: Timestamp;
@@ -37,7 +35,7 @@ export interface AiRequest {
 // --- Functions ---
 
 /**
- * Adds a new graph document to the 'graphs' collection for a specific user.
+ * Adds a new graph document to the user's 'graphs' subcollection.
  * @param userId The ID of the user creating the graph.
  * @param title The title of the graph.
  * @param data The dataset for the graph.
@@ -45,8 +43,7 @@ export interface AiRequest {
  */
 export async function addGraph(userId: string, title: string, data: any) {
     try {
-        const docRef = await addDoc(collection(db, "graphs"), {
-            userId: userId,
+        const docRef = await addDoc(collection(db, "users", userId, "graphs"), {
             title: title,
             data: data,
             createdAt: serverTimestamp(),
@@ -60,7 +57,7 @@ export async function addGraph(userId: string, title: string, data: any) {
 }
 
 /**
- * Adds a new AI request document to the 'aiRequests' collection for a specific user.
+ * Adds a new AI request document to the user's 'aiRequests' subcollection.
  * @param userId The ID of the user making the request.
  * @param input The input provided to the AI.
  * @param output The output received from the AI.
@@ -68,8 +65,7 @@ export async function addGraph(userId: string, title: string, data: any) {
  */
 export async function addAiRequest(userId: string, input: string | object, output: string | object) {
     try {
-        const docRef = await addDoc(collection(db, "aiRequests"), {
-            userId: userId,
+        const docRef = await addDoc(collection(db, "users", userId, "aiRequests"), {
             input: input,
             output: output,
             createdAt: serverTimestamp()
@@ -88,7 +84,7 @@ export async function addAiRequest(userId: string, input: string | object, outpu
  * @returns An unsubscribe function to stop listening for updates.
  */
 export function listenToGraphs(userId: string, callback: (graphs: Graph[]) => void) {
-    const q = query(collection(db, "graphs"), where("userId", "==", userId));
+    const q = query(collection(db, "users", userId, "graphs"));
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const graphs: Graph[] = [];
@@ -96,7 +92,6 @@ export function listenToGraphs(userId: string, callback: (graphs: Graph[]) => vo
             const data = doc.data() as DocumentData;
             graphs.push({
                 id: doc.id,
-                userId: data.userId,
                 title: data.title,
                 data: data.data,
                 createdAt: data.createdAt,
@@ -118,7 +113,7 @@ export function listenToGraphs(userId: string, callback: (graphs: Graph[]) => vo
  * @returns An unsubscribe function to stop listening for updates.
  */
 export function listenToAiRequests(userId: string, callback: (requests: AiRequest[]) => void) {
-    const q = query(collection(db, "aiRequests"), where("userId", "==", userId));
+    const q = query(collection(db, "users", userId, "aiRequests"));
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const requests: AiRequest[] = [];
@@ -126,7 +121,6 @@ export function listenToAiRequests(userId: string, callback: (requests: AiReques
             const data = doc.data() as DocumentData;
             requests.push({
                 id: doc.id,
-                userId: data.userId,
                 input: data.input,
                 output: data.output,
                 createdAt: data.createdAt

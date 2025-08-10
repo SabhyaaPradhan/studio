@@ -3,22 +3,21 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can only read and write their own document.
+
+    // Users can read and update their own user document.
+    // User creation/deletion is handled by other services (e.g. Firebase Auth triggers).
     match /users/{userId} {
       allow read, update: if request.auth.uid == userId;
-      allow create: if request.auth.uid != null;
     }
 
-    // A user can only manage their own graphs.
-    match /graphs/{graphId} {
-      allow read, delete, update: if request.auth.uid == resource.data.userId;
-      allow create: if request.auth.uid == request.resource.data.userId;
+    // Users can manage their own graphs.
+    match /users/{userId}/graphs/{graphId} {
+        allow read, write, create, delete, list: if request.auth.uid == userId;
     }
-
-    // a user can only manage their own AI requests.
-    match /aiRequests/{requestId} {
-       allow read, delete, update: if request.auth.uid == resource.data.userId;
-       allow create: if request.auth.uid == request.resource.data.userId;
+    
+    // Users can manage their own AI requests.
+    match /users/{userId}/aiRequests/{requestId} {
+        allow read, write, create, delete, list: if request.auth.uid == userId;
     }
   }
 }
