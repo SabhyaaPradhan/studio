@@ -1,9 +1,10 @@
 
 import { MessageSquare, BrainCircuit, Settings, DollarSign, Lightbulb, Newspaper, Icon } from 'lucide-react';
+import { Graph } from './firestore-service';
 
 // --- Types ---
 
-type StatCard = {
+export type StatCardData = {
     value: number | string;
     change: string;
 };
@@ -26,13 +27,10 @@ type Announcement = {
 
 export interface DashboardData {
     stats: {
-        repliesToday: StatCard;
-        plan: StatCard;
-        knowledgeSources: StatCard;
-        trialEnds: StatCard;
+        repliesToday: StatCardData;
+        knowledgeSources: StatCardData;
     };
     charts: {
-        replies: ChartData<{ date: string; replies: number }>;
         usage: ChartData<{ name: string; value: number }>;
         confidence: ChartData<{ day: string; confidence: number; count: number }>;
     };
@@ -46,7 +44,7 @@ const getRandomInt = (min: number, max: number) => {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 };
 
-const generateRepliesToday = (): StatCard => {
+const generateRepliesToday = (): StatCardData => {
     const replies = getRandomInt(30, 150);
     const change = getRandomInt(-20, 20);
     return {
@@ -55,38 +53,16 @@ const generateRepliesToday = (): StatCard => {
     };
 };
 
-const generatePlan = (): StatCard => {
-    return {
-        value: "Enterprise",
-        change: "You have access to all features",
-    };
-}
-
-const generateKnowledgeSources = (): StatCard => {
-    const sources = getRandomInt(1, 10);
-    const change = getRandomInt(0, 2);
+const generateKnowledgeSources = (graphs: Graph[]): StatCardData => {
+    const sources = graphs.length;
+    // This logic can be improved to track changes over time
+    const change = `+0 this week`;
     return {
         value: sources,
-        change: `+${change} this week`,
+        change: change,
     };
 }
 
-const generateTrialEnds = (): StatCard => {
-    return {
-        value: "N/A",
-        change: "",
-    }
-}
-
-const generateRepliesChartData = (): ChartData<{ date: string; replies: number }> => {
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    return {
-        data: days.map(day => ({
-            date: day,
-            replies: getRandomInt(20, 100),
-        })),
-    };
-};
 
 const generateUsageChartData = (): ChartData<{ name: string; value: number }> => {
     return {
@@ -131,27 +107,15 @@ const generateAnnouncements = (): Announcement[] => {
 // --- API Function ---
 
 /**
- * Fetches all data for the main dashboard.
- * In a real application, this would make network requests to a backend.
- * Here, we simulate it with mock data generators and a delay.
+ * Fetches static or less frequently updated data for the main dashboard.
+ * Real-time data like plan and graph info will be fetched directly in the component.
  */
-export const getDashboardData = (): Promise<DashboardData> => {
+export const getDashboardData = (): Promise<Omit<DashboardData, 'stats' | 'charts'>> => {
     console.log("Fetching dashboard data...");
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         setTimeout(() => {
-            const data: DashboardData = {
-                stats: {
-                    repliesToday: generateRepliesToday(),
-                    plan: generatePlan(),
-                    knowledgeSources: generateKnowledgeSources(),
-                    trialEnds: generateTrialEnds(),
-                },
-                charts: {
-                    replies: generateRepliesChartData(),
-                    usage: generateUsageChartData(),
-                    confidence: generateConfidenceChartData(),
-                },
+            const data = {
                 activityFeed: generateActivityFeed(),
                 announcements: generateAnnouncements(),
             };
@@ -162,5 +126,3 @@ export const getDashboardData = (): Promise<DashboardData> => {
         }, getRandomInt(500, 1500)); // Simulate network latency
     });
 };
-
-    

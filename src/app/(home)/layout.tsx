@@ -62,9 +62,10 @@ import AnimatedFooter from '@/components/common/animated-footer';
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { gsap } from 'gsap';
 import { motion, AnimatePresence } from 'framer-motion';
+import { listenToUser, UserProfile } from '@/services/user-service';
 
 
-type UserPlan = 'starter' | 'pro' | 'enterprise';
+type UserPlan = 'starter' | 'pro' | 'enterprise' | 'free';
 
 const hasPermission = (
   plan: UserPlan,
@@ -208,12 +209,19 @@ export default function AuthenticatedLayout({
   useAuthRedirectToLogin();
   const { theme, setTheme } = useTheme();
   const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
   const showSidebar = !['/home', '/billing', '/settings', '/support', '/contact'].includes(pathname);
 
   // MOCK: In a real app, this would come from your user's data
-  const [userPlan] = useState<UserPlan>('starter');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+        const unsubscribe = listenToUser(user.uid, setUserProfile);
+        return () => unsubscribe();
+    }
+  }, [user]);
 
 
   const handleLogout = async () => {
@@ -242,7 +250,7 @@ export default function AuthenticatedLayout({
   }, [mobileMenuOpen]);
 
 
-  if (loading) {
+  if (loading || !userProfile) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader className="h-10 w-10 animate-spin" />
@@ -260,6 +268,8 @@ export default function AuthenticatedLayout({
       { href: "/settings", label: "Settings", icon: Settings },
       { href: "/support", label: "FAQ", icon: HelpCircle },
   ];
+
+  const userPlan = userProfile.plan as UserPlan;
 
   return (
     <SidebarProvider>
@@ -313,7 +323,7 @@ export default function AuthenticatedLayout({
                 </TooltipProvider>
                 <Avatar className="h-9 w-9">
                     <AvatarImage src={user?.photoURL || ''} />
-                    <AvatarFallback>{user?.displayName?.[0] || user?.email?.[0]}</AvatarFallback>
+                    <AvatarFallback>{userProfile.first_name?.[0] || user?.email?.[0]}</AvatarFallback>
                 </Avatar>
                 <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                     <SheetTrigger asChild>
@@ -405,11 +415,11 @@ export default function AuthenticatedLayout({
                     <div className="flex items-center gap-3 p-3 rounded-lg border m-2">
                         <Avatar className="h-9 w-9">
                             <AvatarImage src={user?.photoURL || ''} />
-                            <AvatarFallback>{user?.displayName?.[0] || user?.email?.[0]}</AvatarFallback>
+                            <AvatarFallback>{userProfile.first_name?.[0] || user?.email?.[0]}</AvatarFallback>
                         </Avatar>
                         <div className="flex-1 overflow-hidden">
-                            <p className="text-sm font-semibold truncate">{user?.displayName}</p>
-                            <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                            <p className="text-sm font-semibold truncate">{userProfile.first_name} {userProfile.last_name}</p>
+                            <p className="text-xs text-muted-foreground truncate">{userProfile.email}</p>
                         </div>
                         <Tooltip>
                             <TooltipTrigger asChild>
