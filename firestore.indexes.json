@@ -1,0 +1,11 @@
+
+{
+  "indexes": [
+    {
+      "collectionGroup": "users",
+      "fieldPath": "email",
+      "order": "ASCENDING"
+    }
+  ],
+  "fieldOverrides": []
+}
