@@ -103,11 +103,15 @@ export default function DashboardPage() {
                     checkCompletion();
                 }
             }, (err) => {
-                if (active && err.code !== 'not-found') {
-                    setError(err.message || "Failed to listen to user profile.");
-                } else if (active) {
-                    dataStatus.userProfile = true;
-                    checkCompletion();
+                if (active) {
+                    // Only set error for actual DB errors, not for not-found during init
+                    if (err.code !== 'not-found') {
+                        setError(err.message || "Failed to listen to user profile.");
+                    } else {
+                        // If profile is not found, we can still continue loading other parts
+                        dataStatus.userProfile = true;
+                        checkCompletion();
+                    }
                 }
             });
 
@@ -177,8 +181,13 @@ export default function DashboardPage() {
 
     const getTrialDaysLeft = () => {
         if (userProfile?.trial_end_date) {
-            const days = differenceInDays(new Date(userProfile.trial_end_date), new Date());
-            return days > 0 ? `${days} days` : 'Ended';
+            const trialEnd = new Date(userProfile.trial_end_date);
+            // Ensure we are comparing with today's date at the start of the day
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const days = differenceInDays(trialEnd, today);
+            return days >= 0 ? `${days} day(s)` : 'Ended';
         }
         return 'N/A';
     };
@@ -218,7 +227,7 @@ export default function DashboardPage() {
         return <div className="flex items-center justify-center h-screen"><ErrorDisplay error={error} /></div>;
     }
 
-    if (!staticData || !graphs || !activities) { // userProfile can be null
+    if (!staticData || !graphs || !activities) { // userProfile can be null but we handle it
         return <div className="flex items-center justify-center h-screen"><p>No data available.</p></div>;
     }
 
@@ -226,7 +235,7 @@ export default function DashboardPage() {
         <div ref={containerRef} className="flex-1 space-y-12 p-4 pt-6 md:p-8">
             <div className="space-y-2">
                 <h2 data-animate="welcome-title" className="text-3xl md:text-4xl font-bold tracking-tight">
-                    Welcome back, <span className="text-primary">{userProfile?.first_name || 'User'}</span>!
+                    Welcome back, <span className="text-primary">{userProfile?.first_name || user?.displayName || 'User'}</span>!
                 </h2>
                 <p data-animate="welcome-desc" className="text-lg text-muted-foreground">Here’s your account overview for today.</p>
             </div>
