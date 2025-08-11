@@ -136,7 +136,7 @@ const NavMenuItem = ({
 
   return (
     <SidebarMenuItem>
-      {isLocked ? <UpgradeTooltip>{itemContent}</UpgradeTooltip> : itemContent}
+      {isLocked ? <UpgradeTooltip>{children}</UpgradeTooltip> : itemContent}
     </SidebarMenuItem>
   );
 };
@@ -219,7 +219,9 @@ export default function AuthenticatedLayout({
 
   useEffect(() => {
     if (user) {
-        const unsubscribe = listenToUser(user.uid, setUserProfile);
+        const unsubscribe = listenToUser(user.uid, setUserProfile, (err) => {
+            console.error("Layout: Failed to listen to user profile.", err);
+        });
         return () => unsubscribe();
     }
   }, [user]);

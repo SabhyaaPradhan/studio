@@ -99,7 +99,14 @@ export default function DashboardPage() {
                     checkCompletion();
                 }
             }, (err) => {
-                if (active) setError(err.message || "Failed to listen to user profile.");
+                // Ignore not-found errors for user profile, as it might not exist yet
+                if (active && err.code !== 'not-found') {
+                    setError(err.message || "Failed to listen to user profile.");
+                } else if (active) {
+                    // Still need to mark as complete even if not found
+                    dataStatus.userProfile = true;
+                    checkCompletion();
+                }
             });
         };
 
@@ -197,7 +204,7 @@ export default function DashboardPage() {
         return <div className="flex items-center justify-center h-screen"><ErrorDisplay error={error} /></div>;
     }
 
-    if (!staticData || !userProfile || !graphs) {
+    if (!staticData || !graphs) { // userProfile can be null
         return <div className="flex items-center justify-center h-screen"><p>No data available.</p></div>;
     }
 
@@ -205,7 +212,7 @@ export default function DashboardPage() {
         <div ref={containerRef} className="flex-1 space-y-12 p-4 pt-6 md:p-8">
             <div className="space-y-2">
                 <h2 data-animate="welcome-title" className="text-3xl md:text-4xl font-bold tracking-tight">
-                    Welcome back, <span className="text-primary">{userProfile.first_name || 'User'}</span>!
+                    Welcome back, <span className="text-primary">{userProfile?.first_name || 'User'}</span>!
                 </h2>
                 <p data-animate="welcome-desc" className="text-lg text-muted-foreground">Here’s your account overview for today.</p>
             </div>

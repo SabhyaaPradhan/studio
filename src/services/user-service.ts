@@ -60,9 +60,10 @@ function docToProfile(doc: DocumentData): UserProfile {
  * @param onError A function to be called when an error occurs.
  * @returns An unsubscribe function to stop listening for updates.
  */
-export function listenToUser(userId: string, callback: (profile: UserProfile | null) => void, onError: (error: FirestoreError) => void): Unsubscribe {
+export function listenToUser(userId: string, callback: (profile: UserProfile | null) => void, onError?: (error: FirestoreError) => void): Unsubscribe {
     if (!userId) {
-        onError({ code: 'invalid-argument', message: 'User ID is required.' } as FirestoreError);
+        const error = { code: 'invalid-argument', message: 'User ID is required.' } as FirestoreError;
+        onError?.(error);
         return () => {};
     }
     const docRef = doc(db, "users", userId);
@@ -73,12 +74,12 @@ export function listenToUser(userId: string, callback: (profile: UserProfile | n
         } else {
             const profileNotFoundError = { code: 'not-found', message: 'No such user document!' } as FirestoreError;
             console.warn(profileNotFoundError.message);
-            onError(profileNotFoundError);
+            onError?.(profileNotFoundError);
             callback(null);
         }
     }, (error) => {
         console.error("Error listening to user profile: ", error);
-        onError(error);
+        onError?.(error);
         callback(null);
     });
 
