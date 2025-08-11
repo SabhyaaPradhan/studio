@@ -191,7 +191,7 @@ export default function DashboardPage() {
 
     const stats = userProfile && graphs ? [
         { title: "AI Replies Today", value: "N/A", icon: Bot, change: "Data not available", link: "#", linkText: "View Details" },
-        { title: "Plan", value: userProfile.plan.charAt(0).toUpperCase() + userProfile.plan.slice(1), icon: DollarSign, change: "Manage your subscription", link: "/billing", linkText: "Upgrade" },
+        { title: "Plan", value: userProfile.plan ? userProfile.plan.charAt(0).toUpperCase() + userProfile.plan.slice(1) : "Free", icon: DollarSign, change: "Manage your subscription", link: "/billing", linkText: "Upgrade" },
         { title: "Knowledge Sources", value: graphs.length, icon: BrainCircuit, change: "+0 this week", link: "#", linkText: "Manage" },
         { title: "Trial Ends In", value: getTrialDaysLeft(), icon: CalendarDays, change: `Ends on ${userProfile.trial_end_date ? format(new Date(userProfile.trial_end_date), 'MMM d, yyyy') : 'N/A'}`, link: "/billing", linkText: "View Plans" }
     ] : [];
