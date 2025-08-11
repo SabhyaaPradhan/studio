@@ -117,18 +117,19 @@ const NavMenuItem = ({
   const pathname = usePathname();
   const Icon = icon;
   const isLocked = plan && requiredPlan ? !hasPermission(plan, requiredPlan) : false;
-  const isEffectivelyDisabled = isDisabled || !plan; // Disable if no plan is loaded yet or explicitly disabled
+  // A link should be disabled if it's explicitly set to be, OR if it's a locked, plan-restricted link.
+  const isEffectivelyDisabled = isDisabled || isLocked;
   const isActive = pathname === href;
 
   const itemContent = (
     <SidebarMenuButton
       asChild
       isActive={isActive}
-      className={cn('h-10', isLocked || isEffectivelyDisabled ? 'cursor-not-allowed opacity-60' : '')}
+      className={cn('h-10', isEffectivelyDisabled ? 'cursor-not-allowed opacity-60' : '')}
       tooltip={label}
-      disabled={isLocked || isEffectivelyDisabled}
+      disabled={isEffectivelyDisabled}
     >
-      <Link href={isLocked || isEffectivelyDisabled ? '#' : href}>
+      <Link href={isEffectivelyDisabled ? '#' : href}>
         <Icon className="h-5 w-5" />
         <span className="flex-1">{label}</span>
         {plan && isLocked && <Lock className="ml-auto h-3.5 w-3.5" />}
@@ -214,8 +215,7 @@ export default function AuthenticatedLayout({
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
-  const pagesWithSidebar = ['/dashboard', '/chat', '/analytics', '/integrations', '/custom-prompts', '/brand-voice', '/prompt-library', '/daily-summary', '/collaboration', '/lead-capture', '/export', '/real-time-analytics', '/api-access', '/workflow-builder', '/custom-model', '/security', '/white-label', '/webhooks'];
-  const shouldShowSidebar = pagesWithSidebar.includes(pathname);
+  const shouldShowSidebar = !['/home', '/billing', '/settings', '/support'].includes(pathname);
 
   // MOCK: In a real app, this would come from your user's data
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
