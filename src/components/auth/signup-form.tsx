@@ -72,7 +72,7 @@ export default function SignupForm() {
         first_name: firstName,
         last_name: lastName,
         email: user.email,
-        plan: 'free',
+        plan: 'starter',
         plan_start_date: serverTimestamp(),
         plan_end_date: null,
         trial_start_date: serverTimestamp(),
