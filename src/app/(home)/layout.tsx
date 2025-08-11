@@ -384,7 +384,7 @@ export default function AuthenticatedLayout({
                   </div>
 
                   <NavMenuItem href="/dashboard" icon={BarChartBig} label="Dashboard" plan={userPlan} />
-                  <NavMenuItem href="/chat" icon={MessageSquare} label="Chat / AI Assistant" plan={userPlan} isDisabled={true} />
+                  <NavMenuItem href="/chat" icon={MessageSquare} label="Chat / AI Assistant" plan={userPlan} />
                   <NavMenuItem href="/analytics" icon={BarChart2} label="Analytics" plan={userPlan} requiredPlan="pro" />
                   <NavMenuItem href="/integrations" icon={GitMerge} label="Integrations" plan={userPlan} />
                   

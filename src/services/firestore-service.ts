@@ -1,4 +1,3 @@
-
 import { app } from '@/lib/firebase';
 import { 
     getFirestore, 
@@ -9,9 +8,11 @@ import {
     onSnapshot,
     Timestamp,
     DocumentData,
-    collectionGroup,
     Unsubscribe,
-    FirestoreError
+    FirestoreError,
+    doc,
+    updateDoc,
+    arrayUnion
 } from 'firebase/firestore';
 
 const db = getFirestore(app);
@@ -31,6 +32,21 @@ export interface AiRequest {
     input: string | object;
     output: string | object;
     createdAt: Timestamp;
+}
+
+export interface ChatMessage {
+    id: string;
+    role: 'user' | 'model';
+    content: string;
+    createdAt: string; // ISO string
+    confidence?: number;
+}
+
+export interface Conversation {
+    id: string; // Document ID
+    messages: ChatMessage[];
+    createdAt: Timestamp;
+    updatedAt: Timestamp;
 }
 
 
@@ -144,6 +160,80 @@ export function listenToAiRequests(userId: string, callback: (requests: AiReques
         callback(requests);
     }, (error) => {
         console.error("Error listening to AI requests: ", error);
+        onError(error);
+    });
+
+    return unsubscribe;
+}
+
+/**
+ * Creates a new conversation document.
+ * @param userId The ID of the user.
+ * @param initialMessage The first message of the conversation.
+ * @returns The ID of the newly created conversation.
+ */
+export async function createConversation(userId: string, initialMessage: ChatMessage): Promise<string> {
+    if (!userId) throw new Error("User ID is required.");
+    const docRef = await addDoc(collection(db, `users/${userId}/conversations`), {
+        messages: [initialMessage],
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+    });
+    return docRef.id;
+}
+
+
+/**
+ * Adds a message to an existing conversation.
+ * @param userId The ID of the user.
+ * @param conversationId The ID of the conversation.
+ * @param message The message to add.
+ */
+export async function addMessageToConversation(userId: string, conversationId: string, message: ChatMessage) {
+    if (!userId || !conversationId) throw new Error("User ID and Conversation ID are required.");
+    const docRef = doc(db, `users/${userId}/conversations/${conversationId}`);
+    await updateDoc(docRef, {
+        messages: arrayUnion(message),
+        updatedAt: serverTimestamp(),
+    });
+}
+
+
+/**
+ * Listens for real-time updates to all conversations for a user.
+ * @param userId The user's ID.
+ * @param callback A function to be called with the updated list of conversations.
+ * @param onError A function to be called on error.
+ * @returns An unsubscribe function.
+ */
+export function listenToConversations(
+    userId: string, 
+    callback: (conversations: Conversation[]) => void, 
+    onError: (error: FirestoreError) => void
+): Unsubscribe {
+    if (!userId) {
+        onError({ code: 'invalid-argument', message: 'User ID is required.' } as FirestoreError);
+        return () => {};
+    }
+
+    const q = query(collection(db, `users/${userId}/conversations`));
+
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const conversations: Conversation[] = [];
+        querySnapshot.forEach((doc) => {
+            const data = doc.data() as DocumentData;
+            conversations.push({
+                id: doc.id,
+                messages: data.messages || [],
+                createdAt: data.createdAt,
+                updatedAt: data.updatedAt,
+            } as Conversation);
+        });
+        // Sort by most recently updated
+        conversations.sort((a, b) => b.updatedAt.toMillis() - a.updatedAt.toMillis());
+        callback(conversations);
+    }, (error) => {
+        console.error("Error listening to conversations:", error);
         onError(error);
     });
 
