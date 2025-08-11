@@ -18,8 +18,9 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification, signOut } from "firebase/auth";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { Checkbox } from "../ui/checkbox";
 import { useRouter } from "next/navigation";
 
@@ -55,9 +56,32 @@ export default function SignupForm() {
     setIsSubmitting(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-      await updateProfile(userCredential.user, { displayName: values.name });
+      const user = userCredential.user;
       
-      await sendEmailVerification(userCredential.user);
+      // Update Firebase Auth profile
+      await updateProfile(user, { displayName: values.name });
+
+      // Create user document in Firestore
+      const [firstName, ...lastNameParts] = values.name.split(' ');
+      const lastName = lastNameParts.join(' ');
+      
+      const trialEndDate = new Date();
+      trialEndDate.setDate(trialEndDate.getDate() + 14);
+
+      await setDoc(doc(db, "users", user.uid), {
+        first_name: firstName,
+        last_name: lastName,
+        email: user.email,
+        plan: 'free',
+        plan_start_date: serverTimestamp(),
+        plan_end_date: null,
+        trial_start_date: serverTimestamp(),
+        trial_end_date: trialEndDate,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      
+      await sendEmailVerification(user);
       
       await signOut(auth);
 
@@ -72,7 +96,9 @@ export default function SignupForm() {
       toast({
         variant: "destructive",
         title: "Uh oh! Something went wrong.",
-        description: error.message,
+        description: error.code === 'auth/email-already-in-use' 
+            ? 'This email is already associated with an account.' 
+            : error.message,
       });
     } finally {
         setIsSubmitting(false);

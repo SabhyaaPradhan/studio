@@ -63,7 +63,8 @@ function docToProfile(doc: DocumentData): UserProfile {
 export function listenToUser(userId: string, callback: (profile: UserProfile | null) => void, onError?: (error: FirestoreError) => void): Unsubscribe {
     if (!userId) {
         const error = { code: 'invalid-argument', message: 'User ID is required.' } as FirestoreError;
-        onError?.(error);
+        // Don't call onError for this, as it's an expected pre-auth state.
+        console.warn(error.message);
         return () => {};
     }
     const docRef = doc(db, "users", userId);
@@ -72,13 +73,12 @@ export function listenToUser(userId: string, callback: (profile: UserProfile | n
         if (docSnap.exists()) {
             callback(docToProfile(docSnap));
         } else {
-            const profileNotFoundError = { code: 'not-found', message: 'No such user document!' } as FirestoreError;
-            console.warn(profileNotFoundError.message);
-            onError?.(profileNotFoundError);
+            console.warn(`User document not found for uid: ${userId}. This is expected for new users.`);
             callback(null);
         }
     }, (error) => {
         console.error("Error listening to user profile: ", error);
+        // Only call the provided onError for actual database/permission errors
         onError?.(error);
         callback(null);
     });
