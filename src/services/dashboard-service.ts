@@ -88,13 +88,12 @@ const generateConfidenceChartData = (): ChartData<{ day: string; confidence: num
 
 const generateActivityFeed = (): Activity[] => {
     const activities: Activity[] = [
-        { icon: MessageSquare, text: `New AI reply generated to user '#${getRandomInt(1000,9999)}'`, time: "2m ago" },
-        { icon: BrainCircuit, text: "Knowledge source 'Product FAQ.pdf' was updated", time: "1h ago" },
-        { icon: Settings, text: "Your profile information was updated", time: "3h ago" },
-        { icon: DollarSign, text: "Your plan has been upgraded to 'Pro'", time: "1d ago" },
+        { icon: MessageSquare, text: `AI replied to user '#${getRandomInt(1000,9999)}'`, time: "2 minutes ago" },
+        { icon: BrainCircuit, text: "Knowledge source 'Product FAQ.pdf' was updated.", time: "1 hour ago" },
+        { icon: DollarSign, text: "Your plan has been upgraded to 'Pro'.", time: "1 day ago" },
+        { icon: Settings, text: "Your profile information was updated.", time: "3 days ago" },
     ];
-    // Randomize order a bit
-    return activities.sort(() => Math.random() - 0.5);
+    return activities;
 };
 
 const generateAnnouncements = (): Announcement[] => {

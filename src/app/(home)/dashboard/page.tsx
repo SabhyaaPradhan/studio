@@ -281,7 +281,7 @@ export default function DashboardPage() {
                                     <div className="p-2 bg-secondary rounded-full">
                                         <item.icon className="h-5 w-5 text-muted-foreground" />
                                     </div>
-                                    <div>
+                                    <div className="flex-1">
                                         <p className="text-sm">{item.text}</p>
                                         <p className="text-xs text-muted-foreground">{item.time}</p>
                                     </div>
