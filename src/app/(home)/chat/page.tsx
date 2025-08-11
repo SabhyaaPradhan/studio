@@ -132,7 +132,7 @@ export default function ChatPage() {
 
   const activeConversation = conversations.find(c => c.id === currentConversationId);
   const usageStats = {
-      used: activeConversation?.messages.filter(m => m.role === 'model').length || 0,
+      used: conversations.reduce((acc, curr) => acc + curr.messages.filter(m => m.role === 'model').length, 0),
       limit: userProfile?.plan === 'starter' ? 100 : -1, // -1 for unlimited
   };
 
