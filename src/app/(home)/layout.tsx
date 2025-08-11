@@ -265,7 +265,8 @@ export default function AuthenticatedLayout({
   }
 
   const navLinks = [
-      { href: "/home", label: "Home", icon: Home },
+      { href: "/dashboard", label: "Dashboard", icon: BarChartBig },
+      { href: "/chat", label: "Chat", icon: MessageSquare },
       { href: "/billing", label: "Billing", icon: CreditCard },
       { href: "/settings", label: "Settings", icon: Settings },
       { href: "/support", label: "FAQ", icon: HelpCircle },
@@ -338,17 +339,12 @@ export default function AuthenticatedLayout({
                             <Menu className="w-6 h-6" />
                         </Button>
                     </SheetTrigger>
-                    <SheetContent ref={mobileMenuRef}>
-                        <SheetHeader className="flex flex-row justify-between items-center border-b pb-4 px-4">
+                    <SheetContent ref={mobileMenuRef} className="p-0">
+                         <SheetHeader className="flex flex-row justify-between items-center border-b p-4">
                             <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
-                            <Link href="/dashboard" className="flex items-center gap-2" onClick={() => setMobileMenuOpen(false)}>
+                             <Link href="/dashboard" className="flex items-center gap-2" onClick={() => setMobileMenuOpen(false)}>
                                 <span className="text-xl font-bold text-primary">Savrii</span>
                             </Link>
-                            <SheetClose asChild>
-                                <Button variant="ghost" size="icon">
-                                    <X className="h-6 w-6" />
-                                </Button>
-                            </SheetClose>
                         </SheetHeader>
                         <nav className="flex flex-col gap-2 mt-8 p-4">
                             {navLinks.map(link => (
@@ -365,6 +361,12 @@ export default function AuthenticatedLayout({
                                 </div>
                             ))}
                         </nav>
+                         <div className="p-4 mt-auto border-t">
+                             <Button variant="outline" className="w-full justify-start" onClick={handleLogout}>
+                                 <LogOut className="mr-2 h-4 w-4" />
+                                 Logout
+                             </Button>
+                         </div>
                     </SheetContent>
                 </Sheet>
             </div>
