@@ -214,17 +214,23 @@ export default function AuthenticatedLayout({
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
-  const shouldShowSidebar = !['/home', '/billing', '/settings', '/support', '/contact'].includes(pathname);
+  const pagesWithSidebar = ['/dashboard', '/chat', '/analytics', '/integrations', '/custom-prompts', '/brand-voice', '/prompt-library', '/daily-summary', '/collaboration', '/lead-capture', '/export', '/real-time-analytics', '/api-access', '/workflow-builder', '/custom-model', '/security', '/white-label', '/webhooks'];
+  const shouldShowSidebar = pagesWithSidebar.includes(pathname);
 
   // MOCK: In a real app, this would come from your user's data
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
-        const unsubscribe = listenToUser(user.uid, setUserProfile, (err) => {
+        const unsubscribe = listenToUser(user.uid, (profile) => {
+             setUserProfile(profile);
+        }, (err) => {
             console.error("Layout: Failed to listen to user profile.", err);
+            setUserProfile(null);
         });
         return () => unsubscribe();
+    } else {
+        setUserProfile(null);
     }
   }, [user]);
 
@@ -284,6 +290,11 @@ export default function AuthenticatedLayout({
                 ) : (
                     <Link href="/dashboard" className="font-semibold text-lg flex items-center gap-2 text-primary">
                        <span>Savrii</span>
+                    </Link>
+                )}
+                 {shouldShowSidebar && (
+                    <Link href="/dashboard" className="font-semibold text-lg items-center gap-2 text-primary hidden md:flex">
+                        <span>Savrii</span>
                     </Link>
                 )}
             </div>
@@ -369,9 +380,7 @@ export default function AuthenticatedLayout({
               <SidebarContent>
                 <SidebarMenu>
                   <div className="p-2 mb-2">
-                      <Link href="/dashboard" className="font-semibold text-lg flex items-center gap-2 text-primary">
-                          <span>Savrii</span>
-                      </Link>
+                     <SidebarTrigger className="md:flex hidden" />
                   </div>
 
                   <NavMenuItem href="/dashboard" icon={BarChartBig} label="Dashboard" plan={userPlan} />
@@ -409,7 +418,7 @@ export default function AuthenticatedLayout({
                       {userProfile ? (
                         <p className='text-muted-foreground capitalize'>{userProfile.plan}</p>
                       ) : (
-                        <Skeleton className="h-4 w-1/2 mt-1" />
+                        <Skeleton className="h-4 w-20 mt-1" />
                       )}
                   </div>
                   <SidebarMenu>

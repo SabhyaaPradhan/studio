@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
@@ -104,15 +105,10 @@ export default function DashboardPage() {
                 }
             }, (err) => {
                 if (active) {
-                    // Only set error for actual DB errors, not for not-found during init
-                    if (err.code !== 'not-found') {
-                        setError(err.message || "Failed to listen to user profile.");
-                    } else {
-                        // If profile is not found, we can still continue loading other parts
-                        dataStatus.userProfile = true;
-                        checkCompletion();
-                    }
+                    setError(err.message || "Failed to listen to user profile.");
                 }
+                 dataStatus.userProfile = true; // Mark as complete even on error to avoid hanging
+                 checkCompletion();
             });
 
             // Real-time Activity Data
@@ -227,7 +223,7 @@ export default function DashboardPage() {
         return <div className="flex items-center justify-center h-screen"><ErrorDisplay error={error} /></div>;
     }
 
-    if (!staticData || !graphs || !activities) { // userProfile can be null but we handle it
+    if (!staticData || !graphs || !activities) {
         return <div className="flex items-center justify-center h-screen"><p>No data available.</p></div>;
     }
 
@@ -235,7 +231,7 @@ export default function DashboardPage() {
         <div ref={containerRef} className="flex-1 space-y-12 p-4 pt-6 md:p-8">
             <div className="space-y-2">
                 <h2 data-animate="welcome-title" className="text-3xl md:text-4xl font-bold tracking-tight">
-                    Welcome back, <span className="text-primary">{userProfile?.first_name || user?.displayName || 'User'}</span>!
+                    Welcome back, <span className="text-primary">{userProfile?.first_name || user?.displayName?.split(' ')[0] || 'User'}</span>!
                 </h2>
                 <p data-animate="welcome-desc" className="text-lg text-muted-foreground">Here’s your account overview for today.</p>
             </div>
