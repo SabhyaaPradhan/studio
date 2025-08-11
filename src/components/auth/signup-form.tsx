@@ -20,7 +20,7 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { auth, db } from "@/lib/firebase";
 import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification, signOut } from "firebase/auth";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
 import { Checkbox } from "../ui/checkbox";
 import { useRouter } from "next/navigation";
 
@@ -65,20 +65,21 @@ export default function SignupForm() {
       const [firstName, ...lastNameParts] = values.name.split(' ');
       const lastName = lastNameParts.join(' ');
       
+      const now = new Date();
       const trialEndDate = new Date();
-      trialEndDate.setDate(trialEndDate.getDate() + 14);
+      trialEndDate.setDate(now.getDate() + 14);
 
       await setDoc(doc(db, "users", user.uid), {
         first_name: firstName,
         last_name: lastName,
         email: user.email,
         plan: 'starter',
-        plan_start_date: serverTimestamp(),
+        plan_start_date: now.toISOString(),
         plan_end_date: null,
-        trial_start_date: serverTimestamp(),
-        trial_end_date: trialEndDate,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        trial_start_date: now.toISOString(),
+        trial_end_date: trialEndDate.toISOString(),
+        createdAt: now.toISOString(),
+        updatedAt: now.toISOString(),
       });
       
       await sendEmailVerification(user);

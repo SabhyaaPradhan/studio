@@ -1,7 +1,7 @@
 
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, initializeFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   "projectId": "savrii-ai-assistant",
@@ -14,6 +14,12 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+
+// To avoid issues with server-side rendering, we initialize Firestore on the client side.
+initializeFirestore(app, {
+  ignoreUndefinedProperties: true,
+});
+
 const auth = getAuth(app);
 const db = getFirestore(app);
 
