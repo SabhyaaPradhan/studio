@@ -283,7 +283,7 @@ export default function ChatPage() {
                         <CardHeader>
                             <CardTitle className="text-lg">Usage</CardTitle>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="p-6">
                             {userProfile ? (
                                 <>
                                 <div className="text-sm text-muted-foreground mb-2">
