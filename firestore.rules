@@ -4,20 +4,29 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users can read and update their own user document.
-    // User creation/deletion is handled by other services (e.g. Firebase Auth triggers).
-    match /users/{userId} {
-      allow read, update: if request.auth.uid == userId;
+    // Helper function to check ownership
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
     }
 
-    // Users can manage their own graphs.
-    match /users/{userId}/graphs/{graphId} {
-        allow read, write, create, delete, list: if request.auth.uid == userId;
+    // Users can only read and update their own profile
+    match /users/{userId} {
+      allow read, update: if isOwner(userId);
+      allow create, delete: if false; // Disallow client-side creation/deletion
+      
+      // Users can only access their own subcollections
+      match /graphs/{graphId} {
+        allow read, write: if isOwner(userId);
+      }
+      
+      match /aiRequests/{requestId} {
+        allow read, write: if isOwner(userId);
+      }
     }
-    
-    // Users can manage their own AI requests.
-    match /users/{userId}/aiRequests/{requestId} {
-        allow read, write, create, delete, list: if request.auth.uid == userId;
+
+    // Deny all other access by default
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

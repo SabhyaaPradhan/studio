@@ -9,7 +9,9 @@ import {
     onSnapshot,
     Timestamp,
     DocumentData,
-    collectionGroup
+    collectionGroup,
+    Unsubscribe,
+    FirestoreError
 } from 'firebase/firestore';
 
 const db = getFirestore(app);
@@ -42,6 +44,7 @@ export interface AiRequest {
  * @returns The new document reference.
  */
 export async function addGraph(userId: string, title: string, data: any) {
+    if (!userId) throw new Error("User ID is required to add a graph.");
     try {
         const docRef = await addDoc(collection(db, "users", userId, "graphs"), {
             title: title,
@@ -64,6 +67,7 @@ export async function addGraph(userId: string, title: string, data: any) {
  * @returns The new document reference.
  */
 export async function addAiRequest(userId: string, input: string | object, output: string | object) {
+    if (!userId) throw new Error("User ID is required to add an AI request.");
     try {
         const docRef = await addDoc(collection(db, "users", userId, "aiRequests"), {
             input: input,
@@ -81,9 +85,14 @@ export async function addAiRequest(userId: string, input: string | object, outpu
  * Listens for real-time updates to a user's graphs.
  * @param userId The ID of the user whose graphs to listen for.
  * @param callback A function to be called with the updated list of graphs.
+ * @param onError A function to be called when an error occurs.
  * @returns An unsubscribe function to stop listening for updates.
  */
-export function listenToGraphs(userId: string, callback: (graphs: Graph[]) => void) {
+export function listenToGraphs(userId: string, callback: (graphs: Graph[]) => void, onError: (error: FirestoreError) => void): Unsubscribe {
+    if (!userId) {
+        onError({ code: 'invalid-argument', message: 'User ID is required.' } as FirestoreError);
+        return () => {};
+    }
     const q = query(collection(db, "users", userId, "graphs"));
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -101,6 +110,7 @@ export function listenToGraphs(userId: string, callback: (graphs: Graph[]) => vo
         callback(graphs);
     }, (error) => {
         console.error("Error listening to graphs: ", error);
+        onError(error);
     });
 
     return unsubscribe;
@@ -110,9 +120,14 @@ export function listenToGraphs(userId: string, callback: (graphs: Graph[]) => vo
  * Listens for real-time updates to a user's AI requests.
  * @param userId The ID of the user whose AI requests to listen for.
  * @param callback A function to be called with the updated list of AI requests.
+ * @param onError A function to be called when an error occurs.
  * @returns An unsubscribe function to stop listening for updates.
  */
-export function listenToAiRequests(userId: string, callback: (requests: AiRequest[]) => void) {
+export function listenToAiRequests(userId: string, callback: (requests: AiRequest[]) => void, onError: (error: FirestoreError) => void): Unsubscribe {
+    if (!userId) {
+        onError({ code: 'invalid-argument', message: 'User ID is required.' } as FirestoreError);
+        return () => {};
+    }
     const q = query(collection(db, "users", userId, "aiRequests"));
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -129,6 +144,7 @@ export function listenToAiRequests(userId: string, callback: (requests: AiReques
         callback(requests);
     }, (error) => {
         console.error("Error listening to AI requests: ", error);
+        onError(error);
     });
 
     return unsubscribe;

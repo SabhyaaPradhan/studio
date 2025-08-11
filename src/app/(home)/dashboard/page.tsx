@@ -53,66 +53,62 @@ export default function DashboardPage() {
         }
 
         let active = true;
-        let graphListener: (() => void) | undefined;
-        let userListener: (() => void) | undefined;
+        let graphUnsubscribe: (() => void) | undefined;
+        let userUnsubscribe: (() => void) | undefined;
         
-        let staticDataLoaded = false;
-        let graphsLoaded = false;
-        let userProfileLoaded = false;
+        const dataStatus = {
+            staticData: false,
+            graphs: false,
+            userProfile: false,
+        };
 
         const checkCompletion = () => {
-            if (staticDataLoaded && graphsLoaded && userProfileLoaded && active) {
+            if (active && dataStatus.staticData && dataStatus.graphs && dataStatus.userProfile) {
                 setLoading(false);
             }
         };
 
-        const fetchData = async () => {
-            try {
-                if (!active) return;
-                
-                // Static Data
-                getDashboardData().then(result => {
-                    if (active) {
-                        setStaticData(result);
-                        staticDataLoaded = true;
-                        checkCompletion();
-                    }
-                }).catch(err => {
-                    if (active) setError(err.message || "Failed to fetch dashboard data.");
-                });
-
-                // Real-time Graph Data
-                graphListener = listenToGraphs(user.uid, (newGraphs) => {
-                    if (active) {
-                        setGraphs(newGraphs);
-                        graphsLoaded = true;
-                        checkCompletion();
-                    }
-                });
-
-                // Real-time User Profile Data
-                userListener = listenToUser(user.uid, (profile) => {
-                    if (active) {
-                        setUserProfile(profile);
-                        userProfileLoaded = true;
-                        checkCompletion();
-                    }
-                });
-
-            } catch (err: any) {
+        const fetchData = () => {
+            // Static Data
+            getDashboardData().then(result => {
                 if (active) {
-                    setError(err.message || "An unexpected error occurred.");
-                    setLoading(false);
+                    setStaticData(result);
+                    dataStatus.staticData = true;
+                    checkCompletion();
                 }
-            }
+            }).catch(err => {
+                if (active) setError(err.message || "Failed to fetch dashboard data.");
+            });
+
+            // Real-time Graph Data
+            graphUnsubscribe = listenToGraphs(user.uid, (newGraphs) => {
+                if (active) {
+                    setGraphs(newGraphs);
+                    dataStatus.graphs = true;
+                    checkCompletion();
+                }
+            }, (err) => {
+                if (active) setError(err.message || "Failed to listen to graphs.");
+            });
+
+            // Real-time User Profile Data
+            userUnsubscribe = listenToUser(user.uid, (profile) => {
+                if (active) {
+                    setUserProfile(profile);
+                    dataStatus.userProfile = true;
+                    checkCompletion();
+                }
+            }, (err) => {
+                if (active) setError(err.message || "Failed to listen to user profile.");
+            });
         };
 
         fetchData();
         
         return () => {
             active = false;
-            if (graphListener) graphListener();
-            if (userListener) userListener();
+            if (graphUnsubscribe) graphUnsubscribe();
+            if (userUnsubscribe) userUnsubscribe();
         };
     }, [user]);
     
