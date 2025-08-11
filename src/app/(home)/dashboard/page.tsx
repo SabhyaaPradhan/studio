@@ -16,6 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { listenToGraphs, Graph, addGraph } from '@/services/firestore-service';
 import { listenToUser, UserProfile } from '@/services/user-service';
 import { format, differenceInDays, formatDistanceToNow } from 'date-fns';
+import { listenToActivities, Activity } from '@/services/activity-service';
 
 
 gsap.registerPlugin(ScrollTrigger);
@@ -42,7 +43,8 @@ export default function DashboardPage() {
     const containerRef = useRef<HTMLDivElement>(null);
     const [graphs, setGraphs] = useState<Graph[] | null>(null);
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-    const [staticData, setStaticData] = useState<Omit<DashboardData, 'stats' | 'charts'> | null>(null);
+    const [staticData, setStaticData] = useState<Omit<DashboardData, 'stats' | 'charts' | 'activityFeed'> | null>(null);
+    const [activities, setActivities] = useState<Activity[] | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -55,15 +57,17 @@ export default function DashboardPage() {
         let active = true;
         let graphUnsubscribe: (() => void) | undefined;
         let userUnsubscribe: (() => void) | undefined;
+        let activityUnsubscribe: (() => void) | undefined;
         
         const dataStatus = {
             staticData: false,
             graphs: false,
             userProfile: false,
+            activities: false,
         };
 
         const checkCompletion = () => {
-            if (active && dataStatus.staticData && dataStatus.graphs && dataStatus.userProfile) {
+            if (active && dataStatus.staticData && dataStatus.graphs && dataStatus.userProfile && dataStatus.activities) {
                 setLoading(false);
             }
         };
@@ -99,14 +103,23 @@ export default function DashboardPage() {
                     checkCompletion();
                 }
             }, (err) => {
-                // Ignore not-found errors for user profile, as it might not exist yet
                 if (active && err.code !== 'not-found') {
                     setError(err.message || "Failed to listen to user profile.");
                 } else if (active) {
-                    // Still need to mark as complete even if not found
                     dataStatus.userProfile = true;
                     checkCompletion();
                 }
+            });
+
+            // Real-time Activity Data
+            activityUnsubscribe = listenToActivities(user.uid, (newActivities) => {
+                if(active) {
+                    setActivities(newActivities);
+                    dataStatus.activities = true;
+                    checkCompletion();
+                }
+            }, (err) => {
+                if (active) setError(err.message || "Failed to listen to activities.");
             });
         };
 
@@ -116,6 +129,7 @@ export default function DashboardPage() {
             active = false;
             if (graphUnsubscribe) graphUnsubscribe();
             if (userUnsubscribe) userUnsubscribe();
+            if (activityUnsubscribe) activityUnsubscribe();
         };
     }, [user]);
     
@@ -204,7 +218,7 @@ export default function DashboardPage() {
         return <div className="flex items-center justify-center h-screen"><ErrorDisplay error={error} /></div>;
     }
 
-    if (!staticData || !graphs) { // userProfile can be null
+    if (!staticData || !graphs || !activities) { // userProfile can be null
         return <div className="flex items-center justify-center h-screen"><p>No data available.</p></div>;
     }
 
@@ -276,17 +290,21 @@ export default function DashboardPage() {
                     </CardHeader>
                     <CardContent>
                         <ul className="space-y-4 activity-feed">
-                            {staticData.activityFeed.map((item, index) => (
-                                <li key={index} className="flex items-start gap-4 activity-item">
-                                    <div className="p-2 bg-secondary rounded-full">
-                                        <item.icon className="h-5 w-5 text-muted-foreground" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="text-sm">{item.text}</p>
-                                        <p className="text-xs text-muted-foreground">{item.time}</p>
-                                    </div>
-                                </li>
-                            ))}
+                            {activities.length > 0 ? (
+                                activities.map((item) => (
+                                    <li key={item.id} className="flex items-start gap-4 activity-item">
+                                        <div className="p-2 bg-secondary rounded-full">
+                                            <item.icon className="h-5 w-5 text-muted-foreground" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="text-sm">{item.text}</p>
+                                            <p className="text-xs text-muted-foreground">{formatDistanceToNow(item.timestamp, { addSuffix: true })}</p>
+                                        </div>
+                                    </li>
+                                ))
+                            ) : (
+                                <p className="text-muted-foreground text-sm text-center pt-8">No recent activity.</p>
+                            )}
                         </ul>
                     </CardContent>
                 </Card>

@@ -13,12 +13,6 @@ type ChartData<T> = {
     data: T[];
 };
 
-type Activity = {
-    icon: Icon;
-    text: string;
-    time: string;
-};
-
 type Announcement = {
     type: 'feature' | 'tip';
     title: string;
@@ -34,7 +28,6 @@ export interface DashboardData {
         usage: ChartData<{ name: string; value: number }>;
         confidence: ChartData<{ day: string; confidence: number; count: number }>;
     };
-    activityFeed: Activity[];
     announcements: Announcement[];
 }
 
@@ -42,58 +35,6 @@ export interface DashboardData {
 
 const getRandomInt = (min: number, max: number) => {
     return Math.floor(Math.random() * (max - min + 1)) + min;
-};
-
-const generateRepliesToday = (): StatCardData => {
-    const replies = getRandomInt(30, 150);
-    const change = getRandomInt(-20, 20);
-    return {
-        value: replies,
-        change: `${change >= 0 ? '+' : ''}${change} from yesterday`,
-    };
-};
-
-const generateKnowledgeSources = (graphs: Graph[]): StatCardData => {
-    const sources = graphs.length;
-    // This logic can be improved to track changes over time
-    const change = `+0 this week`;
-    return {
-        value: sources,
-        change: change,
-    };
-}
-
-
-const generateUsageChartData = (): ChartData<{ name: string; value: number }> => {
-    return {
-        data: [
-            { name: 'General', value: getRandomInt(200, 600) },
-            { name: 'E-commerce', value: getRandomInt(100, 400) },
-            { name: 'Coaching', value: getRandomInt(100, 400) },
-            { name: 'SaaS Support', value: getRandomInt(50, 300) },
-        ],
-    };
-};
-
-const generateConfidenceChartData = (): ChartData<{ day: string; confidence: number; count: number }> => {
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    return {
-        data: days.map(day => ({
-            day,
-            confidence: getRandomInt(75, 98),
-            count: getRandomInt(5, 40),
-        })),
-    };
-}
-
-const generateActivityFeed = (): Activity[] => {
-    const activities: Activity[] = [
-        { icon: MessageSquare, text: `AI replied to user '#${getRandomInt(1000,9999)}'`, time: "2 minutes ago" },
-        { icon: BrainCircuit, text: "Knowledge source 'Product FAQ.pdf' was updated.", time: "1 hour ago" },
-        { icon: DollarSign, text: "Your plan has been upgraded to 'Pro'.", time: "1 day ago" },
-        { icon: Settings, text: "Your profile information was updated.", time: "3 days ago" },
-    ];
-    return activities;
 };
 
 const generateAnnouncements = (): Announcement[] => {
@@ -110,16 +51,15 @@ const generateAnnouncements = (): Announcement[] => {
  * Real-time data like plan and graph info will be fetched directly in the component.
  */
 export const getDashboardData = (): Promise<Omit<DashboardData, 'stats' | 'charts'>> => {
-    console.log("Fetching dashboard data...");
+    console.log("Fetching static dashboard data...");
 
     return new Promise((resolve) => {
         setTimeout(() => {
             const data = {
-                activityFeed: generateActivityFeed(),
                 announcements: generateAnnouncements(),
             };
             
-            console.log("Dashboard data fetched successfully.");
+            console.log("Static dashboard data fetched successfully.");
             resolve(data);
 
         }, getRandomInt(500, 1500)); // Simulate network latency

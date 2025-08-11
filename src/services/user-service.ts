@@ -24,6 +24,7 @@ export interface UserProfile {
     plan_end_date: string | null; // ISO string or null
     trial_start_date: string; // ISO string
     trial_end_date: string; // ISO string
+    updatedAt: string; // ISO string
 }
 
 
@@ -37,6 +38,7 @@ function docToProfile(doc: DocumentData): UserProfile {
     const plan_end_date = data.plan_end_date ? data.plan_end_date.toDate().toISOString() : null;
     const trial_start_date = data.trial_start_date?.toDate()?.toISOString() || new Date().toISOString();
     const trial_end_date = data.trial_end_date?.toDate()?.toISOString() || new Date().toISOString();
+    const updatedAt = data.updatedAt?.toDate()?.toISOString() || new Date().toISOString();
 
     const profile: UserProfile = {
         id: doc.id,
@@ -48,6 +50,7 @@ function docToProfile(doc: DocumentData): UserProfile {
         plan_end_date,
         trial_start_date,
         trial_end_date,
+        updatedAt,
     };
     return profile;
 }
@@ -63,7 +66,6 @@ function docToProfile(doc: DocumentData): UserProfile {
 export function listenToUser(userId: string, callback: (profile: UserProfile | null) => void, onError?: (error: FirestoreError) => void): Unsubscribe {
     if (!userId) {
         const error = { code: 'invalid-argument', message: 'User ID is required.' } as FirestoreError;
-        // Don't call onError for this, as it's an expected pre-auth state.
         console.warn(error.message);
         return () => {};
     }
@@ -79,7 +81,9 @@ export function listenToUser(userId: string, callback: (profile: UserProfile | n
     }, (error) => {
         console.error("Error listening to user profile: ", error);
         // Only call the provided onError for actual database/permission errors
-        onError?.(error);
+        if (onError) {
+            onError(error);
+        }
         callback(null);
     });
 
