@@ -5,43 +5,22 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Check } from "lucide-react";
 import { useState } from "react";
+import { getPlans, Currency } from '@/lib/plans';
 
-const plans = {
-    starter: {
-        name: "Starter",
-        price: "$0",
-        description: "For individuals getting started.",
-        features: ["100 queries / month", "Basic AI responses", "Email support", "1 integration", "Basic analytics"],
-        cta: "Current Plan"
-    },
-    pro: {
-        name: "Pro",
-        price: "$29",
-        description: "For small teams and startups.",
-        features: ["Unlimited queries", "Advanced AI responses", "Priority support", "All integrations", "Advanced analytics", "Custom prompts", "Brand voice training"],
-        cta: "Upgrade"
-    },
-    enterprise: {
-        name: "Enterprise",
-        price: "$99",
-        description: "For growing businesses.",
-        features: ["Unlimited queries", "Premium AI responses", "24/7 phone support", "All integrations", "Real-time analytics", "Custom prompts", "Brand voice training", "API access", "White-label options"],
-        cta: "Upgrade"
-    }
-};
-
-type PlanKey = keyof typeof plans;
+type PlanKey = 'starter' | 'pro' | 'enterprise';
 
 export default function BillingPage() {
     // In a real app, this would come from user's auth state
     const [currentPlan, setCurrentPlan] = useState<PlanKey>('starter');
+    
+    // For billing, we assume a fixed currency, e.g., USD, or fetch it from user settings.
+    const plans = getPlans("monthly", "USD");
 
     const getPlanCTA = (planName: string) => {
         const planKey = planName.toLowerCase() as PlanKey;
         if (planKey === currentPlan) {
             return "Current Plan";
         }
-        // Logic to determine if it's an upgrade or downgrade could go here
         return "Switch Plan";
     }
 
@@ -80,11 +59,11 @@ export default function BillingPage() {
                     <p className="text-muted-foreground">Upgrade your plan to unlock more features.</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
-                    {Object.values(plans).map(plan => (
+                    {plans.map(plan => (
                         <Card key={plan.name} className="flex flex-col h-full">
                             <CardHeader className="text-center">
                                 <CardTitle className="text-2xl">{plan.name}</CardTitle>
-                                <p className="text-4xl font-bold">{plan.price}<span className="text-lg font-normal text-muted-foreground">/mo</span></p>
+                                <p className="text-4xl font-bold">{plan.price}<span className="text-lg font-normal text-muted-foreground">{plan.priceDetail}</span></p>
                                 <CardDescription>{plan.description}</CardDescription>
                             </CardHeader>
                             <CardContent className="flex-grow">
