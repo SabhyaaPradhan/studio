@@ -5,14 +5,13 @@ import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { VariantProps, cva } from "class-variance-authority"
 import { PanelLeft } from "lucide-react"
+import Link from 'next/link'
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
-import { Skeleton } from "@/components/ui/skeleton"
 import {
   Tooltip,
   TooltipContent,
@@ -341,79 +340,72 @@ SidebarMenuItem.displayName = "SidebarMenuItem"
 
 
 const SidebarMenuButton = React.forwardRef<
-  HTMLButtonElement,
-  React.ComponentProps<"button"> & {
-    asChild?: boolean
-    isActive?: boolean
-    tooltip?: string | React.ReactNode;
+  HTMLButtonElement | HTMLAnchorElement,
+  (React.ComponentProps<"button"> | React.ComponentProps<typeof Link>) & {
+    isActive?: boolean;
+    tooltip?: React.ReactNode;
+    href?: string;
   }
 >(
   (
     {
-      asChild = false,
       isActive = false,
       tooltip,
       className,
       children,
+      href,
       ...props
     },
     ref
   ) => {
-    const Comp = asChild ? Slot : "button"
-    const { isMobile, state } = useSidebar()
-    const { state: sidebarState } = useSidebar()
+    const { isMobile, state: sidebarState } = useSidebar();
 
-    const button = (
-      <Comp
-        ref={ref}
-        data-sidebar="menu-button"
-        data-active={isActive}
-        className={cn("flex w-full items-center gap-3 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-primary transition-all duration-200 focus-visible:ring-2", 
+    const commonProps = {
+      'data-sidebar': "menu-button",
+      'data-active': isActive,
+      className: cn(
+        "flex w-full items-center gap-3 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-primary transition-all duration-200 focus-visible:ring-2", 
         "hover:bg-accent hover:text-accent-foreground",
         "active:bg-accent active:text-accent-foreground",
         "disabled:pointer-events-none disabled:opacity-50",
         "aria-disabled:pointer-events-none aria-disabled:opacity-50",
         "data-[active=true]:bg-primary data-[active=true]:font-medium data-[active=true]:text-primary-foreground",
-        sidebarState === 'collapsed' && 'justify-center',
+        sidebarState === 'collapsed' && 'justify-center h-10',
         className
-        )}
-        {...props}
-      >
-        {children}
-      </Comp>
-    )
-    
+      ),
+      ...props
+    };
+
     const icon = React.Children.toArray(children).find(
-        (child) => React.isValidElement(child) && child.type.displayName?.includes("Icon")
+      (child) => React.isValidElement(child) && (child.type as any).displayName?.includes('Icon')
     );
 
-    const content = <div className={cn("flex-1", sidebarState === 'collapsed' && "hidden")}>{children}</div>
-    
-    const iconOnly = React.Children.toArray(children).find(child => React.isValidElement(child) && (child.type as any).displayName?.includes('Icon'));
-    
-    const newChildren = sidebarState === 'collapsed' ? icon : children;
+    const buttonContent = (
+      <>
+        {React.Children.map(children, child => {
+          if (React.isValidElement(child) && typeof child.type !== 'string' && (child.type as any).displayName?.includes('Icon')) {
+            return React.cloneElement(child as React.ReactElement, { className: cn('h-5 w-5', (child.props as any).className) });
+          }
+          if (sidebarState === 'expanded') {
+            return child;
+          }
+          return null;
+        })}
+      </>
+    );
 
+    const button = href ? (
+      <Link href={href} {...commonProps} ref={ref as React.Ref<HTMLAnchorElement>}>
+        {buttonContent}
+      </Link>
+    ) : (
+      <button {...commonProps} ref={ref as React.Ref<HTMLButtonElement>}>
+        {buttonContent}
+      </button>
+    );
 
-    if (!tooltip) {
-      return (
-         <Comp
-            ref={ref}
-            data-sidebar="menu-button"
-            data-active={isActive}
-            className={cn("flex w-full items-center gap-3 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-primary transition-all duration-200 focus-visible:ring-2", 
-            "hover:bg-accent hover:text-accent-foreground",
-            "active:bg-accent active:text-accent-foreground",
-            "disabled:pointer-events-none disabled:opacity-50",
-            "aria-disabled:pointer-events-none aria-disabled:opacity-50",
-            "data-[active=true]:bg-primary data-[active=true]:font-medium data-[active=true]:text-primary-foreground",
-            sidebarState === 'collapsed' && 'justify-center h-10',
-            className
-            )}
-            {...props}
-         >
-           {newChildren}
-         </Comp>
-      )
+    if (!tooltip || sidebarState === 'expanded' || isMobile) {
+      return button;
     }
 
     return (
@@ -421,17 +413,13 @@ const SidebarMenuButton = React.forwardRef<
         <TooltipTrigger asChild>
           {button}
         </TooltipTrigger>
-        <TooltipContent
-          side="right"
-          align="center"
-          hidden={state !== "collapsed" || isMobile}
-        >
+        <TooltipContent side="right" align="center">
           {tooltip}
         </TooltipContent>
       </Tooltip>
-    )
+    );
   }
-)
+);
 SidebarMenuButton.displayName = "SidebarMenuButton"
 
 const SidebarMenuSub = React.forwardRef<
@@ -460,20 +448,18 @@ SidebarMenuSub.displayName = "SidebarMenuSub"
 const SidebarMenuSubItem = React.forwardRef<
   HTMLLIElement,
   React.ComponentProps<"li">
->(({ ...props }, ref) => <li ref={ref} {...props} />)
+>(({ ...props }, ref) => <li ref={ref} data-sidebar="menu-sub-item" {...props} />)
 SidebarMenuSubItem.displayName = "SidebarMenuSubItem"
 
 const SidebarMenuSubButton = React.forwardRef<
   HTMLAnchorElement,
   React.ComponentProps<"a"> & {
-    asChild?: boolean
     isActive?: boolean
   }
->(({ asChild = false, isActive, className, ...props }, ref) => {
-  const Comp = asChild ? Slot : "a"
+>(({ isActive, className, ...props }, ref) => {
 
   return (
-    <Comp
+    <a
       ref={ref}
       data-sidebar="menu-sub-button"
       data-active={isActive}

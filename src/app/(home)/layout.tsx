@@ -103,7 +103,6 @@ const NavMenuItem = ({
   label,
   plan,
   requiredPlan,
-  isSubItem = false,
   isDisabled = false,
 }: {
   href: string;
@@ -111,29 +110,25 @@ const NavMenuItem = ({
   label: string;
   plan?: UserPlan;
   requiredPlan?: 'pro' | 'enterprise';
-  isSubItem?: boolean;
   isDisabled?: boolean;
 }) => {
   const pathname = usePathname();
   const Icon = icon;
   const isLocked = plan && requiredPlan ? !hasPermission(plan, requiredPlan) : false;
-  // A link should be disabled if it's explicitly set to be, OR if it's a locked, plan-restricted link.
   const isEffectivelyDisabled = isDisabled || isLocked;
   const isActive = pathname === href;
 
   const itemContent = (
     <SidebarMenuButton
-      asChild
+      href={isEffectivelyDisabled ? '#' : href}
       isActive={isActive}
-      className={cn('h-10', isEffectivelyDisabled ? 'cursor-not-allowed opacity-60' : '')}
+      className={cn(isEffectivelyDisabled && 'cursor-not-allowed opacity-60')}
       tooltip={label}
       disabled={isEffectivelyDisabled}
     >
-      <Link href={isEffectivelyDisabled ? '#' : href}>
-        <Icon className="h-5 w-5" />
-        <span className="flex-1">{label}</span>
-        {plan && isLocked && <Lock className="ml-auto h-3.5 w-3.5" />}
-      </Link>
+      <Icon className="h-5 w-5" />
+      <span className="flex-1">{label}</span>
+      {plan && isLocked && <Lock className="ml-auto h-3.5 w-3.5" />}
     </SidebarMenuButton>
   );
 
@@ -143,6 +138,7 @@ const NavMenuItem = ({
     </SidebarMenuItem>
   );
 };
+
 
 const NavMenuCollapsible = ({
   icon,
@@ -185,16 +181,11 @@ const NavMenuCollapsible = ({
       <CollapsibleContent asChild>
         <SidebarMenuSub>
           {items.map((item) => (
-             <NavMenuItem
-                key={item.href}
-                href={item.href}
-                icon={() => <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/80 group-hover:bg-foreground" />}
-                label={item.label}
-                plan={plan}
-                requiredPlan={item.requiredPlan}
-                isDisabled={item.isDisabled}
-                isSubItem
-              />
+             <SidebarMenuSubItem key={item.href}>
+                 <SidebarMenuSubButton href={item.href} isActive={pathname === item.href}>
+                     {item.label}
+                 </SidebarMenuSubButton>
+             </SidebarMenuSubItem>
           ))}
         </SidebarMenuSub>
       </CollapsibleContent>
@@ -214,25 +205,29 @@ export default function AuthenticatedLayout({
   const { theme, setTheme } = useTheme();
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
 
-  const shouldShowSidebar = !['/home', '/billing', '/settings', '/support'].includes(pathname);
+  const shouldShowSidebar = !['/home', '/billing', '/settings', '/support'].some(p => pathname.startsWith(p));
 
-  // MOCK: In a real app, this would come from your user's data
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
+        setProfileLoading(true);
         const unsubscribe = listenToUser(user.uid, (profile) => {
              setUserProfile(profile);
+             setProfileLoading(false);
         }, (err) => {
             console.error("Layout: Failed to listen to user profile.", err);
             setUserProfile(null);
+            setProfileLoading(false);
         });
         return () => unsubscribe();
-    } else {
+    } else if (!loading) {
         setUserProfile(null);
+        setProfileLoading(false);
     }
-  }, [user]);
+  }, [user, loading]);
 
 
   const handleLogout = async () => {
@@ -261,7 +256,7 @@ export default function AuthenticatedLayout({
   }, [mobileMenuOpen]);
 
 
-  if (loading || !user) {
+  if (loading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader className="h-10 w-10 animate-spin" />
@@ -415,10 +410,10 @@ export default function AuthenticatedLayout({
               <SidebarFooter>
                   <div className='px-4 py-2 text-sm'>
                       <p className='font-semibold'>Current Plan</p>
-                      {userProfile ? (
-                        <p className='text-muted-foreground capitalize'>{userProfile.plan}</p>
-                      ) : (
+                      {profileLoading ? (
                         <Skeleton className="h-4 w-20 mt-1" />
+                      ) : (
+                        <p className='text-muted-foreground capitalize'>{userProfile?.plan || 'starter'}</p>
                       )}
                   </div>
                   <SidebarMenu>
@@ -433,16 +428,16 @@ export default function AuthenticatedLayout({
                             <AvatarFallback>{userProfile?.first_name?.[0] || user?.email?.[0]}</AvatarFallback>
                         </Avatar>
                         <div className="flex-1 overflow-hidden">
-                           {userProfile ? (
-                                <>
-                                    <p className="text-sm font-semibold truncate">{userProfile.first_name} {userProfile.last_name}</p>
-                                    <p className="text-xs text-muted-foreground truncate">{userProfile.email}</p>
-                                </>
-                           ) : (
+                           {profileLoading ? (
                                 <div className="space-y-1">
                                     <Skeleton className="h-4 w-3/4" />
                                     <Skeleton className="h-3 w-full" />
                                 </div>
+                           ) : (
+                                <>
+                                    <p className="text-sm font-semibold truncate">{userProfile?.first_name} {userProfile?.last_name}</p>
+                                    <p className="text-xs text-muted-foreground truncate">{userProfile?.email}</p>
+                                </>
                            )}
                         </div>
                         <Tooltip>
