@@ -136,7 +136,7 @@ const NavMenuItem = ({
 
   return (
     <SidebarMenuItem>
-      {isLocked ? <UpgradeTooltip>{children}</UpgradeTooltip> : itemContent}
+      {isLocked ? <UpgradeTooltip>{itemContent}</UpgradeTooltip> : itemContent}
     </SidebarMenuItem>
   );
 };
@@ -362,7 +362,7 @@ export default function AuthenticatedLayout({
             </div>
         </header>
         <div className="flex flex-1">
-          {showSidebar && userPlan && (
+          {showSidebar && (
             <Sidebar>
               <SidebarContent>
                 <SidebarMenu>
@@ -371,33 +371,43 @@ export default function AuthenticatedLayout({
                           <span>Savrii</span>
                       </Link>
                   </div>
-                  <NavMenuItem href="/dashboard" icon={BarChartBig} label="Dashboard" plan={userPlan} />
-                  <NavMenuItem href="/chat" icon={MessageSquare} label="Chat / AI Assistant" plan={userPlan} isDisabled={true} />
-                  <NavMenuItem href="/analytics" icon={BarChart2} label="Analytics" plan={userPlan} requiredPlan="pro" />
-                  <NavMenuItem href="/integrations" icon={GitMerge} label="Integrations" plan={userPlan} />
-                  
-                  <NavMenuCollapsible icon={FileText} label="Content Mgmt" plan={userPlan} items={[
-                      { href: "/custom-prompts", label: "Custom Prompts", requiredPlan: "pro" },
-                      { href: "/brand-voice", label: "Brand Voice Training", requiredPlan: "pro" },
-                      { href: "/prompt-library", label: "Prompt Library", requiredPlan: "pro", isDisabled: true },
-                  ]} />
-                  
-                  <NavMenuCollapsible icon={Users} label="Productivity" plan={userPlan} items={[
-                      { href: "/daily-summary", label: "Daily Summary", requiredPlan: "pro", isDisabled: true },
-                      { href: "/collaboration", label: "Collaboration Tools", requiredPlan: "pro", isDisabled: true },
-                      { href: "/lead-capture", label: "Lead Capture Options", requiredPlan: "pro", isDisabled: true },
-                      { href: "/export", label: "Export Conversations", requiredPlan: "pro", isDisabled: true },
-                  ]} />
+                  {userPlan ? (
+                    <>
+                      <NavMenuItem href="/dashboard" icon={BarChartBig} label="Dashboard" plan={userPlan} />
+                      <NavMenuItem href="/chat" icon={MessageSquare} label="Chat / AI Assistant" plan={userPlan} isDisabled={true} />
+                      <NavMenuItem href="/analytics" icon={BarChart2} label="Analytics" plan={userPlan} requiredPlan="pro" />
+                      <NavMenuItem href="/integrations" icon={GitMerge} label="Integrations" plan={userPlan} />
+                      
+                      <NavMenuCollapsible icon={FileText} label="Content Mgmt" plan={userPlan} items={[
+                          { href: "/custom-prompts", label: "Custom Prompts", requiredPlan: "pro" },
+                          { href: "/brand-voice", label: "Brand Voice Training", requiredPlan: "pro" },
+                          { href: "/prompt-library", label: "Prompt Library", requiredPlan: "pro", isDisabled: true },
+                      ]} />
+                      
+                      <NavMenuCollapsible icon={Users} label="Productivity" plan={userPlan} items={[
+                          { href: "/daily-summary", label: "Daily Summary", requiredPlan: "pro", isDisabled: true },
+                          { href: "/collaboration", label: "Collaboration Tools", requiredPlan: "pro", isDisabled: true },
+                          { href: "/lead-capture", label: "Lead Capture Options", requiredPlan: "pro", isDisabled: true },
+                          { href: "/export", label: "Export Conversations", requiredPlan: "pro", isDisabled: true },
+                      ]} />
 
-                  <NavMenuCollapsible icon={Settings} label="Advanced" plan={userPlan} items={[
-                      { href: "/real-time-analytics", label: "Real-Time Analytics", requiredPlan: "enterprise" },
-                      { href: "/api-access", label: "API Access", requiredPlan: "enterprise" },
-                      { href: "/workflow-builder", label: "Workflow Builder", requiredPlan: "enterprise", isDisabled: true },
-                      { href: "/custom-model", label: "Custom AI Model", requiredPlan: "enterprise", isDisabled: true },
-                      { href: "/security", label: "Security & Compliance", requiredPlan: "enterprise", isDisabled: true },
-                      { href: "/white-label", label: "White-label Settings", requiredPlan: "enterprise" },
-                      { href: "/webhooks", label: "Webhooks & Zapier", requiredPlan: "enterprise", isDisabled: true },
-                  ]} />
+                      <NavMenuCollapsible icon={Settings} label="Advanced" plan={userPlan} items={[
+                          { href: "/real-time-analytics", label: "Real-Time Analytics", requiredPlan: "enterprise" },
+                          { href: "/api-access", label: "API Access", requiredPlan: "enterprise" },
+                          { href: "/workflow-builder", label: "Workflow Builder", requiredPlan: "enterprise", isDisabled: true },
+                          { href: "/custom-model", label: "Custom AI Model", requiredPlan: "enterprise", isDisabled: true },
+                          { href: "/security", label: "Security & Compliance", requiredPlan: "enterprise", isDisabled: true },
+                          { href: "/white-label", label: "White-label Settings", requiredPlan: "enterprise" },
+                          { href: "/webhooks", label: "Webhooks & Zapier", requiredPlan: "enterprise", isDisabled: true },
+                      ]} />
+                    </>
+                  ) : (
+                    <div className="space-y-2 p-2">
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-full" />
+                    </div>
+                  )}
                 </SidebarMenu>
               </SidebarContent>
               <SidebarFooter>
@@ -410,9 +420,19 @@ export default function AuthenticatedLayout({
                       )}
                   </div>
                   <SidebarMenu>
-                      <NavMenuItem href="/billing" icon={CreditCard} label="Billing" plan={userPlan} />
-                      <NavMenuItem href="/settings" icon={Settings} label="Settings" plan={userPlan} />
-                      <NavMenuItem href="/support" icon={HelpCircle} label="Support" plan={userPlan} />
+                    {userPlan ? (
+                        <>
+                          <NavMenuItem href="/billing" icon={CreditCard} label="Billing" plan={userPlan} />
+                          <NavMenuItem href="/settings" icon={Settings} label="Settings" plan={userPlan} />
+                          <NavMenuItem href="/support" icon={HelpCircle} label="Support" plan={userPlan} />
+                        </>
+                    ) : (
+                        <div className="space-y-2 p-2">
+                           <Skeleton className="h-10 w-full" />
+                           <Skeleton className="h-10 w-full" />
+                           <Skeleton className="h-10 w-full" />
+                        </div>
+                    )}
                   </SidebarMenu>
                 <TooltipProvider>
                     <div className="flex items-center gap-3 p-3 rounded-lg border m-2">
