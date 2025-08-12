@@ -138,7 +138,7 @@ export default function ChatPage() {
 
 
   return (
-    <div className="flex flex-col h-[calc(100vh-5rem)]">
+    <div className="flex flex-col h-full">
         <div className="p-6 border-b">
             <div className="max-w-4xl mx-auto flex items-center justify-between">
                 <div>
@@ -319,7 +319,5 @@ const Avatar = ({ Icon, isUser = false }: { Icon: React.ElementType, isUser?: bo
         <Icon className="w-5 h-5" />
     </div>
 )
-
-    
 
     

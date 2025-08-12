@@ -371,7 +371,7 @@ export default function AuthenticatedLayout({
                 </Sheet>
             </div>
         </header>
-        <div className="flex flex-1">
+        <div className="flex flex-1 overflow-hidden">
           {shouldShowSidebar && (
             <Sidebar>
               <SidebarContent>
@@ -464,3 +464,5 @@ export default function AuthenticatedLayout({
     </SidebarProvider>
   );
 }
+
+    
