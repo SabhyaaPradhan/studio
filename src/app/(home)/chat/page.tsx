@@ -322,7 +322,6 @@ export default function ChatPage() {
                             )}
                         </CardContent>
                     </Card>
-                     <Button variant="secondary" onClick={() => setCurrentConversationId(null)}>New Conversation</Button>
                 </div>
             </div>
         </div>
@@ -342,5 +341,7 @@ const Avatar = ({ Icon, isUser = false }: { Icon: React.ElementType, isUser?: bo
     
 
 
+
+    
 
     
