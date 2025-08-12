@@ -265,7 +265,7 @@ export default function AuthenticatedLayout({
   }
 
   const navLinks = [
-      { href: "/dashboard", label: "Dashboard", icon: BarChartBig },
+      { href: "/home", label: "Home", icon: Home },
       { href: "/billing", label: "Billing", icon: CreditCard },
       { href: "/settings", label: "Settings", icon: Settings },
       { href: "/support", label: "FAQ", icon: HelpCircle },
@@ -464,4 +464,3 @@ export default function AuthenticatedLayout({
   );
 }
 
-    
