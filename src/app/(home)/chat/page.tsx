@@ -131,6 +131,7 @@ export default function ChatPage() {
   };
 
   const activeConversation = conversations.find(c => c.id === currentConversationId);
+  
   const usageStats = {
       used: conversations.reduce((acc, curr) => acc + curr.messages.filter(m => m.role === 'model').length, 0),
       limit: userProfile?.plan === 'pro' || userProfile?.plan === 'enterprise' ? -1 : 100,
@@ -319,7 +320,5 @@ const Avatar = ({ Icon, isUser = false }: { Icon: React.ElementType, isUser?: bo
         <Icon className="w-5 h-5" />
     </div>
 )
-
-    
 
     
