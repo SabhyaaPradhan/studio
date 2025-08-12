@@ -34,6 +34,7 @@ export default function ChatPage() {
   const [isSending, setIsSending] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -48,7 +49,16 @@ export default function ChatPage() {
 
   useEffect(() => {
     if (user) {
-        const unsubscribeUser = listenToUser(user.uid, setUserProfile);
+        setProfileLoading(true);
+        const unsubscribeUser = listenToUser(user.uid, (profile) => {
+            setUserProfile(profile);
+            setProfileLoading(false);
+        }, (err) => {
+            console.error("ChatPage: Failed to listen to user profile.", err);
+            setUserProfile(null);
+            setProfileLoading(false);
+        });
+
         const unsubscribeConversations = listenToConversations(
             user.uid, 
             (loadedConversations) => {
@@ -69,6 +79,8 @@ export default function ChatPage() {
             unsubscribeUser();
             unsubscribeConversations();
         };
+    } else if (!user && !profileLoading) {
+        setProfileLoading(false);
     }
   }, [user, toast, currentConversationId]);
 
@@ -285,7 +297,9 @@ export default function ChatPage() {
                             <CardTitle className="text-lg">Usage</CardTitle>
                         </CardHeader>
                         <CardContent className="p-6">
-                            {userProfile ? (
+                            {profileLoading ? (
+                                <Skeleton className="h-12 w-full" />
+                            ) : userProfile ? (
                                 <>
                                 <div className="text-sm text-muted-foreground mb-2">
                                     <span className="font-medium text-foreground">Monthly Usage:</span> {usageStats.used} / {
@@ -303,7 +317,9 @@ export default function ChatPage() {
                                 </div>
                                 )}
                                 </>
-                            ) : <Skeleton className="h-12 w-full" />}
+                            ) : (
+                                <p className="text-sm text-muted-foreground">Could not load usage data.</p>
+                            )}
                         </CardContent>
                     </Card>
                      <Button variant="secondary" onClick={() => setCurrentConversationId(null)}>New Conversation</Button>
@@ -320,5 +336,7 @@ const Avatar = ({ Icon, isUser = false }: { Icon: React.ElementType, isUser?: bo
         <Icon className="w-5 h-5" />
     </div>
 )
+
+    
 
     
