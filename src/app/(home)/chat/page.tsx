@@ -138,7 +138,7 @@ export default function ChatPage() {
 
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] flex-col">
+    <div className="flex flex-col h-[calc(100vh-5rem)]">
         <div className="p-6 border-b">
             <div className="max-w-4xl mx-auto flex items-center justify-between">
                 <div>
@@ -166,7 +166,7 @@ export default function ChatPage() {
                         <CardHeader>
                             <CardTitle>Conversation</CardTitle>
                         </CardHeader>
-                        <CardContent ref={scrollAreaRef} className="flex-1 space-y-4 mb-2 overflow-y-auto px-6 py-2">
+                        <CardContent ref={scrollAreaRef} className="flex-1 space-y-4 overflow-y-auto p-6">
                         {isLoadingHistory ? (
                             <div className="flex justify-center py-8">
                             <Loader2 className="w-6 h-6 animate-spin" />
@@ -181,7 +181,7 @@ export default function ChatPage() {
                             >
                                 {msg.role === 'model' && <Avatar Icon={Bot} />}
                                 <div
-                                className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                                className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg break-words ${
                                     msg.role === "user"
                                     ? "bg-primary text-primary-foreground"
                                     : "bg-secondary"
