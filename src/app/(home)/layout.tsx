@@ -266,7 +266,6 @@ export default function AuthenticatedLayout({
 
   const navLinks = [
       { href: "/dashboard", label: "Dashboard", icon: BarChartBig },
-      { href: "/chat", label: "Chat", icon: MessageSquare },
       { href: "/billing", label: "Billing", icon: CreditCard },
       { href: "/settings", label: "Settings", icon: Settings },
       { href: "/support", label: "FAQ", icon: HelpCircle },
