@@ -66,7 +66,7 @@ function docToProfile(doc: DocumentData): UserProfile {
 export function listenToUser(userId: string, callback: (profile: UserProfile | null) => void, onError?: (error: FirestoreError) => void): Unsubscribe {
     if (!userId) {
         const error = { code: 'invalid-argument', message: 'User ID is required.' } as FirestoreError;
-        console.warn(error.message);
+        if (onError) onError(error);
         return () => {};
     }
     const docRef = doc(db, "users", userId);
@@ -75,16 +75,15 @@ export function listenToUser(userId: string, callback: (profile: UserProfile | n
         if (docSnap.exists()) {
             callback(docToProfile(docSnap));
         } else {
-            console.warn(`User document not found for uid: ${userId}. This is expected for new users.`);
+            // This is a valid state for new users whose document hasn't been created yet.
+            // Calling back with null allows the UI to handle this state gracefully.
             callback(null);
         }
     }, (error) => {
         console.error("Error listening to user profile: ", error);
-        // Only call the provided onError for actual database/permission errors
         if (onError) {
             onError(error);
         }
-        callback(null);
     });
 
     return unsubscribe;
