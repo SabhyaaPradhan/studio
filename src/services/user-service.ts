@@ -19,7 +19,7 @@ export interface UserProfile {
     first_name: string;
     last_name: string;
     email: string;
-    plan: 'free' | 'pro' | 'enterprise';
+    plan: 'free' | 'pro' | 'enterprise' | 'starter';
     plan_start_date: string; // ISO string
     plan_end_date: string | null; // ISO string or null
     trial_start_date: string; // ISO string
@@ -31,26 +31,25 @@ export interface UserProfile {
 /**
  * Converts a Firestore document with Timestamps to a UserProfile object with ISO strings.
  */
-function docToProfile(doc: DocumentData): UserProfile {
-    const data = doc.data() as any;
-    // Basic validation to ensure timestamps are not null before converting
-    const plan_start_date = data.plan_start_date?.toDate()?.toISOString() || new Date().toISOString();
-    const plan_end_date = data.plan_end_date ? data.plan_end_date.toDate().toISOString() : null;
-    const trial_start_date = data.trial_start_date?.toDate()?.toISOString() || new Date().toISOString();
-    const trial_end_date = data.trial_end_date?.toDate()?.toISOString() || new Date().toISOString();
-    const updatedAt = data.updatedAt?.toDate()?.toISOString() || new Date().toISOString();
+function docToProfile(docSnap: DocumentData): UserProfile {
+    const data = docSnap.data();
+    if (!data) throw new Error("Document data is empty.");
+
+    // Helper to safely convert timestamp or return a default
+    const toISOString = (timestamp: any, defaultDate = new Date()) => 
+        timestamp instanceof Timestamp ? timestamp.toDate().toISOString() : defaultDate.toISOString();
 
     const profile: UserProfile = {
-        id: doc.id,
+        id: docSnap.id,
         first_name: data.first_name || '',
         last_name: data.last_name || '',
         email: data.email || '',
-        plan: data.plan || 'free',
-        plan_start_date,
-        plan_end_date,
-        trial_start_date,
-        trial_end_date,
-        updatedAt,
+        plan: data.plan || 'starter',
+        plan_start_date: toISOString(data.plan_start_date),
+        plan_end_date: data.plan_end_date ? toISOString(data.plan_end_date) : null,
+        trial_start_date: toISOString(data.trial_start_date),
+        trial_end_date: toISOString(data.trial_end_date),
+        updatedAt: toISOString(data.updatedAt),
     };
     return profile;
 }
@@ -73,7 +72,14 @@ export function listenToUser(userId: string, callback: (profile: UserProfile | n
     
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
         if (docSnap.exists()) {
-            callback(docToProfile(docSnap));
+            try {
+                const profile = docToProfile(docSnap);
+                callback(profile);
+            } catch (e: any) {
+                 if (onError) {
+                    onError({ code: 'internal', message: `Error parsing profile data: ${e.message}` } as FirestoreError);
+                }
+            }
         } else {
             // This is a valid state for new users whose document hasn't been created yet.
             // Calling back with null allows the UI to handle this state gracefully.
