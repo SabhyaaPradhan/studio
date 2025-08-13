@@ -19,7 +19,8 @@ import {
   Sparkles,
   Clock,
   Loader2,
-  User
+  User,
+  Plus
 } from "lucide-react";
 import { listenToConversations, createConversation, addMessageToConversation, Conversation, ChatMessage } from "@/services/firestore-service";
 import { listenToUser, UserProfile } from "@/services/user-service";
@@ -35,7 +36,7 @@ export default function ChatPage() {
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     if (scrollAreaRef.current) {
@@ -175,11 +176,15 @@ export default function ChatPage() {
                 {/* Main Chat Panel */}
                 <div className="flex-1 flex flex-col gap-6">
                     {/* Chat Interface */}
-                    <Card className="flex-1 flex flex-col">
-                        <CardHeader>
+                    <Card className="flex-1 flex flex-col h-full">
+                        <CardHeader className="flex-row items-center justify-between">
                             <CardTitle>Conversation</CardTitle>
+                             <Button variant="outline" size="sm" onClick={() => setCurrentConversationId(null)}>
+                                <Plus className="w-4 h-4 mr-2" />
+                                New Conversation
+                            </Button>
                         </CardHeader>
-                        <CardContent ref={scrollAreaRef} className="flex-1 space-y-4 overflow-y-auto p-6">
+                        <CardContent ref={scrollAreaRef} className="flex-1 space-y-4 overflow-y-auto p-6 h-0 flex-grow">
                         {isLoadingHistory ? (
                             <div className="flex justify-center py-8">
                             <Loader2 className="w-6 h-6 animate-spin" />
@@ -335,13 +340,5 @@ const Avatar = ({ Icon, isUser = false }: { Icon: React.ElementType, isUser?: bo
         <Icon className="w-5 h-5" />
     </div>
 )
-
-    
-
-    
-
-
-
-    
 
     
