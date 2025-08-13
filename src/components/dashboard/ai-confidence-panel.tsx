@@ -7,7 +7,7 @@ import { Lightbulb } from "lucide-react";
 import { useAuthContext } from "@/context/auth-context";
 import { listenToAnalyticsDaily, DailyAnalytics } from "@/services/firestore-service";
 import { useState, useEffect } from "react";
-import { format, subDays } from "date-fns";
+import { format } from "date-fns";
 import { Skeleton } from "../ui/skeleton";
 
 const ChartEmptyState = () => (
@@ -25,17 +25,18 @@ export function AIConfidencePanel() {
 
     useEffect(() => {
         if (user) {
+            setLoading(true);
             const unsubscribe = listenToAnalyticsDaily(user.uid, 7, (data) => {
                 const processedData = data
                     .map(d => {
-                        const totalConfidence = Object.entries(d.confidence_buckets).reduce((acc, [bucket, count]) => {
+                        const totalConfidence = Object.entries(d.confidence_buckets || {}).reduce((acc, [bucket, count]) => {
                             const bucketMid = (parseFloat(bucket.split('-')[0]) + parseFloat(bucket.split('-')[1])) / 2;
                             return acc + (bucketMid * count);
                         }, 0);
-                        const totalCount = Object.values(d.confidence_buckets).reduce((a,b) => a+b, 0);
+                        const totalCount = Object.values(d.confidence_buckets || {}).reduce((a,b) => a+b, 0);
                         
                         return { 
-                            date: format(new Date(d.date + 'T00:00:00Z'), 'MMM d'), 
+                            date: format(new Date(d.date), 'MMM d'), 
                             avg_confidence: totalCount > 0 ? (totalConfidence / totalCount) * 100 : 0
                         };
                     })
@@ -44,10 +45,13 @@ export function AIConfidencePanel() {
                 setLoading(false);
             }, (err) => {
                 console.error(err);
+                setChartData([]);
                 setLoading(false);
             });
 
             return () => unsubscribe();
+        } else if (!user) {
+            setLoading(false);
         }
     }, [user]);
 
@@ -65,7 +69,7 @@ export function AIConfidencePanel() {
             <CardContent className="h-48">
                 {loading ? (
                     <Skeleton className="h-full w-full" />
-                ) : chartData.length > 0 ? (
+                ) : chartData.length > 0 && chartData.some(d => d.avg_confidence > 0) ? (
                     <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                             <defs>
@@ -97,5 +101,3 @@ export function AIConfidencePanel() {
         </Card>
     );
 }
-
-    
