@@ -163,7 +163,7 @@ export default function DashboardPage() {
         })
     );
 
-    const stats = userProfile ? [
+    const stats = !loading && userProfile && realtimeAnalytics ? [
         { title: "AI Replies Today", value: realtimeAnalytics?.today_assistant_messages ?? 0, icon: Bot, change: "vs yesterday", link: "/chat", linkText: "View Chats" },
         { title: "Plan", value: userProfile.plan ? userProfile.plan.charAt(0).toUpperCase() + userProfile.plan.slice(1) : "Free", icon: DollarSign, change: "Manage your subscription", link: "/billing", linkText: "Upgrade" },
         { title: "Knowledge Sources", value: 0, icon: BrainCircuit, change: "Manage sources", link: "/content-management", linkText: "Manage" }, // Placeholder
@@ -272,7 +272,7 @@ export default function DashboardPage() {
                                         </div>
                                         <div className="flex-1">
                                             <p className="text-sm">{item.text}</p>
-                                            <p className="text-xs text-muted-foreground">{formatDistanceToNow(item.timestamp, { addSuffix: true })}</p>
+                                            <p className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(item.timestamp), { addSuffix: true })}</p>
                                         </div>
                                     </li>
                                 ))

@@ -15,14 +15,14 @@ import {
 import { app } from '@/lib/firebase';
 import { listenToChatMessages, ChatMessage } from './firestore-service';
 import { UserProfile, listenToUser } from './user-service';
-import { Icon, MessageSquare, BrainCircuit, Settings, DollarSign } from 'lucide-react';
+import { LucideIcon, MessageSquare, BrainCircuit, Settings, DollarSign } from 'lucide-react';
 
 const db = getFirestore(app);
 
 // --- Types ---
 export interface Activity {
     id: string;
-    icon: Icon;
+    icon: LucideIcon;
     text: string;
     timestamp: Date;
     source: 'chat-message' | 'user-updated';
@@ -45,8 +45,6 @@ export function listenToActivities(userId: string, callback: (activities: Activi
 
     let allActivities: Activity[] = [];
     const MAX_ACTIVITIES = 10;
-
-    const unsubs: Unsubscribe[] = [];
 
     const sortAndCallback = () => {
         allActivities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
