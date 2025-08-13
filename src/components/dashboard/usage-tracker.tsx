@@ -5,19 +5,68 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, Crown } from "lucide-react";
+import { useAuthContext } from "@/context/auth-context";
+import { useState, useEffect } from "react";
+import { listenToUser, UserProfile } from "@/services/user-service";
+import { listenToAnalyticsDaily, DailyAnalytics } from "@/services/firestore-service";
+import { Skeleton } from "../ui/skeleton";
 
 interface UsageTrackerProps {
     onUpgradeClick: () => void;
 }
 
+const getPlanLimit = (plan: UserProfile['plan']) => {
+    switch (plan) {
+        case 'starter':
+            return 100;
+        case 'pro':
+        case 'enterprise':
+            return 1000; // Assuming a higher limit for Pro/Enterprise, can be unlimited
+        default:
+            return 100;
+    }
+}
+
 export function UsageTracker({ onUpgradeClick }: UsageTrackerProps) {
-    // This data would come from a hook like useUsage()
-    const usage = {
-        replies_used: 72,
-        replies_limit: 100,
-        plan: "Starter"
-    };
-    const percentage = (usage.replies_used / usage.replies_limit) * 100;
+    const { user } = useAuthContext();
+    const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+    const [monthlyReplies, setMonthlyReplies] = useState(0);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (user) {
+            const unsubProfile = listenToUser(user.uid, (profile) => {
+                setUserProfile(profile);
+                if (loading) setLoading(false);
+            });
+
+            const today = new Date();
+            const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+
+            const unsubAnalytics = listenToAnalyticsDaily(user.uid, daysInMonth, (analytics) => {
+                const currentMonth = today.getMonth();
+                const currentYear = today.getFullYear();
+                
+                const currentMonthAnalytics = analytics.filter(day => {
+                    const dayDate = new Date(day.date);
+                    return dayDate.getMonth() === currentMonth && dayDate.getFullYear() === currentYear;
+                });
+
+                const totalReplies = currentMonthAnalytics.reduce((sum, day) => sum + (day.assistant_messages || 0), 0);
+                setMonthlyReplies(totalReplies);
+                if (loading) setLoading(false);
+            });
+
+            return () => {
+                unsubProfile();
+                unsubAnalytics();
+            }
+        }
+    }, [user, loading]);
+    
+    const planName = userProfile?.plan || '...';
+    const repliesLimit = userProfile ? getPlanLimit(userProfile.plan) : 100;
+    const percentage = repliesLimit > 0 ? (monthlyReplies / repliesLimit) * 100 : 0;
 
     return (
         <Card>
@@ -26,18 +75,29 @@ export function UsageTracker({ onUpgradeClick }: UsageTrackerProps) {
                     <TrendingUp className="w-5 h-5 text-primary" />
                     Usage This Month
                 </CardTitle>
-                <CardDescription>
-                    You are on the <span className="font-semibold text-primary">{usage.plan}</span> plan.
-                </CardDescription>
+                {loading ? (
+                    <Skeleton className="h-4 w-32 mt-1" />
+                ) : (
+                    <CardDescription>
+                        You are on the <span className="font-semibold text-primary capitalize">{planName}</span> plan.
+                    </CardDescription>
+                )}
             </CardHeader>
             <CardContent className="space-y-4">
-                <div>
-                    <div className="flex justify-between text-sm mb-1">
-                        <span className="font-medium">AI Replies</span>
-                        <span className="text-muted-foreground">{usage.replies_used} / {usage.replies_limit}</span>
+                {loading ? (
+                    <div className="space-y-2">
+                         <Skeleton className="h-4 w-full" />
+                         <Skeleton className="h-4 w-3/4" />
                     </div>
-                    <Progress value={percentage} />
-                </div>
+                ) : (
+                    <div>
+                        <div className="flex justify-between text-sm mb-1">
+                            <span className="font-medium">AI Replies</span>
+                            <span className="text-muted-foreground">{monthlyReplies} / {repliesLimit}</span>
+                        </div>
+                        <Progress value={percentage} />
+                    </div>
+                )}
                 <Button variant="outline" className="w-full" onClick={onUpgradeClick}>
                     <Crown className="w-4 h-4 mr-2" />
                     Upgrade to Pro
@@ -46,5 +106,3 @@ export function UsageTracker({ onUpgradeClick }: UsageTrackerProps) {
         </Card>
     );
 }
-
-    
