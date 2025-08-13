@@ -260,8 +260,8 @@ export default function Dashboard() {
                       </Button>
                     </div>
                   </div>
-                  <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-                    <p className="text-blue-900 dark:text-blue-100 whitespace-pre-wrap">
+                  <div className="bg-destructive/10 p-4 rounded-lg border border-destructive/20">
+                    <p className="text-destructive whitespace-pre-wrap">
                       {response}
                     </p>
                   </div>
@@ -356,5 +356,3 @@ export default function Dashboard() {
     </>
   );
 }
-
-    
