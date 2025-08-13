@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
@@ -36,6 +35,13 @@ const ErrorDisplay = ({ error }: { error: string }) => (
         <p className="text-sm text-center">{error}</p>
     </div>
 );
+
+const ChartEmptyState = () => (
+    <div className="h-full flex items-center justify-center text-muted-foreground">
+        <p>No data available yet.</p>
+    </div>
+);
+
 
 export default function DashboardPage() {
     const { user } = useAuthContext();
@@ -144,22 +150,27 @@ export default function DashboardPage() {
         .map(d => ({ date: format(new Date(d.date + 'T00:00:00Z'), 'MMM d'), replies: d.assistant_messages }))
         .reverse();
 
-    const pieChartData = dailyAnalytics.reduce((acc, day) => {
-        for (const [category, count] of Object.entries(day.by_category || {})) {
-            acc[category] = (acc[category] || 0) + count;
-        }
-        return acc;
-    }, {} as Record<string, number>);
-
-    const formattedPieData = Object.entries(pieChartData).map(([name, value]) => ({ name, value }));
+    const formattedPieData = Object.entries(
+        dailyAnalytics.reduce((acc, day) => {
+            for (const [category, count] of Object.entries(day.by_category || {})) {
+                acc[category] = (acc[category] || 0) + count;
+            }
+            return acc;
+        }, {} as Record<string, number>)
+    ).map(([name, value]) => ({ name, value }));
     
-    const confidenceData = dailyAnalytics.flatMap(day => 
-        Object.entries(day.confidence_buckets || {}).map(([bucket, count]) => ({
-            date: format(new Date(day.date + 'T00:00:00Z'), 'MMM d'),
-            bucket,
-            count
-        }))
+    // Data for Scatter Plot
+    const confidenceScatterData = dailyAnalytics.flatMap(day => 
+        Object.entries(day.confidence_buckets || {}).map(([bucket, count]) => {
+            const bucketMidpoint = (parseFloat(bucket.split('-')[0]) + parseFloat(bucket.split('-')[1])) / 2;
+            return {
+                x: new Date(day.date + 'T00:00:00Z').getTime(),
+                y: bucketMidpoint,
+                z: count
+            };
+        })
     );
+
 
     const stats = userProfile ? [
         { title: "AI Replies Today", value: realtimeAnalytics?.today_assistant_messages ?? 0, icon: Bot, change: "vs yesterday", link: "/chat", linkText: "View Chats" },
@@ -251,7 +262,7 @@ export default function DashboardPage() {
                                 </AreaChart>
                             </ResponsiveContainer>
                         ) : (
-                            <div className="h-full flex items-center justify-center text-muted-foreground">No reply data available for this period.</div>
+                           <ChartEmptyState />
                         )}
                     </CardContent>
                 </Card>
@@ -297,12 +308,12 @@ export default function DashboardPage() {
                                         <Cell key={`cell-${index}`} fill={PIE_CHART_COLORS[index % PIE_CHART_COLORS.length]} />
                                     ))}
                                 </Pie>
-                                <Tooltip />
+                                <Tooltip formatter={(value, name) => [`${value} queries`, name]} />
                                 <Legend />
                             </PieChart>
                         </ResponsiveContainer>
                       ) : (
-                       <div className="h-full flex items-center justify-center text-muted-foreground">No category data available.</div>
+                       <ChartEmptyState />
                       )}
                     </CardContent>
                 </Card>
@@ -313,20 +324,49 @@ export default function DashboardPage() {
                         <CardDescription>Confidence levels for responses over time.</CardDescription>
                     </CardHeader>
                      <CardContent className="h-80">
-                        {confidenceData.length > 0 ? (
+                        {confidenceScatterData.length > 0 ? (
                              <ResponsiveContainer width="100%" height="100%">
-                                <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                                    <CartesianGrid />
-                                    <XAxis type="category" dataKey="date" name="date" />
-                                    <YAxis type="category" dataKey="bucket" name="confidence" />
-                                    <ZAxis type="number" dataKey="count" range={[100, 800]} name="count" />
-                                    <Tooltip cursor={{ strokeDasharray: '3 3' }} />
+                                <ScatterChart margin={{ top: 20, right: 30, bottom: 20, left: 0 }}>
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis 
+                                        type="number" 
+                                        dataKey="x" 
+                                        name="date"
+                                        domain={['dataMin', 'dataMax']}
+                                        tickFormatter={(unixTime) => format(new Date(unixTime), 'MMM d')}
+                                        tick={{ fill: 'hsl(var(--muted-foreground))' }} 
+                                        tickLine={false} 
+                                        axisLine={false}
+                                    />
+                                    <YAxis 
+                                        type="number" 
+                                        dataKey="y" 
+                                        name="confidence" 
+                                        domain={[0, 1]}
+                                        tick={{ fill: 'hsl(var(--muted-foreground))' }} 
+                                        tickLine={false} 
+                                        axisLine={false}
+                                    />
+                                    <ZAxis type="number" dataKey="z" range={[50, 500]} name="count" />
+                                    <Tooltip 
+                                        cursor={{ strokeDasharray: '3 3' }} 
+                                        contentStyle={{
+                                            backgroundColor: 'hsl(var(--card))',
+                                            borderColor: 'hsl(var(--border))',
+                                            borderRadius: 'var(--radius)',
+                                        }}
+                                        formatter={(value: any, name: string) => {
+                                            if (name === 'date') return format(new Date(value), 'MMM d, yyyy');
+                                            if (name === 'confidence') return value.toFixed(2);
+                                            return value;
+                                        }}
+                                    />
                                     <Legend />
-                                    <Scatter name="Confidence Buckets" data={confidenceData} fill="hsl(var(--primary))" />
+                                    <Scatter name="Confidence Buckets" data={confidenceScatterData} fill="hsl(var(--primary))" />
                                 </ScatterChart>
                             </ResponsiveContainer>
                         ) : (
-                            <div className="h-full flex items-center justify-center text-muted-foreground">No confidence data available.</div>
+                            <ChartEmptyState />
                         )}
                     </CardContent>
                 </Card>
