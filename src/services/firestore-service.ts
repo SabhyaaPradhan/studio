@@ -1,4 +1,6 @@
 
+'use client';
+
 import { app } from '@/lib/firebase';
 import { 
     getFirestore, 
@@ -124,7 +126,7 @@ export async function writeChatMessageEvent(userId: string, message: ChatMessage
     });
 
     // 2. Update daily analytics
-    const dailyRef = doc(db, `users/${userId}/analytics/daily`, dateStr);
+    const dailyRef = doc(db, `users/${userId}/analytics/all-analytics/daily`, dateStr);
     const dailyUpdate: { [key: string]: any } = {
         total_messages: increment(1),
         total_tokens: increment(message.tokens || 0)
@@ -303,7 +305,7 @@ export function listenToAnalyticsDaily(userId: string, days: number, callback: (
     }
     const startDate = getUTCDateString(subDays(new Date(), days - 1));
     const q = query(
-        collection(db, `users/${userId}/analytics/daily`),
+        collection(db, `users/${userId}/analytics/all-analytics/daily`),
         where('date', '>=', startDate),
         orderBy('date', 'desc')
     );
