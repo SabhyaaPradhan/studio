@@ -16,7 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { listenToUser, UserProfile } from '@/services/user-service';
 import { format, subDays, differenceInDays, formatDistanceToNow } from 'date-fns';
 import { listenToActivities, Activity } from '@/services/activity-service';
-import { listenToAnalyticsDaily, listenToAnalyticsRealtime, DailyAnalytics, RealtimeAnalytics, addGraph } from '@/services/firestore-service';
+import { listenToAnalyticsDaily, listenToAnalyticsRealtime, DailyAnalytics, RealtimeAnalytics } from '@/services/firestore-service';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -73,6 +73,8 @@ export default function DashboardPage() {
             if (active) {
                 console.error(`Dashboard Error (${context}):`, err);
                 setError(err.message || `Failed to fetch ${context} data.`);
+                // Stop loading on first error
+                setLoading(false);
             }
         };
         
@@ -119,12 +121,12 @@ export default function DashboardPage() {
     }, [user]);
 
     useEffect(() => {
-        if (loading) return;
+        if (loading || error) return;
         const ctx = gsap.context(() => {
             // Animations can be re-enabled here if desired
         }, containerRef);
         return () => ctx.revert();
-    }, [loading]);
+    }, [loading, error]);
 
     const getTrialDaysLeft = () => {
         if (userProfile?.trial_end_date) {
@@ -223,30 +225,34 @@ export default function DashboardPage() {
                         <CardDescription>Assistant messages sent per day.</CardDescription>
                     </CardHeader>
                     <CardContent className="h-80">
-                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={lineChartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                                <defs>
-                                    <linearGradient id="colorReplies" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
-                                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                                <XAxis dataKey="date" tick={{ fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} />
-                                <YAxis allowDecimals={false} tick={{ fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} />
-                                <Tooltip
-                                    contentStyle={{
-                                        backgroundColor: 'hsl(var(--card))',
-                                        borderColor: 'hsl(var(--border))',
-                                        borderRadius: 'var(--radius)',
-                                    }}
-                                    labelStyle={{ color: 'hsl(var(--foreground))' }}
-                                    itemStyle={{ color: 'hsl(var(--primary))', fontWeight: 'bold' }}
-                                    formatter={(value: any) => [`${value} replies`, null]}
-                                />
-                                <Area type="monotone" dataKey="replies" stroke="hsl(var(--primary))" fill="url(#colorReplies)" strokeWidth={2} />
-                            </AreaChart>
-                        </ResponsiveContainer>
+                        {lineChartData.length > 0 ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={lineChartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                                    <defs>
+                                        <linearGradient id="colorReplies" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
+                                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                                    <XAxis dataKey="date" tick={{ fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} />
+                                    <YAxis allowDecimals={false} tick={{ fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} />
+                                    <Tooltip
+                                        contentStyle={{
+                                            backgroundColor: 'hsl(var(--card))',
+                                            borderColor: 'hsl(var(--border))',
+                                            borderRadius: 'var(--radius)',
+                                        }}
+                                        labelStyle={{ color: 'hsl(var(--foreground))' }}
+                                        itemStyle={{ color: 'hsl(var(--primary))', fontWeight: 'bold' }}
+                                        formatter={(value: any) => [`${value} replies`, null]}
+                                    />
+                                    <Area type="monotone" dataKey="replies" stroke="hsl(var(--primary))" fill="url(#colorReplies)" strokeWidth={2} />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="h-full flex items-center justify-center text-muted-foreground">No reply data available for this period.</div>
+                        )}
                     </CardContent>
                 </Card>
                  <Card data-animate="activity-card">
@@ -296,7 +302,7 @@ export default function DashboardPage() {
                             </PieChart>
                         </ResponsiveContainer>
                       ) : (
-                       <p className="text-muted-foreground text-center pt-16">No category data available.</p>
+                       <div className="h-full flex items-center justify-center text-muted-foreground">No category data available.</div>
                       )}
                     </CardContent>
                 </Card>
@@ -313,14 +319,14 @@ export default function DashboardPage() {
                                     <CartesianGrid />
                                     <XAxis type="category" dataKey="date" name="date" />
                                     <YAxis type="category" dataKey="bucket" name="confidence" />
-                                    <ZAxis type="number" dataKey="count" range={[100, 1000]} name="count" />
+                                    <ZAxis type="number" dataKey="count" range={[100, 800]} name="count" />
                                     <Tooltip cursor={{ strokeDasharray: '3 3' }} />
                                     <Legend />
                                     <Scatter name="Confidence Buckets" data={confidenceData} fill="hsl(var(--primary))" />
                                 </ScatterChart>
                             </ResponsiveContainer>
                         ) : (
-                            <p className="text-muted-foreground text-center pt-16">No confidence data available.</p>
+                            <div className="h-full flex items-center justify-center text-muted-foreground">No confidence data available.</div>
                         )}
                     </CardContent>
                 </Card>
@@ -378,5 +384,3 @@ export default function DashboardPage() {
         </div>
     );
 }
-
-    
