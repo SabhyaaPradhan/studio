@@ -36,7 +36,7 @@ export default function ChatPage() {
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
-  const [scrollAreaRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     if (scrollAreaRef.current) {
