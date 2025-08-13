@@ -43,6 +43,7 @@ export function listenToActivities(userId: string, callback: (activities: Activi
         return () => {};
     }
 
+    const unsubs: Unsubscribe[] = [];
     let allActivities: Activity[] = [];
     const MAX_ACTIVITIES = 10;
 
