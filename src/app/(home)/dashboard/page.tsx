@@ -37,8 +37,10 @@ const ErrorDisplay = ({ error }: { error: string }) => (
 );
 
 const ChartEmptyState = () => (
-    <div className="h-full flex items-center justify-center text-muted-foreground">
-        <p>No data available yet.</p>
+    <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground p-4">
+        <Bell className="h-8 w-8 mb-2" />
+        <p className="font-semibold">No Data Available Yet</p>
+        <p className="text-sm">As you use the chat, your analytics will appear here.</p>
     </div>
 );
 
@@ -48,7 +50,7 @@ export default function DashboardPage() {
     const containerRef = useRef<HTMLDivElement>(null);
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [activities, setActivities] = useState<Activity[] | null>(null);
-    const [dailyAnalytics, setDailyAnalytics] = useState<DailyAnalytics[]>([]);
+    const [dailyAnalytics, setDailyAnalytics] = useState<DailyAnalytics[] | null>(null);
     const [realtimeAnalytics, setRealtimeAnalytics] = useState<RealtimeAnalytics | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
@@ -61,12 +63,12 @@ export default function DashboardPage() {
 
         let active = true;
         const unsubs: (() => void)[] = [];
-
+        
         const dataStatus = {
-            dailyAnalytics: false,
-            realtimeAnalytics: false,
-            userProfile: false,
-            activities: false,
+            daily: false,
+            realtime: false,
+            profile: false,
+            activities: false
         };
 
         const checkCompletion = () => {
@@ -86,7 +88,7 @@ export default function DashboardPage() {
         unsubs.push(listenToUser(user.uid, (profile) => {
             if (active) {
                 setUserProfile(profile);
-                dataStatus.userProfile = true;
+                dataStatus.profile = true;
                 checkCompletion();
             }
         }, (err) => handleError("user profile", err)));
@@ -94,7 +96,7 @@ export default function DashboardPage() {
         unsubs.push(listenToAnalyticsDaily(user.uid, 7, (data) => {
             if (active) {
                 setDailyAnalytics(data);
-                dataStatus.dailyAnalytics = true;
+                dataStatus.daily = true;
                 checkCompletion();
             }
         }, (err) => handleError("daily analytics", err)));
@@ -102,7 +104,7 @@ export default function DashboardPage() {
         unsubs.push(listenToAnalyticsRealtime(user.uid, (data) => {
             if (active) {
                 setRealtimeAnalytics(data);
-                dataStatus.realtimeAnalytics = true;
+                dataStatus.realtime = true;
                 checkCompletion();
             }
         }, (err) => handleError("realtime analytics", err)));
@@ -127,49 +129,7 @@ export default function DashboardPage() {
         }, containerRef);
         return () => ctx.revert();
     }, [loading, error]);
-
-    const getTrialDaysLeft = () => {
-        if (userProfile?.trial_end_date) {
-            const trialEnd = new Date(userProfile.trial_end_date);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const days = differenceInDays(trialEnd, today);
-            return days >= 0 ? `${days} day(s)` : 'Ended';
-        }
-        return 'N/A';
-    };
-
-    const lineChartData = dailyAnalytics
-        .map(d => ({ date: format(new Date(d.date + 'T00:00:00Z'), 'MMM d'), replies: d.assistant_messages }))
-        .reverse();
-
-    const formattedPieData = Object.entries(
-        dailyAnalytics.reduce((acc, day) => {
-            for (const [category, count] of Object.entries(day.by_category || {})) {
-                acc[category] = (acc[category] || 0) + count;
-            }
-            return acc;
-        }, {} as Record<string, number>)
-    ).map(([name, value]) => ({ name, value }));
     
-    const confidenceScatterData = dailyAnalytics.flatMap(day => 
-        Object.entries(day.confidence_buckets || {}).map(([bucket, count]) => {
-            const bucketMidpoint = (parseFloat(bucket.split('-')[0]) + parseFloat(bucket.split('-')[1])) / 2;
-            return {
-                x: new Date(day.date + 'T00:00:00Z').getTime(),
-                y: bucketMidpoint,
-                z: count
-            };
-        })
-    );
-
-    const stats = !loading && userProfile && realtimeAnalytics ? [
-        { title: "AI Replies Today", value: realtimeAnalytics?.today_assistant_messages ?? 0, icon: Bot, change: "vs yesterday", link: "/chat", linkText: "View Chats" },
-        { title: "Plan", value: userProfile.plan ? userProfile.plan.charAt(0).toUpperCase() + userProfile.plan.slice(1) : "Free", icon: DollarSign, change: "Manage your subscription", link: "/billing", linkText: "Upgrade" },
-        { title: "Knowledge Sources", value: 0, icon: BrainCircuit, change: "Manage sources", link: "/content-management", linkText: "Manage" }, // Placeholder
-        { title: "Trial Ends In", value: getTrialDaysLeft(), icon: CalendarDays, change: `Ends on ${userProfile.trial_end_date ? format(new Date(userProfile.trial_end_date), 'MMM d, yyyy') : 'N/A'}`, link: "/billing", linkText: "View Plans" }
-    ] : [];
-
     if (loading) {
         return (
             <div className="flex-1 space-y-12 p-4 pt-6 md:p-8">
@@ -178,7 +138,7 @@ export default function DashboardPage() {
                     <Skeleton className="h-6 w-3/4" />
                 </div>
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                    {[...Array(4)].map((_, i) => <Card key={i}><CardContent className="p-6"><LoadingSkeleton /></CardContent></Card>)}
+                    {[...Array(4)].map((_, i) => <Card key={i}><CardContent className="p-6 h-36"><LoadingSkeleton /></CardContent></Card>)}
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <Card className="lg:col-span-2"><CardContent className="p-6 h-96"><Skeleton className="h-full w-full" /></CardContent></Card>
@@ -191,6 +151,49 @@ export default function DashboardPage() {
     if (error) {
         return <div className="flex items-center justify-center h-screen"><ErrorDisplay error={error} /></div>;
     }
+
+    // Data processing and chart variables are now safely calculated after loading and error checks.
+    const getTrialDaysLeft = () => {
+        if (userProfile?.trial_end_date) {
+            const trialEnd = new Date(userProfile.trial_end_date);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const days = differenceInDays(trialEnd, today);
+            return days >= 0 ? `${days} day(s)` : 'Ended';
+        }
+        return 'N/A';
+    };
+
+    const lineChartData = (dailyAnalytics || [])
+        .map(d => ({ date: format(new Date(d.date + 'T00:00:00Z'), 'MMM d'), replies: d.assistant_messages }))
+        .reverse();
+
+    const formattedPieData = Object.entries(
+        (dailyAnalytics || []).reduce((acc, day) => {
+            for (const [category, count] of Object.entries(day.by_category || {})) {
+                acc[category] = (acc[category] || 0) + count;
+            }
+            return acc;
+        }, {} as Record<string, number>)
+    ).map(([name, value]) => ({ name, value }));
+    
+    const confidenceScatterData = (dailyAnalytics || []).flatMap(day => 
+        Object.entries(day.confidence_buckets || {}).map(([bucket, count]) => {
+            const bucketMidpoint = (parseFloat(bucket.split('-')[0]) + parseFloat(bucket.split('-')[1])) / 2;
+            return {
+                x: new Date(day.date + 'T00:00:00Z').getTime(),
+                y: bucketMidpoint,
+                z: count
+            };
+        })
+    );
+
+    const stats = [
+        { title: "AI Replies Today", value: realtimeAnalytics?.today_assistant_messages ?? 0, icon: Bot, change: "vs yesterday", link: "/chat", linkText: "View Chats" },
+        { title: "Plan", value: userProfile?.plan ? userProfile.plan.charAt(0).toUpperCase() + userProfile.plan.slice(1) : "Free", icon: DollarSign, change: "Manage your subscription", link: "/billing", linkText: "Upgrade" },
+        { title: "Knowledge Sources", value: 0, icon: BrainCircuit, change: "Manage sources", link: "/content-management", linkText: "Manage" }, // Placeholder
+        { title: "Trial Ends In", value: getTrialDaysLeft(), icon: CalendarDays, change: `Ends on ${userProfile?.trial_end_date ? format(new Date(userProfile.trial_end_date), 'MMM d, yyyy') : 'N/A'}`, link: "/billing", linkText: "View Plans" }
+    ];
 
     return (
         <div ref={containerRef} className="flex-1 space-y-12 p-4 pt-6 md:p-8">
@@ -262,8 +265,8 @@ export default function DashboardPage() {
                         <CardTitle>Activity Feed</CardTitle>
                         <CardDescription>A log of recent account activities.</CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        <ul className="space-y-4 activity-feed">
+                    <CardContent className="h-80 overflow-y-auto">
+                        <ul className="space-y-4 activity-feed pr-2">
                             {activities && activities.length > 0 ? (
                                 activities.map((item) => (
                                     <li key={item.id} className="flex items-start gap-4 activity-item">
@@ -415,5 +418,7 @@ export default function DashboardPage() {
         </div>
     );
 }
+
+    
 
     
