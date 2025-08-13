@@ -10,14 +10,6 @@ import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { Skeleton } from "../ui/skeleton";
 
-const ChartEmptyState = () => (
-    <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground p-4">
-        <Lightbulb className="h-8 w-8 mb-2" />
-        <p className="font-semibold">Not Enough Data</p>
-        <p className="text-sm">Confidence scores will appear here after you generate a few responses.</p>
-    </div>
-);
-
 export function AIConfidencePanel() {
     const { user } = useAuthContext();
     const [chartData, setChartData] = useState<any[]>([]);
@@ -69,7 +61,7 @@ export function AIConfidencePanel() {
             <CardContent className="h-48">
                 {loading ? (
                     <Skeleton className="h-full w-full" />
-                ) : chartData.length > 0 && chartData.some(d => d.avg_confidence > 0) ? (
+                ) : (
                     <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                             <defs>
@@ -94,8 +86,6 @@ export function AIConfidencePanel() {
                             <Area type="monotone" dataKey="avg_confidence" stroke="hsl(var(--primary))" fill="url(#colorConfidence)" strokeWidth={2} />
                         </AreaChart>
                     </ResponsiveContainer>
-                ) : (
-                    <ChartEmptyState />
                 )}
             </CardContent>
         </Card>
