@@ -79,12 +79,10 @@ export default function DashboardPage() {
             if (active) {
                 console.error(`Dashboard Error (${context}):`, err);
                 setError(err.message || `Failed to fetch ${context} data.`);
-                // Stop loading on first error
                 setLoading(false);
             }
         };
         
-        // Listen to User Profile
         unsubs.push(listenToUser(user.uid, (profile) => {
             if (active) {
                 setUserProfile(profile);
@@ -93,7 +91,6 @@ export default function DashboardPage() {
             }
         }, (err) => handleError("user profile", err)));
 
-        // Listen to Daily Analytics (last 7 days)
         unsubs.push(listenToAnalyticsDaily(user.uid, 7, (data) => {
             if (active) {
                 setDailyAnalytics(data);
@@ -102,7 +99,6 @@ export default function DashboardPage() {
             }
         }, (err) => handleError("daily analytics", err)));
 
-        // Listen to Realtime Analytics
         unsubs.push(listenToAnalyticsRealtime(user.uid, (data) => {
             if (active) {
                 setRealtimeAnalytics(data);
@@ -111,7 +107,6 @@ export default function DashboardPage() {
             }
         }, (err) => handleError("realtime analytics", err)));
 
-        // Listen to Activities
         unsubs.push(listenToActivities(user.uid, (newActivities) => {
             if(active) {
                 setActivities(newActivities);
@@ -129,7 +124,6 @@ export default function DashboardPage() {
     useEffect(() => {
         if (loading || error) return;
         const ctx = gsap.context(() => {
-            // Animations can be re-enabled here if desired
         }, containerRef);
         return () => ctx.revert();
     }, [loading, error]);
@@ -145,7 +139,6 @@ export default function DashboardPage() {
         return 'N/A';
     };
 
-    // Chart Data Preparation
     const lineChartData = dailyAnalytics
         .map(d => ({ date: format(new Date(d.date + 'T00:00:00Z'), 'MMM d'), replies: d.assistant_messages }))
         .reverse();
@@ -159,7 +152,6 @@ export default function DashboardPage() {
         }, {} as Record<string, number>)
     ).map(([name, value]) => ({ name, value }));
     
-    // Data for Scatter Plot
     const confidenceScatterData = dailyAnalytics.flatMap(day => 
         Object.entries(day.confidence_buckets || {}).map(([bucket, count]) => {
             const bucketMidpoint = (parseFloat(bucket.split('-')[0]) + parseFloat(bucket.split('-')[1])) / 2;
@@ -170,7 +162,6 @@ export default function DashboardPage() {
             };
         })
     );
-
 
     const stats = userProfile ? [
         { title: "AI Replies Today", value: realtimeAnalytics?.today_assistant_messages ?? 0, icon: Bot, change: "vs yesterday", link: "/chat", linkText: "View Chats" },
@@ -424,3 +415,5 @@ export default function DashboardPage() {
         </div>
     );
 }
+
+    
