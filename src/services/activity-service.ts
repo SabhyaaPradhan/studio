@@ -13,8 +13,7 @@ import {
     collectionGroup
 } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
-import { Graph, listenToGraphs } from './firestore-service';
-import { AiRequest, listenToAiRequests } from './firestore-service';
+import { listenToChatMessages, ChatMessage } from './firestore-service';
 import { UserProfile, listenToUser } from './user-service';
 import { Icon, MessageSquare, BrainCircuit, Settings, DollarSign } from 'lucide-react';
 
@@ -26,7 +25,7 @@ export interface Activity {
     icon: Icon;
     text: string;
     timestamp: Date;
-    source: 'graph-created' | 'graph-updated' | 'ai-request' | 'user-updated';
+    source: 'chat-message' | 'user-updated';
 }
 
 // --- Activity Listener ---
@@ -45,59 +44,34 @@ export function listenToActivities(userId: string, callback: (activities: Activi
     }
 
     let allActivities: Activity[] = [];
+    const MAX_ACTIVITIES = 10;
 
     const unsubs: Unsubscribe[] = [];
 
-    // Listener for Graphs
-    const graphUnsub = listenToGraphs(userId, (graphs) => {
-        const graphActivities: Activity[] = graphs.flatMap(graph => {
-            const activities: Activity[] = [];
-            if (graph.createdAt) {
-                activities.push({
-                    id: `${graph.id}-created`,
-                    icon: BrainCircuit,
-                    text: `Knowledge source '${graph.title}' was created.`,
-                    timestamp: graph.createdAt.toDate(),
-                    source: 'graph-created'
-                });
-            }
-            // Check if updatedAt is different from createdAt
-            if (graph.updatedAt && graph.createdAt && graph.updatedAt.toMillis() !== graph.createdAt.toMillis()) {
-                 activities.push({
-                    id: `${graph.id}-updated`,
-                    icon: BrainCircuit,
-                    text: `Knowledge source '${graph.title}' was updated.`,
-                    timestamp: graph.updatedAt.toDate(),
-                    source: 'graph-updated'
-                });
-            }
-            return activities;
-        });
+    const sortAndCallback = () => {
+        allActivities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+        callback(allActivities.slice(0, MAX_ACTIVITIES));
+    };
 
-        // Filter out old graph activities and add new ones
-        allActivities = allActivities.filter(a => !a.source.startsWith('graph-'));
-        allActivities.push(...graphActivities);
+    // Listener for Chat Messages
+    const chatUnsub = listenToChatMessages(userId, (messages) => {
+        const chatActivities: Activity[] = messages
+            .filter(msg => msg.role === 'model') // Only show AI replies
+            .map(msg => ({
+                id: msg.id,
+                icon: MessageSquare,
+                text: `New AI reply generated to a user.`,
+                timestamp: new Date(msg.createdAt),
+                source: 'chat-message'
+            }));
+
+        allActivities = allActivities.filter(a => a.source !== 'chat-message');
+        allActivities.push(...chatActivities);
         sortAndCallback();
 
     }, onError);
-    unsubs.push(graphUnsub);
+    unsubs.push(chatUnsub);
 
-    // Listener for AI Requests
-    const aiRequestUnsub = listenToAiRequests(userId, (requests) => {
-        const requestActivities: Activity[] = requests.map(req => ({
-            id: req.id,
-            icon: MessageSquare,
-            text: `New AI reply generated.`,
-            timestamp: req.createdAt.toDate(),
-            source: 'ai-request'
-        }));
-
-        allActivities = allActivities.filter(a => a.source !== 'ai-request');
-        allActivities.push(...requestActivities);
-        sortAndCallback();
-
-    }, onError);
-    unsubs.push(aiRequestUnsub);
 
     // Listener for User Profile
     let initialProfileLoad = true;
@@ -123,13 +97,10 @@ export function listenToActivities(userId: string, callback: (activities: Activi
     unsubs.push(userUnsub);
     
 
-    const sortAndCallback = () => {
-        allActivities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-        callback(allActivities.slice(0, 10)); // Return latest 10 activities
-    };
-
     // Return a function that unsubscribes from all listeners
     return () => {
         unsubs.forEach(unsub => unsub());
     };
 }
+
+    

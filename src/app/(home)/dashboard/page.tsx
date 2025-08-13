@@ -12,17 +12,15 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend, ScatterChart, Scatter, ZAxis } from 'recharts';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { getDashboardData, DashboardData } from '@/services/dashboard-service';
 import { Skeleton } from '@/components/ui/skeleton';
-import { listenToGraphs, Graph, addGraph } from '@/services/firestore-service';
 import { listenToUser, UserProfile } from '@/services/user-service';
-import { format, differenceInDays, formatDistanceToNow } from 'date-fns';
+import { format, subDays, differenceInDays, formatDistanceToNow } from 'date-fns';
 import { listenToActivities, Activity } from '@/services/activity-service';
-
+import { listenToAnalyticsDaily, listenToAnalyticsRealtime, DailyAnalytics, RealtimeAnalytics, addGraph } from '@/services/firestore-service';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const PIE_CHART_COLORS = ['#7CFC00', '#F5B700', '#00C49F', '#FF8042'];
+const PIE_CHART_COLORS = ['#7CFC00', '#F5B700', '#00C49F', '#FF8042', '#FFBB28'];
 
 const LoadingSkeleton = () => (
     <div className="space-y-4">
@@ -42,10 +40,10 @@ const ErrorDisplay = ({ error }: { error: string }) => (
 export default function DashboardPage() {
     const { user } = useAuthContext();
     const containerRef = useRef<HTMLDivElement>(null);
-    const [graphs, setGraphs] = useState<Graph[] | null>(null);
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-    const [staticData, setStaticData] = useState<Omit<DashboardData, 'stats' | 'charts' | 'activityFeed'> | null>(null);
     const [activities, setActivities] = useState<Activity[] | null>(null);
+    const [dailyAnalytics, setDailyAnalytics] = useState<DailyAnalytics[]>([]);
+    const [realtimeAnalytics, setRealtimeAnalytics] = useState<RealtimeAnalytics | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -56,121 +54,74 @@ export default function DashboardPage() {
         }
 
         let active = true;
-        let graphUnsubscribe: (() => void) | undefined;
-        let userUnsubscribe: (() => void) | undefined;
-        let activityUnsubscribe: (() => void) | undefined;
-        
+        const unsubs: (() => void)[] = [];
+
         const dataStatus = {
-            staticData: false,
-            graphs: false,
+            dailyAnalytics: false,
+            realtimeAnalytics: false,
             userProfile: false,
             activities: false,
         };
 
         const checkCompletion = () => {
-            if (active && dataStatus.staticData && dataStatus.graphs && dataStatus.userProfile && dataStatus.activities) {
+            if (active && Object.values(dataStatus).every(Boolean)) {
                 setLoading(false);
             }
         };
 
-        const fetchData = () => {
-            // Static Data
-            getDashboardData().then(result => {
-                if (active) {
-                    setStaticData(result);
-                    dataStatus.staticData = true;
-                    checkCompletion();
-                }
-            }).catch(err => {
-                if (active) setError(err.message || "Failed to fetch dashboard data.");
-            });
-
-            // Real-time Graph Data
-            graphUnsubscribe = listenToGraphs(user.uid, (newGraphs) => {
-                if (active) {
-                    setGraphs(newGraphs);
-                    dataStatus.graphs = true;
-                    checkCompletion();
-                }
-            }, (err) => {
-                if (active) setError(err.message || "Failed to listen to graphs.");
-            });
-
-            // Real-time User Profile Data
-            userUnsubscribe = listenToUser(user.uid, (profile) => {
-                if (active) {
-                    setUserProfile(profile);
-                    dataStatus.userProfile = true;
-                    checkCompletion();
-                }
-            }, (err) => {
-                if (active) {
-                    setError(err.message || "Failed to listen to user profile.");
-                }
-                 dataStatus.userProfile = true; // Mark as complete even on error to avoid hanging
-                 checkCompletion();
-            });
-
-            // Real-time Activity Data
-            activityUnsubscribe = listenToActivities(user.uid, (newActivities) => {
-                if(active) {
-                    setActivities(newActivities);
-                    dataStatus.activities = true;
-                    checkCompletion();
-                }
-            }, (err) => {
-                if (active) setError(err.message || "Failed to listen to activities.");
-            });
+        const handleError = (context: string, err: Error) => {
+            if (active) {
+                console.error(`Dashboard Error (${context}):`, err);
+                setError(err.message || `Failed to fetch ${context} data.`);
+            }
         };
-
-        fetchData();
         
+        // Listen to User Profile
+        unsubs.push(listenToUser(user.uid, (profile) => {
+            if (active) {
+                setUserProfile(profile);
+                dataStatus.userProfile = true;
+                checkCompletion();
+            }
+        }, (err) => handleError("user profile", err)));
+
+        // Listen to Daily Analytics (last 7 days)
+        unsubs.push(listenToAnalyticsDaily(user.uid, 7, (data) => {
+            if (active) {
+                setDailyAnalytics(data);
+                dataStatus.dailyAnalytics = true;
+                checkCompletion();
+            }
+        }, (err) => handleError("daily analytics", err)));
+
+        // Listen to Realtime Analytics
+        unsubs.push(listenToAnalyticsRealtime(user.uid, (data) => {
+            if (active) {
+                setRealtimeAnalytics(data);
+                dataStatus.realtimeAnalytics = true;
+                checkCompletion();
+            }
+        }, (err) => handleError("realtime analytics", err)));
+
+        // Listen to Activities
+        unsubs.push(listenToActivities(user.uid, (newActivities) => {
+            if(active) {
+                setActivities(newActivities);
+                dataStatus.activities = true;
+                checkCompletion();
+            }
+        }, (err) => handleError("activities", err)));
+
         return () => {
             active = false;
-            if (graphUnsubscribe) graphUnsubscribe();
-            if (userUnsubscribe) userUnsubscribe();
-            if (activityUnsubscribe) activityUnsubscribe();
+            unsubs.forEach(unsub => unsub());
         };
     }, [user]);
-    
 
     useEffect(() => {
         if (loading) return;
-
         const ctx = gsap.context(() => {
-            gsap.from("[data-animate='welcome-title']", { duration: 0.8, y: 30, opacity: 0, ease: 'power3.out', delay: 0.2 });
-            gsap.from("[data-animate='welcome-desc']", { duration: 0.8, y: 30, opacity: 0, ease: 'power3.out', delay: 0.4 });
-            
-            gsap.utils.toArray<HTMLDivElement>("[data-animate='stat-card']").forEach((card, i) => {
-                gsap.from(card, {
-                    duration: 0.8,
-                    y: 50,
-                    opacity: 0,
-                    ease: 'power3.out',
-                    scrollTrigger: { trigger: card, start: 'top 90%' },
-                    delay: i * 0.1
-                });
-            });
-
-             gsap.from("[data-animate='chart-card']", { duration: 1, y: 50, opacity: 0, ease: 'power3.out', scrollTrigger: { trigger: "[data-animate='chart-card']", start: 'top 85%' }});
-             gsap.from("[data-animate='activity-card']", { duration: 1, y: 50, opacity: 0, ease: 'power3.out', scrollTrigger: { trigger: "[data-animate='activity-card']", start: 'top 85%' }});
-             gsap.from("[data-animate='quick-actions-card']", { duration: 1, y: 50, opacity: 0, ease: 'power3.out', scrollTrigger: { trigger: "[data-animate='quick-actions-card']", start: 'top 85%' }});
-             gsap.from("[data-animate='announcements-card']", { duration: 1, y: 50, opacity: 0, ease: 'power3.out', scrollTrigger: { trigger: "[data-animate='announcements-card']", start: 'top 85%' }});
-             gsap.from("[data-animate='pie-chart-card']", { duration: 1, y: 50, opacity: 0, ease: 'power3.out', scrollTrigger: { trigger: "[data-animate='pie-chart-card']", start: 'top 85%' }});
-             gsap.from("[data-animate='heatmap-card']", { duration: 1, y: 50, opacity: 0, ease: 'power3.out', scrollTrigger: { trigger: "[data-animate='heatmap-card']", start: 'top 85%' }});
-            
-             gsap.from(".activity-item", {
-                duration: 0.5,
-                x: -30,
-                opacity: 0,
-                stagger: 0.15,
-                ease: 'power3.out',
-                scrollTrigger: {
-                    trigger: ".activity-feed",
-                    start: "top 85%"
-                }
-            });
-
+            // Animations can be re-enabled here if desired
         }, containerRef);
         return () => ctx.revert();
     }, [loading]);
@@ -178,26 +129,40 @@ export default function DashboardPage() {
     const getTrialDaysLeft = () => {
         if (userProfile?.trial_end_date) {
             const trialEnd = new Date(userProfile.trial_end_date);
-            // Ensure we are comparing with today's date at the start of the day
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-            
             const days = differenceInDays(trialEnd, today);
             return days >= 0 ? `${days} day(s)` : 'Ended';
         }
         return 'N/A';
     };
+
+    // Chart Data Preparation
+    const lineChartData = dailyAnalytics
+        .map(d => ({ date: format(new Date(d.date + 'T00:00:00Z'), 'MMM d'), replies: d.assistant_messages }))
+        .reverse();
+
+    const pieChartData = dailyAnalytics.reduce((acc, day) => {
+        for (const [category, count] of Object.entries(day.by_category || {})) {
+            acc[category] = (acc[category] || 0) + count;
+        }
+        return acc;
+    }, {} as Record<string, number>);
+
+    const formattedPieData = Object.entries(pieChartData).map(([name, value]) => ({ name, value }));
     
-    const chartDataFromGraphs = (graphs || []).map(g => ({
-        date: format(g.createdAt.toDate(), 'MMM d'),
-        replies: g.data?.points?.length || 0
-    })).slice(-7);
+    const confidenceData = dailyAnalytics.flatMap(day => 
+        Object.entries(day.confidence_buckets || {}).map(([bucket, count]) => ({
+            date: format(new Date(day.date + 'T00:00:00Z'), 'MMM d'),
+            bucket,
+            count
+        }))
+    );
 
-
-    const stats = userProfile && graphs ? [
-        { title: "AI Replies Today", value: "N/A", icon: Bot, change: "Data not available", link: "#", linkText: "View Details" },
+    const stats = userProfile ? [
+        { title: "AI Replies Today", value: realtimeAnalytics?.today_assistant_messages ?? 0, icon: Bot, change: "vs yesterday", link: "/chat", linkText: "View Chats" },
         { title: "Plan", value: userProfile.plan ? userProfile.plan.charAt(0).toUpperCase() + userProfile.plan.slice(1) : "Free", icon: DollarSign, change: "Manage your subscription", link: "/billing", linkText: "Upgrade" },
-        { title: "Knowledge Sources", value: graphs.length, icon: BrainCircuit, change: "+0 this week", link: "#", linkText: "Manage" },
+        { title: "Knowledge Sources", value: 0, icon: BrainCircuit, change: "Manage sources", link: "/content-management", linkText: "Manage" }, // Placeholder
         { title: "Trial Ends In", value: getTrialDaysLeft(), icon: CalendarDays, change: `Ends on ${userProfile.trial_end_date ? format(new Date(userProfile.trial_end_date), 'MMM d, yyyy') : 'N/A'}`, link: "/billing", linkText: "View Plans" }
     ] : [];
 
@@ -221,10 +186,6 @@ export default function DashboardPage() {
 
     if (error) {
         return <div className="flex items-center justify-center h-screen"><ErrorDisplay error={error} /></div>;
-    }
-
-    if (!staticData || !graphs || !activities) {
-        return <div className="flex items-center justify-center h-screen"><p>No data available.</p></div>;
     }
 
     return (
@@ -259,11 +220,11 @@ export default function DashboardPage() {
                  <Card data-animate="chart-card" className="lg:col-span-2">
                     <CardHeader>
                         <CardTitle>AI Replies Last 7 Days</CardTitle>
-                        <CardDescription>Based on your graph data points.</CardDescription>
+                        <CardDescription>Assistant messages sent per day.</CardDescription>
                     </CardHeader>
                     <CardContent className="h-80">
                          <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={chartDataFromGraphs} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                            <AreaChart data={lineChartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                                 <defs>
                                     <linearGradient id="colorReplies" x1="0" y1="0" x2="0" y2="1">
                                     <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
@@ -272,7 +233,7 @@ export default function DashboardPage() {
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                                 <XAxis dataKey="date" tick={{ fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} />
-                                <YAxis tick={{ fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} />
+                                <YAxis allowDecimals={false} tick={{ fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} />
                                 <Tooltip
                                     contentStyle={{
                                         backgroundColor: 'hsl(var(--card))',
@@ -295,7 +256,7 @@ export default function DashboardPage() {
                     </CardHeader>
                     <CardContent>
                         <ul className="space-y-4 activity-feed">
-                            {activities.length > 0 ? (
+                            {activities && activities.length > 0 ? (
                                 activities.map((item) => (
                                     <li key={item.id} className="flex items-start gap-4 activity-item">
                                         <div className="p-2 bg-secondary rounded-full">
@@ -322,7 +283,21 @@ export default function DashboardPage() {
                         <CardDescription>Proportion of queries by category.</CardDescription>
                     </CardHeader>
                     <CardContent className="h-80">
-                       <p className="text-muted-foreground text-center pt-16">Chart data not available.</p>
+                      {formattedPieData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie data={formattedPieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} fill="#8884d8" label>
+                                    {formattedPieData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={PIE_CHART_COLORS[index % PIE_CHART_COLORS.length]} />
+                                    ))}
+                                </Pie>
+                                <Tooltip />
+                                <Legend />
+                            </PieChart>
+                        </ResponsiveContainer>
+                      ) : (
+                       <p className="text-muted-foreground text-center pt-16">No category data available.</p>
+                      )}
                     </CardContent>
                 </Card>
 
@@ -332,7 +307,21 @@ export default function DashboardPage() {
                         <CardDescription>Confidence levels for responses over time.</CardDescription>
                     </CardHeader>
                      <CardContent className="h-80">
-                        <p className="text-muted-foreground text-center pt-16">Chart data not available.</p>
+                        {confidenceData.length > 0 ? (
+                             <ResponsiveContainer width="100%" height="100%">
+                                <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                                    <CartesianGrid />
+                                    <XAxis type="category" dataKey="date" name="date" />
+                                    <YAxis type="category" dataKey="bucket" name="confidence" />
+                                    <ZAxis type="number" dataKey="count" range={[100, 1000]} name="count" />
+                                    <Tooltip cursor={{ strokeDasharray: '3 3' }} />
+                                    <Legend />
+                                    <Scatter name="Confidence Buckets" data={confidenceData} fill="hsl(var(--primary))" />
+                                </ScatterChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <p className="text-muted-foreground text-center pt-16">No confidence data available.</p>
+                        )}
                     </CardContent>
                 </Card>
             </div>
@@ -344,8 +333,8 @@ export default function DashboardPage() {
                         <CardDescription>Get started with common tasks.</CardDescription>
                     </CardHeader>
                     <CardContent className="grid grid-cols-2 gap-4">
-                        <Button variant="outline"><Bot className="mr-2 h-4 w-4" />Ask AI</Button>
-                        <Button variant="outline" onClick={() => user && graphs && addGraph(user.uid, `New Graph #${graphs.length + 1}`, { points: [] })}>
+                        <Button variant="outline" asChild><Link href="/chat"><Bot className="mr-2 h-4 w-4" />Ask AI</Link></Button>
+                        <Button variant="outline">
                             <PlusCircle className="mr-2 h-4 w-4" />Add Knowledge
                         </Button>
                         <Button variant="outline" asChild><Link href="/billing"><DollarSign className="mr-2 h-4 w-4" />Upgrade Plan</Link></Button>
@@ -360,19 +349,28 @@ export default function DashboardPage() {
                     </CardHeader>
                     <CardContent>
                        <Accordion type="single" collapsible className="w-full">
-                           {staticData.announcements.map((item, index) => (
-                                <AccordionItem value={`item-${index}`} key={index}>
-                                    <AccordionTrigger>
-                                        <div className='flex items-center gap-2'>
-                                            {item.type === 'feature' ? <Newspaper className="h-4 w-4 text-primary" /> : <Lightbulb className="h-4 w-4 text-primary" />}
-                                            {item.title}
-                                        </div>
-                                    </AccordionTrigger>
-                                    <AccordionContent className="text-muted-foreground">
-                                        {item.content}
-                                    </AccordionContent>
-                                </AccordionItem>
-                           ))}
+                           <AccordionItem value="item-1">
+                               <AccordionTrigger>
+                                   <div className='flex items-center gap-2'>
+                                       <Newspaper className="h-4 w-4 text-primary" />
+                                       New Feature: Real-time Analytics!
+                                   </div>
+                               </AccordionTrigger>
+                               <AccordionContent className="text-muted-foreground">
+                                   Enterprise users can now access real-time analytics for deeper insights into customer interactions. Check it out in the new 'Analytics' tab.
+                               </AccordionContent>
+                           </AccordionItem>
+                            <AccordionItem value="item-2">
+                               <AccordionTrigger>
+                                   <div className='flex items-center gap-2'>
+                                       <Lightbulb className="h-4 w-4 text-primary" />
+                                        Tip of the Week: Train Your Brand Voice
+                                   </div>
+                               </AccordionTrigger>
+                               <AccordionContent className="text-muted-foreground">
+                                   Improve AI consistency by training it on your brand's unique tone. Upload examples of your communication style in the 'Brand Voice' section.
+                               </AccordionContent>
+                           </AccordionItem>
                         </Accordion>
                     </CardContent>
                 </Card>
@@ -380,3 +378,5 @@ export default function DashboardPage() {
         </div>
     );
 }
+
+    

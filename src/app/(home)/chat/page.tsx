@@ -22,7 +22,7 @@ import {
   User,
   Plus
 } from "lucide-react";
-import { listenToConversations, createConversation, addMessageToConversation, Conversation, ChatMessage } from "@/services/firestore-service";
+import { listenToConversations, createConversation, addMessageToConversation, Conversation, ChatMessage, writeChatMessageEvent } from "@/services/firestore-service";
 import { listenToUser, UserProfile } from "@/services/user-service";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -80,7 +80,7 @@ export default function ChatPage() {
             unsubscribeUser();
             unsubscribeConversations();
         };
-    } else if (!user && !profileLoading) {
+    } else if (!profileLoading) {
         setProfileLoading(false);
     }
   }, [user, toast, currentConversationId]);
@@ -100,6 +100,7 @@ export default function ChatPage() {
             role: 'user',
             content: userMessageContent,
             createdAt: new Date().toISOString(),
+            tokens: userMessageContent.split(' ').length, // Approximate tokens
         };
 
         if (!conversationId) {
@@ -109,6 +110,8 @@ export default function ChatPage() {
         } else {
             await addMessageToConversation(user.uid, conversationId, userMessage);
         }
+        
+        await writeChatMessageEvent(user.uid, userMessage);
 
         const currentConvo = conversations.find(c => c.id === conversationId);
         const history = currentConvo?.messages.map(m => ({ role: m.role, content: m.content })) || [];
@@ -121,8 +124,13 @@ export default function ChatPage() {
             content: aiResult.response,
             confidence: aiResult.confidence,
             createdAt: new Date().toISOString(),
+            tokens: aiResult.response.split(' ').length, // Approximate tokens
+            category: "General", // Placeholder category
+            latency_ms: 500 // Placeholder latency
         };
         await addMessageToConversation(user.uid, conversationId!, aiMessage);
+        await writeChatMessageEvent(user.uid, aiMessage);
+
     } catch (error) {
         console.error("Failed to send message:", error);
         toast({
@@ -336,7 +344,5 @@ const Avatar = ({ Icon, isUser = false }: { Icon: React.ElementType, isUser?: bo
         <Icon className="w-5 h-5" />
     </div>
 )
-
-    
 
     
