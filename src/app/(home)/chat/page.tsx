@@ -179,10 +179,6 @@ export default function ChatPage() {
                     <Card className="flex-1 flex flex-col h-full">
                         <CardHeader className="flex-row items-center justify-between">
                             <CardTitle>Conversation</CardTitle>
-                             <Button variant="outline" size="sm" onClick={() => setCurrentConversationId(null)}>
-                                <Plus className="w-4 h-4 mr-2" />
-                                New Conversation
-                            </Button>
                         </CardHeader>
                         <CardContent ref={scrollAreaRef} className="flex-1 space-y-4 overflow-y-auto p-6 h-0 flex-grow">
                         {isLoadingHistory ? (
@@ -340,5 +336,7 @@ const Avatar = ({ Icon, isUser = false }: { Icon: React.ElementType, isUser?: bo
         <Icon className="w-5 h-5" />
     </div>
 )
+
+    
 
     
