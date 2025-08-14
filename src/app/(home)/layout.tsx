@@ -287,6 +287,13 @@ export default function AuthenticatedLayout({
     return null; // or a loading spinner, since redirect will handle it.
   }
 
+  const topNavItems = [
+    { href: "/home", label: "Home" },
+    { href: "/billing", label: "Billing" },
+    { href: "/settings", label: "Settings" },
+    { href: "/support", label: "Support" },
+  ];
+
   return (
     <SidebarProvider>
       <div className="flex flex-col min-h-screen bg-background">
@@ -299,6 +306,20 @@ export default function AuthenticatedLayout({
                     <span>Savrii</span>
                 </Link>
             </div>
+            <nav className="hidden md:flex items-center gap-4">
+              {topNavItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "text-sm font-medium transition-colors hover:text-primary",
+                    pathname === item.href ? "text-primary" : "text-muted-foreground"
+                  )}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
             <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" onClick={toggleTheme} className="relative h-9 w-9 overflow-hidden">
                     <AnimatePresence mode="wait" initial={false}>
