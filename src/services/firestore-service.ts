@@ -344,7 +344,11 @@ export function listenToConversations(
         return () => {};
     }
 
-    const q = query(collectionGroup(db, `conversations`), where("userId", "==", userId), orderBy("lastMessageAt", "desc"));
+    const q = query(
+        collectionGroup(db, 'conversations'), 
+        where("userId", "==", userId), 
+        orderBy("lastMessageAt", "desc")
+    );
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const conversations: Conversation[] = [];
@@ -403,7 +407,8 @@ export function listenToRecentRepliesForHeatmap(
     const startDate = subDays(new Date(), days);
 
     const q = query(
-        collection(db, 'users', userId, 'ai_replies'),
+        collectionGroup(db, 'ai_replies'),
+        where("userId", "==", userId),
         where("createdAt", ">=", startDate),
         orderBy("createdAt", "desc")
     );
@@ -431,8 +436,6 @@ export function listenToEmailStats(
         return () => {};
     }
 
-    // Listens to the latest email_stats document for the user.
-    // In a real app, you might aggregate this data or query a specific date range.
     const q = query(
         collection(db, `users/${userId}/email_stats`),
         orderBy('date', 'desc'),
