@@ -10,8 +10,6 @@ import { Badge } from '@/components/ui/badge';
 import { BarChart3, MessageSquare, TrendingUp, Target, Clock, AlertTriangle, ShieldCheck, BarChartHorizontal } from 'lucide-react';
 import { MetricCard, MetricCardSkeleton } from '@/components/analytics/metric-card';
 import { DailyUsageChart, DailyUsageChartSkeleton } from '@/components/analytics/daily-usage-chart';
-import { TemplatesPieChart } from '@/components/analytics/templates-pie-chart';
-import { ActivityHeatmap } from '@/components/analytics/activity-heatmap';
 import { PlanUsage, PlanUsageSkeleton } from '@/components/analytics/plan-usage';
 
 interface OverviewStats {
@@ -159,17 +157,6 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Activity Heatmap */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Daily Activity</CardTitle>
-          <CardDescription>Shows the busiest hours for AI interactions during the day.</CardDescription>
-        </CardHeader>
-        <CardContent className="h-72">
-           <ActivityHeatmap />
-        </CardContent>
-      </Card>
       
       {/* Performance & Plan Section */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
