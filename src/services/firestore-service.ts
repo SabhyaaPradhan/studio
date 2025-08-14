@@ -56,12 +56,51 @@ export interface ChatMessage {
 }
 
 
-export interface Conversation {
-    id: string; // Document ID
-    messages: ChatMessage[];
-    createdAt: Timestamp;
-    updatedAt: Timestamp;
+export interface CustomerMessage {
+  id: string;
+  conversationId: string;
+  messageType: "incoming" | "outgoing";
+  senderName: string;
+  senderEmail?: string;
+  content: string;
+  isRead: boolean;
+  deliveryStatus: string;
+  createdAt: string; // ISO String
 }
+
+
+export interface Conversation {
+    id: string;
+    userId: string;
+    customerName: string;
+    customerEmail: string;
+    customerPhone?: string;
+    channel: string;
+    subject?: string;
+    status: string;
+    priority: string;
+    lastMessageAt: Timestamp;
+    unreadCount: number;
+    messages: CustomerMessage[];
+}
+
+
+export interface AiGeneratedReply {
+  id: string;
+  conversationId: string;
+  originalMessageId: string;
+  replyType: string;
+  generatedReply: string;
+  finalReply?: string;
+  confidence: number;
+  status: 'draft' | 'sent' | 'failed';
+  wasEdited: boolean;
+  createdAt: Timestamp;
+  conversation: { // Denormalized for easy display
+      customerName: string;
+  };
+}
+
 
 export interface DailyAnalytics {
     id: string; // YYYY-MM-DD
@@ -111,7 +150,7 @@ const getConfidenceBucket = (confidence: number): string => {
  * @param userId The ID of the user.
  * @param message The ChatMessage object.
  */
-export async function writeChatMessageEvent(userId: string, message: ChatMessage) {
+export async function writeChatMessageEvent(userId: string, message: Omit<ChatMessage, 'id' | 'createdAt'>) {
     if (!userId) throw new Error("User ID is required.");
 
     const batch = writeBatch(db);
@@ -273,22 +312,20 @@ export function listenToConversations(
         return () => {};
     }
 
-    const q = query(collection(db, `users/${userId}/conversations`));
+    const q = query(collection(db, `conversations`), where("userId", "==", userId));
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const conversations: Conversation[] = [];
         querySnapshot.forEach((doc) => {
             const data = doc.data();
             conversations.push({
+                ...data,
                 id: doc.id,
-                messages: data.messages || [],
-                createdAt: data.createdAt,
-                updatedAt: data.updatedAt,
             } as Conversation);
         });
         conversations.sort((a, b) => {
-            const timeA = a.updatedAt?.toMillis() || 0;
-            const timeB = b.updatedAt?.toMillis() || 0;
+            const timeA = a.lastMessageAt?.toMillis() || 0;
+            const timeB = b.lastMessageAt?.toMillis() || 0;
             return timeB - timeA;
         });
         callback(conversations);
@@ -299,6 +336,33 @@ export function listenToConversations(
 
     return unsubscribe;
 }
+
+export function listenToRecentReplies(
+    userId: string, 
+    callback: (replies: AiGeneratedReply[]) => void, 
+    onError: (error: FirestoreError) => void
+): Unsubscribe {
+    if (!userId) {
+        onError({ code: 'invalid-argument', message: 'User ID is required.' } as FirestoreError);
+        return () => {};
+    }
+
+    const q = query(
+        collection(db, 'ai_replies'), 
+        where("userId", "==", userId), 
+        orderBy("createdAt", "desc"), 
+        limit(5)
+    );
+
+    return onSnapshot(q, (snapshot) => {
+        const replies: AiGeneratedReply[] = [];
+        snapshot.forEach(doc => {
+            replies.push({ id: doc.id, ...doc.data() } as AiGeneratedReply);
+        });
+        callback(replies);
+    }, onError);
+}
+
 
 // --- Analytics Listeners ---
 
@@ -348,5 +412,3 @@ export function listenToAnalyticsRealtime(userId: string, callback: (data: Realt
         }
     }, onError);
 }
-
-    
