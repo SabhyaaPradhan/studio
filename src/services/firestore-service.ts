@@ -97,6 +97,7 @@ export interface AiGeneratedReply {
   status: 'draft' | 'sent' | 'failed';
   wasEdited: boolean;
   createdAt: Timestamp;
+  source?: 'gmail' | 'web';
   conversation: { // Denormalized for easy display
       customerName: string;
   };
@@ -359,6 +360,7 @@ export function listenToConversations(
 
 export function listenToRecentReplies(
     userId: string, 
+    days: number,
     callback: (replies: AiGeneratedReply[]) => void, 
     onError: (error: FirestoreError) => void
 ): Unsubscribe {
@@ -366,12 +368,14 @@ export function listenToRecentReplies(
         onError({ code: 'invalid-argument', message: 'User ID is required.' } as FirestoreError);
         return () => {};
     }
+    
+    const startDate = subDays(new Date(), days);
 
     const q = query(
         collection(db, 'ai_replies'), 
-        where("userId", "==", userId), 
-        orderBy("createdAt", "desc"), 
-        limit(5)
+        where("userId", "==", userId),
+        where("createdAt", ">=", startDate),
+        orderBy("createdAt", "desc")
     );
 
     return onSnapshot(q, (snapshot) => {
