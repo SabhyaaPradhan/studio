@@ -76,6 +76,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { listenToUser, UserProfile } from '@/services/user-service';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SheetHeader, SheetTitle, SheetClose } from '@/components/ui/sheet';
+import { Separator } from '@/components/ui/separator';
 
 
 type UserPlan = 'starter' | 'pro' | 'enterprise' | 'free';
@@ -289,7 +290,7 @@ export default function AuthenticatedLayout({
         <header className="sticky top-0 z-10 flex h-20 items-center justify-between gap-4 border-b bg-background/80 px-4 backdrop-blur-sm">
           <div className="flex items-center gap-2">
             <SidebarTrigger
-              className={cn('md:hidden', !showSidebar && 'hidden')}
+              className={cn('md:hidden')}
             >
               <Menu className="w-6 h-6" />
             </SidebarTrigger>
@@ -365,67 +366,79 @@ export default function AuthenticatedLayout({
           </div>
         </header>
         <div className="flex flex-1 overflow-hidden">
-          {showSidebar && (
-            <Sidebar>
-                <div className="md:hidden pt-12">
-                 <SheetHeader className="p-2 border-b md:hidden">
-                    <SheetTitle className="sr-only">Menu</SheetTitle>
-                 </SheetHeader>
+          <Sidebar>
+              <div className="md:hidden pt-12">
+               <SheetHeader className="p-2 border-b md:hidden">
+                  <SheetTitle className="sr-only">Menu</SheetTitle>
+               </SheetHeader>
+              </div>
+            <SidebarContent>
+              <SidebarMenu>
+                <div className="hidden p-2 mb-2 md:block">
+                  <SidebarTrigger />
                 </div>
-              <SidebarContent>
-                <SidebarMenu>
-                  <div className="hidden p-2 mb-2 md:block">
-                    <SidebarTrigger />
-                  </div>
-                  <NavMenuItem href="/dashboard" icon={LayoutDashboard} label="Dashboard" plan={userPlan} />
-                  <NavMenuItem href="/inbox" icon={MessageCircle} label="Inbox" plan={userPlan} isDisabled />
-                  <NavMenuItem href="/chat" icon={Bot} label="Chat / AI Assistant" plan={userPlan} />
-                  <NavMenuItem href="/analytics" icon={BarChart3} label="Analytics" plan={userPlan} requiredPlan="pro" isDisabled />
-                  <NavMenuItem href="/integrations" icon={Zap} label="Integrations" plan={userPlan} isDisabled />
-                  <NavMenuItem href="/billing" icon={CreditCard} label="Billing" plan={userPlan} />
+                {/* --- Main Sidebar Nav --- */}
+                { showSidebar && (
+                  <>
+                    <NavMenuItem href="/dashboard" icon={LayoutDashboard} label="Dashboard" plan={userPlan} />
+                    <NavMenuItem href="/inbox" icon={MessageCircle} label="Inbox" plan={userPlan} isDisabled />
+                    <NavMenuItem href="/chat" icon={Bot} label="Chat / AI Assistant" plan={userPlan} />
+                    <NavMenuItem href="/analytics" icon={BarChart3} label="Analytics" plan={userPlan} requiredPlan="pro" isDisabled />
+                    <NavMenuItem href="/integrations" icon={Zap} label="Integrations" plan={userPlan} isDisabled />
+                  
+                    <NavMenuCollapsible icon={Wand2} label="Pro Features" plan={userPlan} items={[
+                        { href: "/prompts", label: "Custom Prompts", icon: Wand2, requiredPlan: "pro", isDisabled: true },
+                        { href: "/brand-voice", label: "Brand Voice", icon: Palette, requiredPlan: "pro", isDisabled: true },
+                        { href: "/prompt-library", label: "Prompt Library", icon: BookOpen, requiredPlan: "pro", isDisabled: true },
+                        { href: "/daily-summary", label: "Daily Summary", icon: FileText, requiredPlan: "pro", isDisabled: true },
+                        { href: "/collaboration", label: "Collaboration", icon: Users, requiredPlan: "pro", isDisabled: true },
+                        { href: "/lead-capture", label: "Lead Capture", icon: Target, requiredPlan: "pro", isDisabled: true },
+                        { href: "/export", label: "Export Data", icon: Download, requiredPlan: "pro", isDisabled: true },
+                    ]} />
+                  
+                    <NavMenuCollapsible icon={Shield} label="Enterprise" plan={userPlan} items={[
+                        { href: "/real-time-analytics", label: "Real-Time Analytics", icon: TrendingUp, requiredPlan: "enterprise", isDisabled: true },
+                        { href: "/workflow-builder", label: "Workflow Builder", icon: Workflow, requiredPlan: "enterprise", isDisabled: true },
+                        { href: "/custom-model", label: "Custom AI Model", icon: Upload, requiredPlan: "enterprise", isDisabled: true },
+                        { href: "/security", label: "Security", icon: Shield, requiredPlan: "enterprise", isDisabled: true },
+                        { href: "/white-label", label: "White-label", icon: Paintbrush, requiredPlan: "enterprise", isDisabled: true },
+                        { href: "/webhooks", label: "Webhooks", icon: Webhook, requiredPlan: "enterprise", isDisabled: true },
+                    ]} />
+                  </>
+                )}
 
-                <NavMenuCollapsible icon={Wand2} label="Pro Features" plan={userPlan} items={[
-                    { href: "/prompts", label: "Custom Prompts", icon: Wand2, requiredPlan: "pro", isDisabled: true },
-                    { href: "/brand-voice", label: "Brand Voice", icon: Palette, requiredPlan: "pro", isDisabled: true },
-                    { href: "/prompt-library", label: "Prompt Library", icon: BookOpen, requiredPlan: "pro", isDisabled: true },
-                    { href: "/daily-summary", label: "Daily Summary", icon: FileText, requiredPlan: "pro", isDisabled: true },
-                    { href: "/collaboration", label: "Collaboration", icon: Users, requiredPlan: "pro", isDisabled: true },
-                    { href: "/lead-capture", label: "Lead Capture", icon: Target, requiredPlan: "pro", isDisabled: true },
-                    { href: "/export", label: "Export Data", icon: Download, requiredPlan: "pro", isDisabled: true },
-                ]} />
-                
-                <NavMenuCollapsible icon={Shield} label="Enterprise" plan={userPlan} items={[
-                    { href: "/real-time-analytics", label: "Real-Time Analytics", icon: TrendingUp, requiredPlan: "enterprise", isDisabled: true },
-                    { href: "/workflow-builder", label: "Workflow Builder", icon: Workflow, requiredPlan: "enterprise", isDisabled: true },
-                    { href: "/custom-model", label: "Custom AI Model", icon: Upload, requiredPlan: "enterprise", isDisabled: true },
-                    { href: "/security", label: "Security", icon: Shield, requiredPlan: "enterprise", isDisabled: true },
-                    { href: "/white-label", label: "White-label", icon: Paintbrush, requiredPlan: "enterprise", isDisabled: true },
-                    { href: "/webhooks", label: "Webhooks", icon: Webhook, requiredPlan: "enterprise", isDisabled: true },
-                ]} />
-                </SidebarMenu>
-              </SidebarContent>
-              <SidebarFooter>
-                <SidebarMenu>
-                  <NavMenuItem
-                    href="/settings"
-                    icon={Settings}
-                    label="Settings"
-                    plan={userPlan}
-                  />
-                  <NavMenuItem
-                    href="/support"
-                    icon={HelpCircle}
-                    label="Support"
-                    plan={userPlan}
-                  />
-                </SidebarMenu>
-              </SidebarFooter>
-            </Sidebar>
-          )}
-          <main className="flex-1 overflow-y-auto">{children}</main>
+                {/* --- Mobile Nav (from top bar) --- */}
+                <div className="md:hidden">
+                  <Separator className="my-4" />
+                  <p className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Navigation</p>
+                  <div className="mt-2 flex flex-col gap-1">
+                    <NavMenuItem href="/home" icon={Home} label="Home" plan={userPlan} />
+                    <NavMenuItem href="/billing" icon={CreditCard} label="Billing" plan={userPlan} />
+                  </div>
+                </div>
+              </SidebarMenu>
+            </SidebarContent>
+            <SidebarFooter>
+              <SidebarMenu>
+                <NavMenuItem
+                  href="/settings"
+                  icon={Settings}
+                  label="Settings"
+                  plan={userPlan}
+                />
+                <NavMenuItem
+                  href="/support"
+                  icon={HelpCircle}
+                  label="Support"
+                  plan={userPlan}
+                />
+              </SidebarMenu>
+            </SidebarFooter>
+          </Sidebar>
+          <main className={cn("flex-1 overflow-y-auto", !showSidebar && "w-full")}>{children}</main>
         </div>
-        <AnimatedFooter />
       </div>
+      <AnimatedFooter />
     </SidebarProvider>
   );
 }
