@@ -382,8 +382,7 @@ export function listenToRecentReplies(
     const startDate = subDays(new Date(), 29);
 
     const q = query(
-        collectionGroup(db, 'ai_replies'), 
-        where("userId", "==", userId),
+        collection(db, `users/${userId}/ai_replies`),
         where("createdAt", ">=", startDate),
         orderBy("createdAt", "desc")
     );
@@ -413,8 +412,7 @@ export function listenToRecentRepliesForHeatmap(
     const q = query(
         collectionGroup(db, 'ai_replies'), 
         where("userId", "==", userId),
-        where("createdAt", ">=", startDate),
-        orderBy("createdAt", "desc")
+        where("createdAt", ">=", startDate)
     );
 
     return onSnapshot(q, (snapshot) => {
@@ -423,7 +421,10 @@ export function listenToRecentRepliesForHeatmap(
             replies.push({ id: doc.id, ...doc.data() } as AiGeneratedReply);
         });
         callback(replies);
-    }, onError);
+    }, (error) => {
+        console.error("Error listening to replies for heatmap:", error);
+        onError(error);
+    });
 }
 
 
