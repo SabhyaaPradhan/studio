@@ -3,7 +3,8 @@
 
 import { useState, useEffect } from 'react';
 import { useAuthContext } from '@/context/auth-context';
-import { listenToAnalyticsDaily, DailyAnalytics, listenToUser, UserProfile } from '@/services/firestore-service';
+import { listenToAnalyticsDaily, DailyAnalytics } from '@/services/firestore-service';
+import { listenToUser, UserProfile } from '@/services/user-service';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { BarChart3, MessageSquare, TrendingUp, Target, Clock, AlertTriangle, ShieldCheck, BarChartHorizontal } from 'lucide-react';
