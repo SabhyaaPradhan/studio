@@ -344,7 +344,7 @@ export function listenToConversations(
         return () => {};
     }
 
-    const q = query(collection(db, `conversations`), where("userId", "==", userId));
+    const q = query(collectionGroup(db, `conversations`), where("userId", "==", userId), orderBy("lastMessageAt", "desc"));
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const conversations: Conversation[] = [];
@@ -354,11 +354,6 @@ export function listenToConversations(
                 ...data,
                 id: doc.id,
             } as Conversation);
-        });
-        conversations.sort((a, b) => {
-            const timeA = a.lastMessageAt?.toMillis() || 0;
-            const timeB = b.lastMessageAt?.toMillis() || 0;
-            return timeB - timeA;
         });
         callback(conversations);
     }, (error) => {
@@ -379,12 +374,10 @@ export function listenToRecentReplies(
         return () => {};
     }
     
-    const startDate = subDays(new Date(), 29);
-
     const q = query(
         collection(db, `users/${userId}/ai_replies`),
-        where("createdAt", ">=", startDate),
-        orderBy("createdAt", "desc")
+        orderBy("createdAt", "desc"),
+        limit(5)
     );
 
     return onSnapshot(q, (snapshot) => {
@@ -410,9 +403,9 @@ export function listenToRecentRepliesForHeatmap(
     const startDate = subDays(new Date(), days);
 
     const q = query(
-        collectionGroup(db, 'ai_replies'), 
-        where("userId", "==", userId),
-        where("createdAt", ">=", startDate)
+        collection(db, 'users', userId, 'ai_replies'),
+        where("createdAt", ">=", startDate),
+        orderBy("createdAt", "desc")
     );
 
     return onSnapshot(q, (snapshot) => {
