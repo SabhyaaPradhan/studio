@@ -4,15 +4,31 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Users can only read and write to their own user document.
-    match /users/{userId} {
-      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null;
+    function isSignedIn() {
+      return request.auth != null;
     }
-    
-    // Users can only read and write to subcollections within their own user document.
+
+    // Allow users to query their own conversations from the root collection
+    match /conversations/{conversationId} {
+      allow list, get: if isSignedIn() && request.query.where.get('userId') == request.auth.uid;
+      allow read, write: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+       match /messages/{messageId} {
+        allow read, write: if isSignedIn() && get(/databases/$(database)/documents/conversations/$(conversationId)).data.userId == request.auth.uid;
+      }
+    }
+
+    match /ai_replies/{replyId} {
+        allow read, write: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    match /integrations/{userId}/email_accounts/{accountId} {
+        allow read, write: if isSignedIn() && userId == request.auth.uid;
+    }
+
+    // Rules for other collections
     match /users/{userId}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
   }
 }
