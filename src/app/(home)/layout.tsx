@@ -110,7 +110,7 @@ const NavMenuItem = ({
   requiredPlan,
   isDisabled = false,
 }: {
-  href: string;
+  href?: string;
   icon: React.ElementType;
   label: string;
   plan?: UserPlan;
@@ -121,7 +121,7 @@ const NavMenuItem = ({
   const Icon = icon;
   const isLocked = plan && requiredPlan ? !hasPermission(plan, requiredPlan) : false;
   const isEffectivelyDisabled = isDisabled || isLocked;
-  const isActive = pathname === href;
+  const isActive = !!(href && pathname === href);
   const router = useRouter();
 
   const handleClick = (e: React.MouseEvent) => {
@@ -345,9 +345,6 @@ export default function AuthenticatedLayout({
       <div className="flex flex-1 overflow-hidden">
         {showSidebar && (
           <Sidebar>
-            <SheetHeader className="p-2 border-b md:hidden">
-              <SheetTitle className="sr-only">Menu</SheetTitle>
-            </SheetHeader>
             <SidebarContent>
               <SidebarMenu>
                 <div className="p-2 mb-2 hidden md:block">
