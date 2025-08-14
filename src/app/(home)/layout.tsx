@@ -75,7 +75,6 @@ import AnimatedFooter from '@/components/common/animated-footer';
 import { motion, AnimatePresence } from 'framer-motion';
 import { listenToUser, UserProfile } from '@/services/user-service';
 import { Skeleton } from '@/components/ui/skeleton';
-import { SheetHeader, SheetTitle, SheetClose } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
 
 
@@ -367,11 +366,6 @@ export default function AuthenticatedLayout({
         </header>
         <div className="flex flex-1 overflow-hidden">
           <Sidebar>
-              <div className="md:hidden pt-12">
-               <SheetHeader className="p-2 border-b md:hidden">
-                  <SheetTitle className="sr-only">Menu</SheetTitle>
-               </SheetHeader>
-              </div>
             <SidebarContent>
               <SidebarMenu>
                 <div className="hidden p-2 mb-2 md:block">

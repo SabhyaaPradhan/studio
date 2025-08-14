@@ -211,6 +211,11 @@ const Sidebar = React.forwardRef<
             }
             side={side}
           >
+            <div className="pt-12">
+               <SheetHeader className="p-2 border-b">
+                  <SheetTitle className="sr-only">Menu</SheetTitle>
+               </SheetHeader>
+            </div>
             {children}
           </SheetContent>
         </Sheet>
@@ -403,7 +408,7 @@ const SidebarMenuButton = React.forwardRef<
     );
     
     const button = (
-        <Comp href={href!} {...commonProps} ref={ref as React.Ref<any>}>
+        <Comp href={href ?? undefined} {...commonProps} ref={ref as React.Ref<any>}>
           {buttonContent}
         </Comp>
     );
