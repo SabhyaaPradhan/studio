@@ -11,7 +11,7 @@ import { BarChart3, MessageSquare, TrendingUp, Target, Clock, AlertTriangle, Shi
 import { MetricCard, MetricCardSkeleton } from '@/components/analytics/metric-card';
 import { DailyUsageChart, DailyUsageChartSkeleton } from '@/components/analytics/daily-usage-chart';
 import { TemplatesPieChart } from '@/components/analytics/templates-pie-chart';
-import { ActivityHeatmap, ActivityHeatmapSkeleton } from '@/components/analytics/activity-heatmap';
+import { ActivityHeatmap } from '@/components/analytics/activity-heatmap';
 import { PlanUsage, PlanUsageSkeleton } from '@/components/analytics/plan-usage';
 
 interface OverviewStats {
