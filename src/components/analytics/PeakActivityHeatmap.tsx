@@ -84,16 +84,17 @@ export function PeakActivityHeatmap({ userId }: PeakActivityHeatmapProps) {
     
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={heatmapData} layout="vertical" margin={{ top: 5, right: 20, left: -10, bottom: 5 }} barCategoryGap="10%">
+      <BarChart data={heatmapData} layout="vertical" margin={{ top: 20, right: 30, left: 20, bottom: 5 }} barCategoryGap="10%">
         <CartesianGrid strokeDasharray="3 3" horizontal={false} />
         <XAxis type="number" tick={{ fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} allowDecimals={false} />
         <YAxis 
             type="category" 
             dataKey="hour" 
-            tick={{ fill: 'hsl(var(--muted-foreground))' }} 
+            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} 
             tickLine={false} 
             axisLine={false} 
-            interval={2} 
+            interval={2}
+            width={80}
         />
         <Tooltip
             cursor={{ fill: 'hsl(var(--secondary))' }}
