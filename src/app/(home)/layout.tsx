@@ -346,6 +346,9 @@ export default function AuthenticatedLayout({
         {showSidebar && (
           <Sidebar>
             <SidebarContent>
+                 <SheetHeader className="p-2 border-b md:hidden">
+                    <SheetTitle className="sr-only">Menu</SheetTitle>
+                 </SheetHeader>
               <SidebarMenu>
                 <div className="p-2 mb-2 hidden md:block">
                    <SidebarTrigger />
@@ -389,7 +392,7 @@ export default function AuthenticatedLayout({
             {children}
         </main>
       </div>
-      <AnimatedFooter />
+       <AnimatedFooter />
     </div>
   </SidebarProvider>
   );
