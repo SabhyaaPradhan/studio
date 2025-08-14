@@ -75,7 +75,7 @@ import AnimatedFooter from '@/components/common/animated-footer';
 import { motion, AnimatePresence } from 'framer-motion';
 import { listenToUser, UserProfile } from '@/services/user-service';
 import { Skeleton } from '@/components/ui/skeleton';
-import { SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { SheetHeader, SheetTitle, SheetClose } from '@/components/ui/sheet';
 
 
 type UserPlan = 'starter' | 'pro' | 'enterprise' | 'free';
@@ -285,20 +285,22 @@ export default function AuthenticatedLayout({
 
   return (
     <SidebarProvider>
-    <div className="flex flex-col min-h-screen bg-background">
-      <header className="p-4 flex items-center justify-between gap-4 sticky top-0 bg-background/80 backdrop-blur-sm z-10 border-b">
+      <div className="flex min-h-screen flex-col bg-background">
+        <header className="sticky top-0 z-10 flex h-20 items-center justify-between gap-4 border-b bg-background/80 px-4 backdrop-blur-sm">
           <div className="flex items-center gap-2">
-              <SidebarTrigger className={cn(
-                  "md:hidden",
-                  !showSidebar && "hidden"
-              )}>
-                  <Menu className="w-6 h-6" />
-              </SidebarTrigger>
-              <Link href="/dashboard" className="font-semibold text-lg items-center gap-2 text-primary hidden md:flex">
-                  <span>Savrii</span>
-              </Link>
+            <SidebarTrigger
+              className={cn('md:hidden', !showSidebar && 'hidden')}
+            >
+              <Menu className="w-6 h-6" />
+            </SidebarTrigger>
+            <Link
+              href="/dashboard"
+              className="hidden items-center gap-2 text-lg font-semibold text-primary md:flex"
+            >
+              <span>Savrii</span>
+            </Link>
           </div>
-          <nav className="hidden md:flex items-center gap-6">
+          <nav className="hidden items-center gap-6 md:flex">
             {topNavItems.map((item) => (
               <NavLink key={item.href} href={item.href}>
                 {item.label}
@@ -306,53 +308,75 @@ export default function AuthenticatedLayout({
             ))}
           </nav>
           <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" onClick={toggleTheme} className="relative h-9 w-9 overflow-hidden">
-                  <AnimatePresence mode="wait" initial={false}>
-                      <motion.div
-                          key={theme === 'light' ? 'moon' : 'sun'}
-                          initial={{ y: -20, opacity: 0, rotate: -90 }}
-                          animate={{ y: 0, opacity: 1, rotate: 0 }}
-                          exit={{ y: 20, opacity: 0, rotate: 90 }}
-                          transition={{ duration: 0.3 }}
-                          className="absolute"
-                      >
-                          {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-                      </motion.div>
-                  </AnimatePresence>
-              </Button>
-              <TooltipProvider>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              className="relative h-9 w-9 overflow-hidden"
+            >
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={theme === 'light' ? 'moon' : 'sun'}
+                  initial={{ y: -20, opacity: 0, rotate: -90 }}
+                  animate={{ y: 0, opacity: 1, rotate: 0 }}
+                  exit={{ y: 20, opacity: 0, rotate: 90 }}
+                  transition={{ duration: 0.3 }}
+                  className="absolute"
+                >
+                  {theme === 'light' ? (
+                    <Moon className="h-5 w-5" />
+                  ) : (
+                    <Sun className="h-5 w-5" />
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </Button>
+            <TooltipProvider>
               <Tooltip>
-                  <TooltipTrigger asChild>
-                       <Avatar className="h-9 w-9">
-                          <AvatarImage src={user?.photoURL || ''} />
-                          <AvatarFallback>{userProfile?.first_name?.[0] || user?.email?.[0]}</AvatarFallback>
-                      </Avatar>
-                  </TooltipTrigger>
-                  <TooltipContent align="end">
-                      <div className="p-2">
-                           <p className="font-semibold">{userProfile?.first_name} {userProfile?.last_name}</p>
-                           <p className="text-muted-foreground text-xs">{userProfile?.email}</p>
-                           <Button size="sm" variant="outline" className="w-full mt-4" onClick={handleLogout}>
-                              <LogOut className="h-4 w-4 mr-2" />
-                              Logout
-                           </Button>
-                      </div>
-                  </TooltipContent>
+                <TooltipTrigger asChild>
+                  <Avatar className="h-9 w-9">
+                    <AvatarImage src={user?.photoURL || ''} />
+                    <AvatarFallback>
+                      {userProfile?.first_name?.[0] || user?.email?.[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                </TooltipTrigger>
+                <TooltipContent align="end">
+                  <div className="p-2">
+                    <p className="font-semibold">
+                      {userProfile?.first_name} {userProfile?.last_name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {userProfile?.email}
+                    </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="mt-4 w-full"
+                      onClick={handleLogout}
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Logout
+                    </Button>
+                  </div>
+                </TooltipContent>
               </Tooltip>
-              </TooltipProvider>
+            </TooltipProvider>
           </div>
-      </header>
-      <div className="flex flex-1 overflow-hidden">
-        {showSidebar && (
-          <Sidebar>
-            <SidebarContent>
+        </header>
+        <div className="flex flex-1 overflow-hidden">
+          {showSidebar && (
+            <Sidebar>
+                <div className="md:hidden pt-12">
                  <SheetHeader className="p-2 border-b md:hidden">
                     <SheetTitle className="sr-only">Menu</SheetTitle>
                  </SheetHeader>
-              <SidebarMenu>
-                <div className="p-2 mb-2 hidden md:block">
-                   <SidebarTrigger />
                 </div>
+              <SidebarContent>
+                <SidebarMenu>
+                  <div className="hidden p-2 mb-2 md:block">
+                    <SidebarTrigger />
+                  </div>
                   <NavMenuItem href="/dashboard" icon={LayoutDashboard} label="Dashboard" plan={userPlan} />
                   <NavMenuItem href="/inbox" icon={MessageCircle} label="Inbox" plan={userPlan} isDisabled />
                   <NavMenuItem href="/chat" icon={Bot} label="Chat / AI Assistant" plan={userPlan} />
@@ -378,22 +402,30 @@ export default function AuthenticatedLayout({
                     { href: "/white-label", label: "White-label", icon: Paintbrush, requiredPlan: "enterprise", isDisabled: true },
                     { href: "/webhooks", label: "Webhooks", icon: Webhook, requiredPlan: "enterprise", isDisabled: true },
                 ]} />
-              </SidebarMenu>
-            </SidebarContent>
-            <SidebarFooter>
-               <SidebarMenu>
-                    <NavMenuItem href="/settings" icon={Settings} label="Settings" plan={userPlan} />
-                    <NavMenuItem href="/support" icon={HelpCircle} label="Support" plan={userPlan} />
-               </SidebarMenu>
-            </SidebarFooter>
-          </Sidebar>
-         )}
-        <main className="flex-1 overflow-y-auto">
-            {children}
-        </main>
+                </SidebarMenu>
+              </SidebarContent>
+              <SidebarFooter>
+                <SidebarMenu>
+                  <NavMenuItem
+                    href="/settings"
+                    icon={Settings}
+                    label="Settings"
+                    plan={userPlan}
+                  />
+                  <NavMenuItem
+                    href="/support"
+                    icon={HelpCircle}
+                    label="Support"
+                    plan={userPlan}
+                  />
+                </SidebarMenu>
+              </SidebarFooter>
+            </Sidebar>
+          )}
+          <main className="flex-1 overflow-y-auto">{children}</main>
+        </div>
+        <AnimatedFooter />
       </div>
-       <AnimatedFooter />
-    </div>
-  </SidebarProvider>
+    </SidebarProvider>
   );
 }
