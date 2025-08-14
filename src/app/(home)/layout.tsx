@@ -34,6 +34,17 @@ import {
   Menu,
   BarChartBig,
   X,
+  Wand2,
+  Palette,
+  BookOpen,
+  Target,
+  Download,
+  TrendingUp,
+  Workflow,
+  Upload,
+  Shield,
+  Webhook,
+  Bot
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -117,6 +128,14 @@ const NavMenuItem = ({
   const isLocked = plan && requiredPlan ? !hasPermission(plan, requiredPlan) : false;
   const isEffectivelyDisabled = isDisabled || isLocked;
   const isActive = pathname === href;
+  const router = useRouter();
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (isLocked) {
+      e.preventDefault();
+      router.push('/billing');
+    }
+  }
 
   const itemContent = (
     <SidebarMenuButton
@@ -125,6 +144,7 @@ const NavMenuItem = ({
       className={cn(isEffectivelyDisabled && 'cursor-not-allowed opacity-60')}
       tooltip={label}
       disabled={isEffectivelyDisabled}
+      onClick={isLocked ? handleClick : undefined}
     >
       <Icon className="h-5 w-5" />
       <span className="flex-1">{label}</span>
@@ -182,9 +202,7 @@ const NavMenuCollapsible = ({
         <SidebarMenuSub>
           {items.map((item) => (
              <SidebarMenuSubItem key={item.href}>
-                 <SidebarMenuSubButton href={item.href} isActive={pathname === item.href}>
-                     {item.label}
-                 </SidebarMenuSubButton>
+                 <NavMenuItem href={item.href} icon={() => <></>} label={item.label} plan={plan} requiredPlan={item.requiredPlan} isDisabled={item.isDisabled} />
              </SidebarMenuSubItem>
           ))}
         </SidebarMenuSub>
@@ -206,8 +224,6 @@ export default function AuthenticatedLayout({
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
-
-  const shouldShowSidebar = !['/home', '/billing', '/settings', '/support'].some(p => pathname.startsWith(p));
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -256,7 +272,7 @@ export default function AuthenticatedLayout({
   }, [mobileMenuOpen]);
 
 
-  if (loading) {
+  if (loading || profileLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader className="h-10 w-10 animate-spin" />
@@ -265,44 +281,30 @@ export default function AuthenticatedLayout({
   }
 
   const navLinks = [
-      { href: "/home", label: "Home", icon: Home },
+      { href: "/dashboard", label: "Dashboard", icon: Home },
       { href: "/billing", label: "Billing", icon: CreditCard },
       { href: "/settings", label: "Settings", icon: Settings },
       { href: "/support", label: "FAQ", icon: HelpCircle },
   ];
 
   const userPlan = userProfile?.plan as UserPlan | undefined;
+  
+  if (!user) {
+    return null; // or a loading spinner, since redirect will handle it.
+  }
 
   return (
     <SidebarProvider>
       <div className="flex flex-col min-h-screen bg-background">
         <header className="p-4 flex items-center justify-between gap-4 sticky top-0 bg-background/80 backdrop-blur-sm z-10 border-b">
             <div className="flex items-center gap-2">
-                {shouldShowSidebar ? (
-                    <SidebarTrigger className="md:hidden">
-                        <Menu className="w-6 h-6" />
-                    </SidebarTrigger>
-                ) : (
-                    <Link href="/dashboard" className="font-semibold text-lg flex items-center gap-2 text-primary">
-                       <span>Savrii</span>
-                    </Link>
-                )}
-                 {shouldShowSidebar && (
-                    <Link href="/dashboard" className="font-semibold text-lg items-center gap-2 text-primary hidden md:flex">
-                        <span>Savrii</span>
-                    </Link>
-                )}
+                <SidebarTrigger className="md:hidden">
+                    <Menu className="w-6 h-6" />
+                </SidebarTrigger>
+                <Link href="/dashboard" className="font-semibold text-lg items-center gap-2 text-primary hidden md:flex">
+                    <span>Savrii</span>
+                </Link>
             </div>
-            <nav className="hidden md:flex flex-1 justify-center items-center gap-8 text-base font-medium">
-                {navLinks.map(link => (
-                    <Link key={link.href} href={link.href} className={cn(
-                        "transition-colors hover:text-primary",
-                        pathname === link.href ? "text-primary font-semibold" : "text-muted-foreground"
-                    )}>
-                        {link.label}
-                    </Link>
-                ))}
-            </nav>
             <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" onClick={toggleTheme} className="relative h-9 w-9 overflow-hidden">
                     <AnimatePresence mode="wait" initial={false}>
@@ -321,146 +323,67 @@ export default function AuthenticatedLayout({
                 <TooltipProvider>
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-9 w-9 hidden md:inline-flex" onClick={handleLogout}>
-                            <LogOut className="h-4 w-4"/>
-                        </Button>
+                         <Avatar className="h-9 w-9">
+                            <AvatarImage src={user?.photoURL || ''} />
+                            <AvatarFallback>{userProfile?.first_name?.[0] || user?.email?.[0]}</AvatarFallback>
+                        </Avatar>
                     </TooltipTrigger>
-                    <TooltipContent align="end">Logout</TooltipContent>
+                    <TooltipContent align="end">
+                        <div className="p-2">
+                             <p className="font-semibold">{userProfile?.first_name} {userProfile?.last_name}</p>
+                             <p className="text-muted-foreground text-xs">{userProfile?.email}</p>
+                             <Button size="sm" variant="outline" className="w-full mt-4" onClick={handleLogout}>
+                                <LogOut className="h-4 w-4 mr-2" />
+                                Logout
+                             </Button>
+                        </div>
+                    </TooltipContent>
                 </Tooltip>
                 </TooltipProvider>
-                <Avatar className="h-9 w-9">
-                    <AvatarImage src={user?.photoURL || ''} />
-                    <AvatarFallback>{userProfile?.first_name?.[0] || user?.email?.[0]}</AvatarFallback>
-                </Avatar>
-                <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-                    <SheetTrigger asChild>
-                        <Button variant="ghost" size="icon" className="md:hidden">
-                            <Menu className="w-6 h-6" />
-                        </Button>
-                    </SheetTrigger>
-                    <SheetContent ref={mobileMenuRef} className="p-0">
-                         <SheetHeader className="flex flex-row justify-between items-center border-b p-4">
-                            <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
-                             <Link href="/dashboard" className="flex items-center gap-2" onClick={() => setMobileMenuOpen(false)}>
-                                <span className="text-xl font-bold text-primary">Savrii</span>
-                            </Link>
-                        </SheetHeader>
-                        <nav className="flex flex-col gap-2 mt-8 p-4">
-                            {navLinks.map(link => (
-                                <div key={link.href} data-mobile-nav-item>
-                                    <SheetClose asChild>
-                                        <Link href={link.href} className={cn(
-                                            "flex items-center gap-4 text-lg p-3 rounded-lg transition-colors hover:bg-secondary",
-                                            pathname === link.href ? "bg-secondary text-primary font-semibold" : "text-muted-foreground"
-                                        )}>
-                                            <link.icon className="h-5 w-5" />
-                                            {link.label}
-                                        </Link>
-                                    </SheetClose>
-                                </div>
-                            ))}
-                        </nav>
-                         <div className="p-4 mt-auto border-t">
-                             <Button variant="outline" className="w-full justify-start" onClick={handleLogout}>
-                                 <LogOut className="mr-2 h-4 w-4" />
-                                 Logout
-                             </Button>
-                         </div>
-                    </SheetContent>
-                </Sheet>
             </div>
         </header>
         <div className="flex flex-1 overflow-hidden">
-          {shouldShowSidebar && (
             <Sidebar>
               <SidebarContent>
                 <SidebarMenu>
                   <div className="p-2 mb-2">
                      <SidebarTrigger className="md:flex hidden" />
                   </div>
+                    <NavMenuItem href="/dashboard" icon={BarChartBig} label="Dashboard" plan={userPlan} />
+                    <NavMenuItem href="/inbox" icon={MessageSquare} label="Inbox" plan={userPlan} />
+                    <NavMenuItem href="/chat" icon={Bot} label="Chat / AI Assistant" plan={userPlan} />
+                    <NavMenuItem href="/analytics" icon={BarChart2} label="Analytics" plan={userPlan} requiredPlan="pro" />
+                    <NavMenuItem href="/integrations" icon={GitMerge} label="Integrations" plan={userPlan} />
+                    <NavMenuItem href="/billing" icon={CreditCard} label="Billing" plan={userPlan} />
+                    <NavMenuItem href="/settings" icon={Settings} label="Settings" plan={userPlan} />
+                    <NavMenuItem href="/support" icon={HelpCircle} label="FAQ / Support" plan={userPlan} />
 
-                  <NavMenuItem href="/dashboard" icon={BarChartBig} label="Dashboard" plan={userPlan} />
-                  <NavMenuItem href="/chat" icon={MessageSquare} label="Chat / AI Assistant" plan={userPlan} />
-                  <NavMenuItem href="/analytics" icon={BarChart2} label="Analytics" plan={userPlan} requiredPlan="pro" />
-                  <NavMenuItem href="/integrations" icon={GitMerge} label="Integrations" plan={userPlan} />
-                  
-                  <NavMenuCollapsible icon={FileText} label="Content Mgmt" plan={userPlan} items={[
-                      { href: "/custom-prompts", label: "Custom Prompts", requiredPlan: "pro" },
-                      { href: "/brand-voice", label: "Brand Voice Training", requiredPlan: "pro" },
-                      { href: "/prompt-library", label: "Prompt Library", requiredPlan: "pro", isDisabled: true },
+                  <NavMenuCollapsible icon={Wand2} label="Pro Features" plan={userPlan} items={[
+                      { href: "/prompts", label: "Custom Prompts", requiredPlan: "pro" },
+                      { href: "/brand-voice", label: "Brand Voice", requiredPlan: "pro" },
+                      { href: "/prompt-library", label: "Prompt Library", requiredPlan: "pro" },
+                      { href: "/daily-summary", label: "Daily Summary", requiredPlan: "pro" },
+                      { href: "/collaboration", label: "Collaboration", requiredPlan: "pro" },
+                      { href: "/lead-capture", label: "Lead Capture", requiredPlan: "pro" },
+                      { href: "/export", label: "Export Data", requiredPlan: "pro" },
                   ]} />
                   
-                  <NavMenuCollapsible icon={Users} label="Productivity" plan={userPlan} items={[
-                      { href: "/daily-summary", label: "Daily Summary", requiredPlan: "pro", isDisabled: true },
-                      { href: "/collaboration", label: "Collaboration Tools", requiredPlan: "pro", isDisabled: true },
-                      { href: "/lead-capture", label: "Lead Capture Options", requiredPlan: "pro", isDisabled: true },
-                      { href: "/export", label: "Export Conversations", requiredPlan: "pro", isDisabled: true },
-                  ]} />
-
-                  <NavMenuCollapsible icon={Settings} label="Advanced" plan={userPlan} items={[
+                  <NavMenuCollapsible icon={Shield} label="Enterprise" plan={userPlan} items={[
                       { href: "/real-time-analytics", label: "Real-Time Analytics", requiredPlan: "enterprise" },
-                      { href: "/api-access", label: "API Access", requiredPlan: "enterprise" },
-                      { href: "/workflow-builder", label: "Workflow Builder", requiredPlan: "enterprise", isDisabled: true },
-                      { href: "/custom-model", label: "Custom AI Model", requiredPlan: "enterprise", isDisabled: true },
-                      { href: "/security", label: "Security & Compliance", requiredPlan: "enterprise", isDisabled: true },
-                      { href: "/white-label", label: "White-label Settings", requiredPlan: "enterprise" },
-                      { href: "/webhooks", label: "Webhooks & Zapier", requiredPlan: "enterprise", isDisabled: true },
+                      { href: "/workflow-builder", label: "Workflow Builder", requiredPlan: "enterprise" },
+                      { href: "/custom-model", label: "Custom AI Model", requiredPlan: "enterprise" },
+                      { href: "/security", label: "Security", requiredPlan: "enterprise" },
+                      { href: "/white-label", label: "White-label", requiredPlan: "enterprise" },
+                      { href: "/webhooks", label: "Webhooks", requiredPlan: "enterprise" },
                   ]} />
                 </SidebarMenu>
               </SidebarContent>
-              <SidebarFooter>
-                  <div className='px-4 py-2 text-sm'>
-                      <p className='font-semibold'>Current Plan</p>
-                      {profileLoading ? (
-                        <Skeleton className="h-4 w-20 mt-1" />
-                      ) : (
-                        <p className='text-muted-foreground capitalize'>{userProfile?.plan || 'starter'}</p>
-                      )}
-                  </div>
-                  <SidebarMenu>
-                    <NavMenuItem href="/billing" icon={CreditCard} label="Billing" plan={userPlan} />
-                    <NavMenuItem href="/settings" icon={Settings} label="Settings" plan={userPlan} />
-                    <NavMenuItem href="/support" icon={HelpCircle} label="Support" plan={userPlan} />
-                  </SidebarMenu>
-                <TooltipProvider>
-                    <div className="flex items-center gap-3 p-3 rounded-lg border m-2">
-                        <Avatar className="h-9 w-9">
-                            <AvatarImage src={user?.photoURL || ''} />
-                            <AvatarFallback>{userProfile?.first_name?.[0] || user?.email?.[0]}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 overflow-hidden">
-                           {profileLoading ? (
-                                <div className="space-y-1">
-                                    <Skeleton className="h-4 w-3/4" />
-                                    <Skeleton className="h-3 w-full" />
-                                </div>
-                           ) : (
-                                <>
-                                    <p className="text-sm font-semibold truncate">{userProfile?.first_name} {userProfile?.last_name}</p>
-                                    <p className="text-xs text-muted-foreground truncate">{userProfile?.email}</p>
-                                </>
-                           )}
-                        </div>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleLogout}>
-                                    <LogOut className="h-4 w-4"/>
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="right" align="center">Logout</TooltipContent>
-                        </Tooltip>
-                    </div>
-                </TooltipProvider>
-              </SidebarFooter>
             </Sidebar>
-          )}
           <main className="flex-1 overflow-y-auto">
               {children}
           </main>
         </div>
       </div>
-      <AnimatedFooter />
     </SidebarProvider>
   );
 }
-

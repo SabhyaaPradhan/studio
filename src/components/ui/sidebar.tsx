@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import * as React from "react"
@@ -72,7 +73,12 @@ const SidebarProvider = React.forwardRef<
 
     // This is the internal state of the sidebar.
     // We use openProp and setOpenProp for control from outside the component.
-    const [_open, _setOpen] = React.useState(defaultOpen)
+    const [_open, _setOpen] = React.useState(() => {
+        if (typeof window === 'undefined') return defaultOpen;
+        const storedState = document.cookie.split('; ').find(row => row.startsWith(`${SIDEBAR_COOKIE_NAME}=`));
+        return storedState ? storedState.split('=')[1] === 'true' : defaultOpen;
+    });
+
     const open = openProp ?? _open
     const setOpen = React.useCallback(
       (value: boolean | ((value: boolean) => boolean)) => {
@@ -303,7 +309,7 @@ const SidebarContent = React.forwardRef<
       ref={ref}
       data-sidebar="content"
       className={cn(
-        "flex min-h-0 flex-1 flex-col gap-2 overflow-auto p-2",
+        "flex min-h-0 flex-1 flex-col gap-2 overflow-auto",
         className
       )}
       {...props}
@@ -319,7 +325,7 @@ const SidebarMenu = React.forwardRef<
   <ul
     ref={ref}
     data-sidebar="menu"
-    className={cn("flex w-full min-w-0 flex-col gap-1", className)}
+    className={cn("flex w-full min-w-0 flex-col gap-1 p-2", className)}
     {...props}
   />
 ))
@@ -341,10 +347,9 @@ SidebarMenuItem.displayName = "SidebarMenuItem"
 
 const SidebarMenuButton = React.forwardRef<
   HTMLButtonElement | HTMLAnchorElement,
-  (React.ComponentProps<"button"> | React.ComponentProps<typeof Link>) & {
+  (React.ComponentProps<"button"> & React.ComponentProps<typeof Link>) & {
     isActive?: boolean;
     tooltip?: React.ReactNode;
-    href?: string;
   }
 >(
   (
@@ -369,7 +374,7 @@ const SidebarMenuButton = React.forwardRef<
         "active:bg-accent active:text-accent-foreground",
         "disabled:pointer-events-none disabled:opacity-50",
         "aria-disabled:pointer-events-none aria-disabled:opacity-50",
-        "data-[active=true]:bg-primary data-[active=true]:font-medium data-[active=true]:text-primary-foreground",
+        "data-[active=true]:bg-secondary data-[active=true]:font-medium data-[active=true]:text-secondary-foreground",
         sidebarState === 'collapsed' && 'justify-center h-10',
         className
       ),
@@ -393,17 +398,13 @@ const SidebarMenuButton = React.forwardRef<
         })}
       </>
     );
-
-    const button = href ? (
-      <Link href={href} {...commonProps} ref={ref as React.Ref<HTMLAnchorElement>}>
-        {buttonContent}
-      </Link>
-    ) : (
-      <button {...commonProps} ref={ref as React.Ref<HTMLButtonElement>}>
-        {buttonContent}
-      </button>
-    );
-
+    
+    const button = (
+        <Link href={href!} {...commonProps} ref={ref as React.Ref<HTMLAnchorElement>}>
+          {buttonContent}
+        </Link>
+      );
+      
     if (!tooltip || sidebarState === 'expanded' || isMobile) {
       return button;
     }
@@ -453,13 +454,13 @@ SidebarMenuSubItem.displayName = "SidebarMenuSubItem"
 
 const SidebarMenuSubButton = React.forwardRef<
   HTMLAnchorElement,
-  React.ComponentProps<"a"> & {
+  React.ComponentProps<typeof Link> & {
     isActive?: boolean
   }
 >(({ isActive, className, ...props }, ref) => {
 
   return (
-    <a
+    <Link
       ref={ref}
       data-sidebar="menu-sub-button"
       data-active={isActive}
