@@ -3,18 +3,19 @@
 
 import { useState, useEffect } from 'react';
 import { useAuthContext } from '@/context/auth-context';
-import { listenToChatMessages, ChatMessage, listenToRecentReplies, AiGeneratedReply } from '@/services/firestore-service';
+import { listenToChatMessages, ChatMessage } from '@/services/firestore-service';
 import { listenToUser, UserProfile } from '@/services/user-service';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { BarChart3, MessageSquare, TrendingUp, Target, Clock, AlertTriangle, ShieldCheck, BarChartHorizontal, Mail, Activity, Eye, MailCheck, AlertOctagon } from 'lucide-react';
+import { BarChart3, MessageSquare, TrendingUp, Target, Clock, AlertTriangle, ShieldCheck, BarChartHorizontal, Activity, Eye } from 'lucide-react';
 import { MetricCard, MetricCardSkeleton } from '@/components/analytics/metric-card';
 import { DailyUsageChart, DailyUsageChartSkeleton } from '@/components/analytics/daily-usage-chart';
 import { PlanUsage, PlanUsageSkeleton } from '@/components/analytics/plan-usage';
 import { GmailRepliesChart, GmailRepliesChartSkeleton } from '@/components/analytics/gmail-replies-chart';
+import { subDays, startOfDay } from 'date-fns';
 import { PeakActivityHeatmap } from '@/components/analytics/PeakActivityHeatmap';
 import { EngagementRatesChart } from '@/components/analytics/EngagementRatesChart';
-import { subDays, startOfDay, format, eachDayOfInterval } from 'date-fns';
+
 
 interface OverviewStats {
   totalResponses: number;
@@ -32,20 +33,12 @@ interface DailySummary {
     }
 }
 
-interface DailyGmailReplies {
-    date: string;
-    count: number;
-}
-
 export default function AnalyticsPage() {
   const { user } = useAuthContext();
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [overview, setOverview] = useState<OverviewStats | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [gmailReplies, setGmailReplies] = useState<DailyGmailReplies[]>([]);
-  const [gmailRepliesLoading, setGmailRepliesLoading] = useState(true);
-
 
   useEffect(() => {
     if (user) {
@@ -61,50 +54,14 @@ export default function AnalyticsPage() {
       const unsubUser = listenToUser(user.uid, (profile) => {
         setUserProfile(profile);
       });
-
-      const unsubGmail = listenToRecentReplies(user.uid, 30, (replies) => {
-          processGmailReplies(replies);
-          setGmailRepliesLoading(false);
-      }, (err) => {
-          console.error(err);
-          setGmailRepliesLoading(false);
-      });
       
       return () => {
         unsubChat();
         unsubUser();
-        unsubGmail();
       };
     }
   }, [user, loading]);
 
-  const processGmailReplies = (replies: AiGeneratedReply[]) => {
-      const gmailRepliesFiltered = replies.filter(r => r.source === 'gmail');
-      const dailyCounts: { [key: string]: number } = {};
-
-      const thirtyDaysAgo = startOfDay(subDays(new Date(), 29));
-      const dateInterval = eachDayOfInterval({ start: thirtyDaysAgo, end: new Date() });
-
-      dateInterval.forEach(day => {
-          const dateKey = format(day, 'yyyy-MM-dd');
-          dailyCounts[dateKey] = 0;
-      });
-
-      gmailRepliesFiltered.forEach(reply => {
-          const replyDate = startOfDay(reply.createdAt.toDate());
-          const dateKey = format(replyDate, 'yyyy-MM-dd');
-          if (dailyCounts[dateKey] !== undefined) {
-              dailyCounts[dateKey]++;
-          }
-      });
-      
-      const chartData = Object.entries(dailyCounts).map(([date, count]) => ({
-          date,
-          count,
-      })).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-      
-      setGmailReplies(chartData);
-  }
 
   const calculateOverview = (messages: ChatMessage[]) => {
     const thirtyDaysAgo = subDays(new Date(), 30);
@@ -218,7 +175,6 @@ export default function AnalyticsPage() {
               value={`${overview.avgConfidence.toFixed(1)}%`}
               icon={Target}
               description="Overall response accuracy"
-              progress={overview.avgConfidence}
             />
             <MetricCard 
               title="Avg. Response Time" 
@@ -230,7 +186,7 @@ export default function AnalyticsPage() {
       </div>
       
       {/* Charts Section */}
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-1">
         <Card>
           <CardHeader>
             <CardTitle>Daily Usage Trend</CardTitle>
@@ -238,18 +194,6 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent className="h-80">
             {loading ? <DailyUsageChartSkeleton /> : <DailyUsageChart data={dailyDataForChart} />}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-                <Mail className="h-5 w-5 text-red-500" />
-                Gmail Reply Volume
-            </CardTitle>
-            <CardDescription>AI-generated Gmail replies over the last 30 days.</CardDescription>
-          </CardHeader>
-          <CardContent className="h-80">
-            {gmailRepliesLoading ? <GmailRepliesChartSkeleton /> : <GmailRepliesChart data={gmailReplies} />}
           </CardContent>
         </Card>
       </div>
@@ -313,7 +257,7 @@ export default function AnalyticsPage() {
               <CardDescription>Hourly AI reply volume over the last week.</CardDescription>
             </CardHeader>
             <CardContent className="h-80">
-                <PeakActivityHeatmap />
+                <PeakActivityHeatmap userId={user?.uid} />
             </CardContent>
         </Card>
 
@@ -326,7 +270,7 @@ export default function AnalyticsPage() {
               <CardDescription>Open, reply, and bounce rates for emails.</CardDescription>
             </CardHeader>
             <CardContent className="h-80">
-                <EngagementRatesChart />
+                <EngagementRatesChart userId={user?.uid} />
             </CardContent>
         </Card>
       </div>

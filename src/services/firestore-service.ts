@@ -22,7 +22,8 @@ import {
     limit,
     orderBy,
     where,
-    startAt
+    startAt,
+    collectionGroup
 } from 'firebase/firestore';
 import { format, subDays } from 'date-fns';
 
@@ -88,6 +89,7 @@ export interface Conversation {
 
 export interface AiGeneratedReply {
   id: string;
+  userId: string;
   conversationId: string;
   originalMessageId: string;
   replyType: string;
@@ -101,6 +103,15 @@ export interface AiGeneratedReply {
   conversation: { // Denormalized for easy display
       customerName: string;
   };
+}
+
+export interface EmailStats {
+    id: string;
+    sent: number;
+    opened: number;
+    replied: number;
+    bounced: number;
+    date: Timestamp;
 }
 
 
@@ -360,7 +371,6 @@ export function listenToConversations(
 
 export function listenToRecentReplies(
     userId: string, 
-    days: number,
     callback: (replies: AiGeneratedReply[]) => void, 
     onError: (error: FirestoreError) => void
 ): Unsubscribe {
@@ -369,10 +379,10 @@ export function listenToRecentReplies(
         return () => {};
     }
     
-    const startDate = subDays(new Date(), days);
+    const startDate = subDays(new Date(), 29);
 
     const q = query(
-        collection(db, 'ai_replies'), 
+        collectionGroup(db, 'ai_replies'), 
         where("userId", "==", userId),
         where("createdAt", ">=", startDate),
         orderBy("createdAt", "desc")
@@ -384,6 +394,64 @@ export function listenToRecentReplies(
             replies.push({ id: doc.id, ...doc.data() } as AiGeneratedReply);
         });
         callback(replies);
+    }, onError);
+}
+
+export function listenToRecentRepliesForHeatmap(
+    userId: string, 
+    days: number,
+    callback: (replies: AiGeneratedReply[]) => void, 
+    onError: (error: FirestoreError) => void
+): Unsubscribe {
+     if (!userId) {
+        onError({ code: 'invalid-argument', message: 'User ID is required.' } as FirestoreError);
+        return () => {};
+    }
+    
+    const startDate = subDays(new Date(), days);
+
+    const q = query(
+        collectionGroup(db, 'ai_replies'), 
+        where("userId", "==", userId),
+        where("createdAt", ">=", startDate),
+        orderBy("createdAt", "desc")
+    );
+
+    return onSnapshot(q, (snapshot) => {
+        const replies: AiGeneratedReply[] = [];
+        snapshot.forEach(doc => {
+            replies.push({ id: doc.id, ...doc.data() } as AiGeneratedReply);
+        });
+        callback(replies);
+    }, onError);
+}
+
+
+export function listenToEmailStats(
+    userId: string,
+    callback: (stats: EmailStats | null) => void,
+    onError: (error: FirestoreError) => void
+): Unsubscribe {
+    if (!userId) {
+        onError({ code: 'invalid-argument', message: 'User ID is required.' } as FirestoreError);
+        return () => {};
+    }
+
+    // Listens to the latest email_stats document for the user.
+    // In a real app, you might aggregate this data or query a specific date range.
+    const q = query(
+        collection(db, `users/${userId}/email_stats`),
+        orderBy('date', 'desc'),
+        limit(1)
+    );
+
+    return onSnapshot(q, (snapshot) => {
+        if (snapshot.empty) {
+            callback(null);
+        } else {
+            const doc = snapshot.docs[0];
+            callback({ id: doc.id, ...doc.data() } as EmailStats);
+        }
     }, onError);
 }
 
