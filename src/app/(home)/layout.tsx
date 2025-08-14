@@ -14,7 +14,6 @@ import {
   SidebarFooter,
   SidebarMenuSub,
   SidebarMenuSubButton,
-  SidebarMenuSubItem,
   useSidebar,
 } from '@/components/ui/sidebar';
 import {
@@ -183,32 +182,32 @@ const NavMenuCollapsible = ({
   const isAnyChildActive = items.some(item => pathname.startsWith(item.href));
 
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <CollapsibleTrigger asChild>
-        <button className={cn("w-full", isAnyChildActive && 'bg-secondary rounded-md')}>
-          <SidebarMenuButton as="div" className={cn(isAnyChildActive && 'bg-secondary')}>
-              <Icon className="h-5 w-5" />
-              <span className="flex-1 text-left">{label}</span>
-              <ChevronDown
-                className={cn(
-                  'ml-auto h-4 w-4 transition-transform duration-200',
-                  isOpen ? 'rotate-180' : '',
-                  state === 'collapsed' && 'hidden'
-                )}
-              />
-          </SidebarMenuButton>
-        </button>
-      </CollapsibleTrigger>
-      <CollapsibleContent asChild>
-        <SidebarMenuSub>
-          {items.map((item) => (
-             <SidebarMenuSubItem key={item.href}>
-                 <NavMenuItem href={item.href} icon={() => <></>} label={item.label} plan={plan} requiredPlan={item.requiredPlan} isDisabled={item.isDisabled} />
-             </SidebarMenuSubItem>
-          ))}
-        </SidebarMenuSub>
-      </CollapsibleContent>
-    </Collapsible>
+    <SidebarMenuItem>
+        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+          <CollapsibleTrigger asChild>
+            <button className={cn("w-full", isAnyChildActive && 'bg-secondary rounded-md')}>
+              <SidebarMenuButton as="div" className={cn(isAnyChildActive && 'bg-secondary')}>
+                  <Icon className="h-5 w-5" />
+                  <span className="flex-1 text-left">{label}</span>
+                  <ChevronDown
+                    className={cn(
+                      'ml-auto h-4 w-4 transition-transform duration-200',
+                      isOpen ? 'rotate-180' : '',
+                      state === 'collapsed' && 'hidden'
+                    )}
+                  />
+              </SidebarMenuButton>
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent asChild>
+            <SidebarMenuSub>
+              {items.map((item) => (
+                 <NavMenuItem key={item.href} href={item.href} icon={() => <></>} label={item.label} plan={plan} requiredPlan={item.requiredPlan} isDisabled={item.isDisabled} />
+              ))}
+            </SidebarMenuSub>
+          </CollapsibleContent>
+        </Collapsible>
+    </SidebarMenuItem>
   );
 };
 
@@ -370,31 +369,31 @@ export default function AuthenticatedLayout({
                   </div>
                     <NavMenuItem href="/home" icon={Home} label="Home" plan={userPlan} />
                     <NavMenuItem href="/dashboard" icon={BarChartBig} label="Dashboard" plan={userPlan} />
-                    <NavMenuItem href="/inbox" icon={MessageSquare} label="Inbox" plan={userPlan} />
+                    <NavMenuItem href="/inbox" icon={MessageSquare} label="Inbox" plan={userPlan} isDisabled />
                     <NavMenuItem href="/chat" icon={Bot} label="Chat / AI Assistant" plan={userPlan} />
-                    <NavMenuItem href="/analytics" icon={BarChart2} label="Analytics" plan={userPlan} requiredPlan="pro" />
-                    <NavMenuItem href="/integrations" icon={GitMerge} label="Integrations" plan={userPlan} />
+                    <NavMenuItem href="/analytics" icon={BarChart2} label="Analytics" plan={userPlan} requiredPlan="pro" isDisabled />
+                    <NavMenuItem href="/integrations" icon={GitMerge} label="Integrations" plan={userPlan} isDisabled />
                     <NavMenuItem href="/billing" icon={CreditCard} label="Billing" plan={userPlan} />
                     <NavMenuItem href="/settings" icon={Settings} label="Settings" plan={userPlan} />
                     <NavMenuItem href="/support" icon={HelpCircle} label="FAQ / Support" plan={userPlan} />
 
                   <NavMenuCollapsible icon={Wand2} label="Pro Features" plan={userPlan} items={[
-                      { href: "/prompts", label: "Custom Prompts", requiredPlan: "pro" },
-                      { href: "/brand-voice", label: "Brand Voice", requiredPlan: "pro" },
-                      { href: "/prompt-library", label: "Prompt Library", requiredPlan: "pro" },
-                      { href: "/daily-summary", label: "Daily Summary", requiredPlan: "pro" },
-                      { href: "/collaboration", label: "Collaboration", requiredPlan: "pro" },
-                      { href: "/lead-capture", label: "Lead Capture", requiredPlan: "pro" },
-                      { href: "/export", label: "Export Data", requiredPlan: "pro" },
+                      { href: "/prompts", label: "Custom Prompts", requiredPlan: "pro", isDisabled: true },
+                      { href: "/brand-voice", label: "Brand Voice", requiredPlan: "pro", isDisabled: true },
+                      { href: "/prompt-library", label: "Prompt Library", requiredPlan: "pro", isDisabled: true },
+                      { href: "/daily-summary", label: "Daily Summary", requiredPlan: "pro", isDisabled: true },
+                      { href: "/collaboration", label: "Collaboration", requiredPlan: "pro", isDisabled: true },
+                      { href: "/lead-capture", label: "Lead Capture", requiredPlan: "pro", isDisabled: true },
+                      { href: "/export", label: "Export Data", requiredPlan: "pro", isDisabled: true },
                   ]} />
                   
                   <NavMenuCollapsible icon={Shield} label="Enterprise" plan={userPlan} items={[
-                      { href: "/real-time-analytics", label: "Real-Time Analytics", requiredPlan: "enterprise" },
-                      { href: "/workflow-builder", label: "Workflow Builder", requiredPlan: "enterprise" },
-                      { href: "/custom-model", label: "Custom AI Model", requiredPlan: "enterprise" },
-                      { href: "/security", label: "Security", requiredPlan: "enterprise" },
-                      { href: "/white-label", label: "White-label", requiredPlan: "enterprise" },
-                      { href: "/webhooks", label: "Webhooks", requiredPlan: "enterprise" },
+                      { href: "/real-time-analytics", label: "Real-Time Analytics", requiredPlan: "enterprise", isDisabled: true },
+                      { href: "/workflow-builder", label: "Workflow Builder", requiredPlan: "enterprise", isDisabled: true },
+                      { href: "/custom-model", label: "Custom AI Model", requiredPlan: "enterprise", isDisabled: true },
+                      { href: "/security", label: "Security", requiredPlan: "enterprise", isDisabled: true },
+                      { href: "/white-label", label: "White-label", requiredPlan: "enterprise", isDisabled: true },
+                      { href: "/webhooks", label: "Webhooks", requiredPlan: "enterprise", isDisabled: true },
                   ]} />
                 </SidebarMenu>
               </SidebarContent>

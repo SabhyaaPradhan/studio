@@ -451,12 +451,6 @@ const SidebarMenuSub = React.forwardRef<
 })
 SidebarMenuSub.displayName = "SidebarMenuSub"
 
-const SidebarMenuSubItem = React.forwardRef<
-  HTMLLIElement,
-  React.ComponentProps<"li">
->(({ ...props }, ref) => <li ref={ref} data-sidebar="menu-sub-item" {...props} />)
-SidebarMenuSubItem.displayName = "SidebarMenuSubItem"
-
 const SidebarMenuSubButton = React.forwardRef<
   HTMLAnchorElement,
   React.ComponentProps<typeof Link> & {
@@ -493,7 +487,6 @@ export {
   SidebarMenuItem,
   SidebarMenuSub,
   SidebarMenuSubButton,
-  SidebarMenuSubItem,
   SidebarProvider,
   SidebarSeparator,
   SidebarTrigger,
