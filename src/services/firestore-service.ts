@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { app } from '@/lib/firebase';
@@ -258,12 +259,31 @@ export function listenToGraphs(userId: string, callback: (graphs: Graph[]) => vo
     });
 }
 
-export function listenToChatMessages(userId: string, callback: (requests: ChatMessage[]) => void, onError: (error: FirestoreError) => void): Unsubscribe {
+export function listenToAiRequests(userId: string, callback: (requests: AiRequest[]) => void, onError: (error: FirestoreError) => void): Unsubscribe {
     if (!userId) {
         onError({ code: 'invalid-argument', message: 'User ID is required.' } as FirestoreError);
         return () => {};
     }
-    const q = query(collection(db, "users", userId, "chatMessages"), orderBy("createdAt", "desc"), limit(10));
+    const q = query(collection(db, "users", userId, "aiRequests"), orderBy("createdAt", "desc"), limit(10));
+
+    return onSnapshot(q, (querySnapshot) => {
+        const requests: AiRequest[] = [];
+        querySnapshot.forEach((doc) => {
+            requests.push({ ...doc.data(), id: doc.id } as AiRequest);
+        });
+        callback(requests);
+    }, (error) => {
+        console.error("Error listening to AI requests: ", error);
+        onError(error);
+    });
+}
+
+export function listenToChatMessages(userId: string, callback: (messages: ChatMessage[]) => void, onError: (error: FirestoreError) => void): Unsubscribe {
+    if (!userId) {
+        onError({ code: 'invalid-argument', message: 'User ID is required.' } as FirestoreError);
+        return () => {};
+    }
+    const q = query(collection(db, "users", userId, "chatMessages"), orderBy("createdAt", "asc"));
 
     return onSnapshot(q, (querySnapshot) => {
         const messages: ChatMessage[] = [];
@@ -275,9 +295,9 @@ export function listenToChatMessages(userId: string, callback: (requests: ChatMe
                 createdAt: (data.createdAt as Timestamp)?.toDate().toISOString() || new Date().toISOString(),
             } as ChatMessage);
         });
-        callback(messages.reverse());
+        callback(messages);
     }, (error) => {
-        console.error("Error listening to AI requests: ", error);
+        console.error("Error listening to chat messages: ", error);
         onError(error);
     });
 }

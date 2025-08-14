@@ -19,19 +19,17 @@ import {
   Loader2,
   User,
 } from "lucide-react";
-import { listenToConversations, createConversation, addMessageToConversation, Conversation, ChatMessage, writeChatMessageEvent } from "@/services/firestore-service";
-import { listenToUser, UserProfile } from "@/services/user-service";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { listenToChatMessages, ChatMessage, writeChatMessageEvent } from "@/services/firestore-service";
 
 export default function ChatPage() {
   const { user } = useAuthContext();
   const { toast } = useToast();
   const [message, setMessage] = useState("");
-  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
-  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [profileLoading, setProfileLoading] = useState(true);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -42,44 +40,27 @@ export default function ChatPage() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [conversations, currentConversationId, isSending]);
+  }, [messages, isSending]);
 
   useEffect(() => {
     if (user) {
-        setProfileLoading(true);
-        const unsubscribeUser = listenToUser(user.uid, (profile) => {
-            setUserProfile(profile);
-            setProfileLoading(false);
-        }, (err) => {
-            console.error("ChatPage: Failed to listen to user profile.", err);
-            setUserProfile(null);
-            setProfileLoading(false);
-        });
-
-        const unsubscribeConversations = listenToConversations(
+        setIsLoadingHistory(true);
+        const unsubscribe = listenToChatMessages(
             user.uid, 
-            (loadedConversations) => {
-                setConversations(loadedConversations);
-                if (loadedConversations.length > 0 && !currentConversationId) {
-                    setCurrentConversationId(loadedConversations[0].id);
-                }
+            (loadedMessages) => {
+                setMessages(loadedMessages);
                 setIsLoadingHistory(false);
             },
             (error) => {
-                console.error("Failed to load conversations:", error);
+                console.error("Failed to load messages:", error);
                 toast({ title: "Error", description: "Could not load chat history.", variant: "destructive"});
                 setIsLoadingHistory(false);
             }
         );
 
-        return () => {
-            unsubscribeUser();
-            unsubscribeConversations();
-        };
-    } else if (!profileLoading) {
-        setProfileLoading(false);
+        return () => unsubscribe();
     }
-  }, [user, toast, currentConversationId]);
+  }, [user, toast]);
 
   const handleSendMessage = async () => {
     if (!message.trim() || !user) return;
@@ -89,42 +70,26 @@ export default function ChatPage() {
     setIsSending(true);
 
     try {
-        let conversationId = currentConversationId;
-
-        const userMessage: ChatMessage = {
-            id: Date.now().toString(),
+        const userMessage: Omit<ChatMessage, 'id' | 'createdAt'> = {
             role: 'user',
             content: userMessageContent,
-            createdAt: new Date().toISOString(),
             tokens: userMessageContent.split(' ').length, // Approximate tokens
         };
-
-        if (!conversationId) {
-            const newConversationId = await createConversation(user.uid, userMessage);
-            setCurrentConversationId(newConversationId);
-            conversationId = newConversationId;
-        } else {
-            await addMessageToConversation(user.uid, conversationId, userMessage);
-        }
         
         await writeChatMessageEvent(user.uid, userMessage);
 
-        const currentConvo = conversations.find(c => c.id === conversationId);
-        const history = currentConvo?.messages.map(m => ({ role: m.role, content: m.content })) || [];
+        const history = messages.map(m => ({ role: m.role, content: m.content })) || [];
 
         const aiResult = await generateChatResponse({ message: userMessageContent, history });
 
-        const aiMessage: ChatMessage = {
-            id: (Date.now() + 1).toString(),
+        const aiMessage: Omit<ChatMessage, 'id' | 'createdAt'> = {
             role: 'model',
             content: aiResult.response,
             confidence: aiResult.confidence,
-            createdAt: new Date().toISOString(),
             tokens: aiResult.response.split(' ').length, // Approximate tokens
             category: "General", // Placeholder category
             latency_ms: 500 // Placeholder latency
         };
-        await addMessageToConversation(user.uid, conversationId!, aiMessage);
         await writeChatMessageEvent(user.uid, aiMessage);
 
     } catch (error) {
@@ -146,8 +111,6 @@ export default function ChatPage() {
       description: "Response copied successfully"
     });
   };
-
-  const activeConversation = conversations.find(c => c.id === currentConversationId);
   
   return (
     <div className="flex flex-col h-full p-4 md:p-8">
@@ -176,7 +139,7 @@ export default function ChatPage() {
                         <Loader2 className="w-6 h-6 animate-spin" />
                         </div>
                     ) : (
-                        activeConversation?.messages.map((msg) => (
+                        messages.map((msg) => (
                         <div
                             key={msg.id}
                             className={`flex gap-3 items-start ${
