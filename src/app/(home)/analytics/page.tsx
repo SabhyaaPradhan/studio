@@ -51,7 +51,7 @@ export default function AnalyticsPage() {
         unsubUser();
       };
     }
-  }, [user]);
+  }, [user, loading]);
 
   const calculateOverview = (data: DailyAnalytics[]) => {
     const totalResponses = data.reduce((sum, day) => sum + (day.assistant_messages || 0), 0);
@@ -164,7 +164,7 @@ export default function AnalyticsPage() {
             <CardDescription>Most frequently used reply templates.</CardDescription>
           </CardHeader>
           <CardContent className="h-80">
-             {loading ? <DailyUsageChartSkeleton /> : <TemplatesPieChart />}
+             <TemplatesPieChart />
           </CardContent>
         </Card>
       </div>
@@ -176,7 +176,7 @@ export default function AnalyticsPage() {
           <CardDescription>Shows the busiest hours for AI interactions during the day.</CardDescription>
         </CardHeader>
         <CardContent className="h-72">
-           {loading ? <ActivityHeatmapSkeleton /> : <ActivityHeatmap />}
+           <ActivityHeatmap />
         </CardContent>
       </Card>
       
