@@ -69,24 +69,11 @@ import AnimatedFooter from '@/components/common/animated-footer';
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { gsap } from 'gsap';
 import { motion, AnimatePresence } from 'framer-motion';
-import { listenToUser, UserProfile } from '@/services/user-service';
+import { listenToUser, UserProfile, hasPermission } from '@/services/user-service';
 import { Skeleton } from '@/components/ui/skeleton';
 
 
 type UserPlan = 'starter' | 'pro' | 'enterprise' | 'free';
-
-const hasPermission = (
-  plan: UserPlan,
-  requiredPlan: 'pro' | 'enterprise'
-) => {
-  if (requiredPlan === 'pro') {
-    return plan === 'pro' || plan === 'enterprise';
-  }
-  if (requiredPlan === 'enterprise') {
-    return plan === 'enterprise';
-  }
-  return true;
-};
 
 const UpgradeTooltip = ({ children }: { children: React.ReactNode }) => (
   <TooltipProvider>
@@ -135,7 +122,7 @@ const NavMenuItem = ({
 
   const itemContent = (
     <SidebarMenuButton
-      href={isEffectivelyDisabled ? '#' : href}
+      href={isEffectivelyDisabled ? undefined : href}
       isActive={isActive}
       className={cn(isEffectivelyDisabled && 'cursor-not-allowed opacity-60')}
       tooltip={label}
@@ -288,7 +275,7 @@ export default function AuthenticatedLayout({
     { href: "/home", label: "Home" },
     { href: "/billing", label: "Billing" },
     { href: "/settings", label: "Settings" },
-    { href: "/support", label: "FAQ / Support" },
+    { href: "/support", label: "Support" },
   ];
 
   const pathsWithoutSidebar = ['/home', '/billing', '/settings', '/support'];
@@ -373,7 +360,7 @@ export default function AuthenticatedLayout({
                     <NavMenuItem href="/integrations" icon={GitMerge} label="Integrations" plan={userPlan} isDisabled />
                     <NavMenuItem href="/billing" icon={CreditCard} label="Billing" plan={userPlan} />
                     <NavMenuItem href="/settings" icon={Settings} label="Settings" plan={userPlan} />
-                    <NavMenuItem href="/support" icon={HelpCircle} label="FAQ / Support" plan={userPlan} />
+                    <NavMenuItem href="/support" icon={HelpCircle} label="Support" plan={userPlan} />
 
                   <NavMenuCollapsible icon={Wand2} label="Pro Features" plan={userPlan} items={[
                       { href: "/prompts", label: "Custom Prompts", requiredPlan: "pro", isDisabled: true },
