@@ -368,9 +368,6 @@ export default function AuthenticatedLayout({
           <Sidebar>
             <SidebarContent>
               <SidebarMenu>
-                <div className="hidden p-2 mb-2 md:block">
-                  <SidebarTrigger />
-                </div>
                 {/* --- Main Sidebar Nav --- */}
                 { showSidebar && (
                   <>
@@ -403,7 +400,7 @@ export default function AuthenticatedLayout({
 
                 {/* --- Mobile Nav (from top bar) --- */}
                 <div className="md:hidden">
-                  <Separator className="my-4" />
+                  
                   <p className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Navigation</p>
                   <div className="mt-2 flex flex-col gap-1">
                     <NavMenuItem href="/home" icon={Home} label="Home" plan={userPlan} />
@@ -431,8 +428,8 @@ export default function AuthenticatedLayout({
           </Sidebar>
           <main className={cn("flex-1 overflow-y-auto", !showSidebar && "w-full")}>{children}</main>
         </div>
+        <AnimatedFooter />
       </div>
-      <AnimatedFooter />
     </SidebarProvider>
   );
 }
