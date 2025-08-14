@@ -11,9 +11,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarFooter,
   SidebarMenuSub,
-  SidebarMenuSubButton,
   useSidebar,
 } from '@/components/ui/sidebar';
 import {
@@ -152,7 +150,7 @@ const NavMenuItem = ({
 
   return (
     <SidebarMenuItem>
-      {plan && isLocked ? <UpgradeTooltip>{itemContent}</UpgradeTooltip> : itemContent}
+      {plan && isLocked ? <UpgradeTooltip>{children}</UpgradeTooltip> : itemContent}
     </SidebarMenuItem>
   );
 };
@@ -401,9 +399,9 @@ export default function AuthenticatedLayout({
            )}
           <main className="flex-1 overflow-y-auto">
               {children}
-              <AnimatedFooter />
           </main>
         </div>
+        <AnimatedFooter />
       </div>
     </SidebarProvider>
   );
