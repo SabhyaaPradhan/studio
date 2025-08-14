@@ -242,7 +242,6 @@ export default function AnalyticsPage() {
 
         {/* Plan Usage Section */}
         <div className="lg:col-span-1">
-          {loading || !userProfile ? <PlanUsageSkeleton /> : <PlanUsage userProfile={userProfile} />}
         </div>
       </div>
       
