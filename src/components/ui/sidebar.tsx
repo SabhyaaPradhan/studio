@@ -1,5 +1,3 @@
-
-
 "use client"
 
 import * as React from "react"
@@ -212,9 +210,9 @@ const Sidebar = React.forwardRef<
             }
             side={side}
           >
-            <SheetHeader>
+             <SheetHeader className="p-2 border-b">
                 <SheetTitle className="sr-only">Menu</SheetTitle>
-            </SheetHeader>
+             </SheetHeader>
             {children}
           </SheetContent>
         </Sheet>
@@ -363,14 +361,14 @@ const SidebarMenuButton = React.forwardRef<
       className,
       children,
       href,
-      as = 'a',
+      as,
       ...props
     },
     ref
   ) => {
     const { isMobile, state: sidebarState } = useSidebar();
 
-    const Comp = as === 'div' ? 'div' : as === 'button' ? 'button' : (href ? Link : 'button');
+    const Comp = as || (href ? Link : 'button');
 
     const commonProps = {
       'data-sidebar': "menu-button",
@@ -407,11 +405,10 @@ const SidebarMenuButton = React.forwardRef<
     );
     
     const button = (
-        <Comp href={href ?? ''} {...commonProps} ref={ref as React.Ref<any>}>
+        <Comp {...commonProps} {...(Comp === Link && href ? { href } : {})} ref={ref as React.Ref<any>}>
           {buttonContent}
         </Comp>
     );
-
       
     if (!tooltip || sidebarState === 'expanded' || isMobile) {
       return button;
