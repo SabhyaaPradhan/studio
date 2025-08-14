@@ -383,8 +383,8 @@ export default function AuthenticatedLayout({
                         <NavMenuItem href="/dashboard" icon={LayoutDashboard} label="Dashboard" plan={userPlan} />
                         <NavMenuItem href="/inbox" icon={MessageCircle} label="Inbox" plan={userPlan} />
                         <NavMenuItem href="/chat" icon={Bot} label="Chat / AI Assistant" plan={userPlan} />
-                        <NavMenuItem href="/analytics" icon={BarChart3} label="Analytics" plan={userPlan} requiredPlan="pro" isDisabled />
-                        <NavMenuItem href="/integrations" icon={Zap} label="Integrations" plan={userPlan} isDisabled />
+                        <NavMenuItem href="/analytics" icon={BarChart3} label="Analytics" plan={userPlan} requiredPlan="pro" />
+                        <NavMenuItem href="/integrations" icon={Zap} label="Integrations" plan={userPlan} />
                       
                         <NavMenuCollapsible icon={Wand2} label="Pro Features" plan={userPlan} items={[
                             { href: "/prompts", label: "Custom Prompts", icon: Wand2, requiredPlan: "pro", isDisabled: true },
