@@ -3,12 +3,13 @@
 
 import { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthContext } from '@/context/auth-context';
 import { BrainCircuit, CalendarDays, DollarSign, MessageSquare, ArrowRight, Lightbulb, UserCheck } from 'lucide-react';
 import Link from 'next/link';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { RecentActivity } from '@/components/home/recent-activity';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -130,18 +131,7 @@ export default function HomePage() {
                 </div>
             </div>
 
-             <Card data-animate="stat-card">
-                <CardHeader>
-                    <CardTitle>Recent Activity</CardTitle>
-                    <CardDescription>A log of your most recent AI interactions and account events.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="text-center text-muted-foreground py-8">
-                        <p>No recent activity to display.</p>
-                        <p className="text-sm">Once you start using the AI, your history will appear here.</p>
-                    </div>
-                </CardContent>
-            </Card>
+            <RecentActivity />
 
         </div>
     );
