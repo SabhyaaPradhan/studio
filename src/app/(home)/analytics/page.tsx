@@ -7,11 +7,13 @@ import { listenToChatMessages, ChatMessage, listenToRecentReplies, AiGeneratedRe
 import { listenToUser, UserProfile } from '@/services/user-service';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { BarChart3, MessageSquare, TrendingUp, Target, Clock, AlertTriangle, ShieldCheck, BarChartHorizontal, Mail } from 'lucide-react';
+import { BarChart3, MessageSquare, TrendingUp, Target, Clock, AlertTriangle, ShieldCheck, BarChartHorizontal, Mail, Activity, Eye, MailCheck, AlertOctagon } from 'lucide-react';
 import { MetricCard, MetricCardSkeleton } from '@/components/analytics/metric-card';
 import { DailyUsageChart, DailyUsageChartSkeleton } from '@/components/analytics/daily-usage-chart';
 import { PlanUsage, PlanUsageSkeleton } from '@/components/analytics/plan-usage';
 import { GmailRepliesChart, GmailRepliesChartSkeleton } from '@/components/analytics/gmail-replies-chart';
+import { PeakActivityHeatmap, PeakActivityHeatmapSkeleton } from '@/components/analytics/PeakActivityHeatmap';
+import { EngagementRatesChart, EngagementRatesChartSkeleton } from '@/components/analytics/EngagementRatesChart';
 import { subDays, startOfDay, format, eachDayOfInterval } from 'date-fns';
 
 interface OverviewStats {
@@ -298,7 +300,40 @@ export default function AnalyticsPage() {
         <div className="lg:col-span-1">
           {loading || !userProfile ? <PlanUsageSkeleton /> : <PlanUsage userProfile={userProfile} />}
         </div>
-        </div>
+      </div>
+      
+       {/* Activity and Engagement Section */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+        <Card className="lg:col-span-3">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5 text-primary" />
+                Peak Activity Periods
+              </CardTitle>
+              <CardDescription>Hourly AI reply volume over the last week.</CardDescription>
+            </CardHeader>
+            <CardContent className="h-80">
+                {/* For now, using skeleton until data is wired */}
+                <PeakActivityHeatmapSkeleton />
+                {/* <PeakActivityHeatmap data={heatmapData} /> */}
+            </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                  <Eye className="h-5 w-5 text-blue-500" />
+                  Email Engagement Rates
+              </CardTitle>
+              <CardDescription>Open, reply, and bounce rates for emails.</CardDescription>
+            </CardHeader>
+            <CardContent className="h-80">
+               {/* For now, using skeleton until data is wired */}
+                <EngagementRatesChartSkeleton />
+                {/* <EngagementRatesChart data={engagementData} /> */}
+            </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
