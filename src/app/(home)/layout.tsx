@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import Link from 'next/link';
@@ -186,17 +185,19 @@ const NavMenuCollapsible = ({
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <CollapsibleTrigger asChild>
-        <SidebarMenuButton as="button" className={cn("w-full", isAnyChildActive && 'bg-secondary')}>
-            <Icon className="h-5 w-5" />
-            <span className="flex-1 text-left">{label}</span>
-            <ChevronDown
-              className={cn(
-                'ml-auto h-4 w-4 transition-transform duration-200',
-                isOpen ? 'rotate-180' : '',
-                state === 'collapsed' && 'hidden'
-              )}
-            />
-        </SidebarMenuButton>
+        <button className={cn("w-full", isAnyChildActive && 'bg-secondary rounded-md')}>
+          <SidebarMenuButton as="div" className={cn(isAnyChildActive && 'bg-secondary')}>
+              <Icon className="h-5 w-5" />
+              <span className="flex-1 text-left">{label}</span>
+              <ChevronDown
+                className={cn(
+                  'ml-auto h-4 w-4 transition-transform duration-200',
+                  isOpen ? 'rotate-180' : '',
+                  state === 'collapsed' && 'hidden'
+                )}
+              />
+          </SidebarMenuButton>
+        </button>
       </CollapsibleTrigger>
       <CollapsibleContent asChild>
         <SidebarMenuSub>
@@ -280,13 +281,6 @@ export default function AuthenticatedLayout({
     );
   }
 
-  const navLinks = [
-      { href: "/dashboard", label: "Dashboard", icon: Home },
-      { href: "/billing", label: "Billing", icon: CreditCard },
-      { href: "/settings", label: "Settings", icon: Settings },
-      { href: "/support", label: "FAQ", icon: HelpCircle },
-  ];
-
   const userPlan = userProfile?.plan as UserPlan | undefined;
   
   if (!user) {
@@ -349,6 +343,7 @@ export default function AuthenticatedLayout({
                   <div className="p-2 mb-2">
                      <SidebarTrigger className="md:flex hidden" />
                   </div>
+                    <NavMenuItem href="/home" icon={Home} label="Home" plan={userPlan} />
                     <NavMenuItem href="/dashboard" icon={BarChartBig} label="Dashboard" plan={userPlan} />
                     <NavMenuItem href="/inbox" icon={MessageSquare} label="Inbox" plan={userPlan} />
                     <NavMenuItem href="/chat" icon={Bot} label="Chat / AI Assistant" plan={userPlan} />
@@ -381,6 +376,7 @@ export default function AuthenticatedLayout({
             </Sidebar>
           <main className="flex-1 overflow-y-auto">
               {children}
+              <AnimatedFooter />
           </main>
         </div>
       </div>

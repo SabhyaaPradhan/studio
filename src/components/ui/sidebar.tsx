@@ -350,7 +350,7 @@ const SidebarMenuButton = React.forwardRef<
   (React.ComponentProps<"button"> & Partial<React.ComponentProps<typeof Link>>) & {
     isActive?: boolean;
     tooltip?: React.ReactNode;
-    as?: 'button' | 'a'
+    as?: 'button' | 'a' | 'div'
   }
 >(
   (
@@ -366,6 +366,8 @@ const SidebarMenuButton = React.forwardRef<
     ref
   ) => {
     const { isMobile, state: sidebarState } = useSidebar();
+
+    const Comp = as === 'div' ? 'div' : as === 'button' ? 'button' : (href ? Link : 'button');
 
     const commonProps = {
       'data-sidebar': "menu-button",
@@ -401,15 +403,12 @@ const SidebarMenuButton = React.forwardRef<
       </>
     );
     
-    const button = href ? (
-        <Link href={href} {...commonProps} ref={ref as React.Ref<HTMLAnchorElement>}>
+    const button = (
+        <Comp href={href!} {...commonProps} ref={ref as React.Ref<any>}>
           {buttonContent}
-        </Link>
-      ) : (
-        <button {...commonProps} ref={ref as React.Ref<HTMLButtonElement>}>
-          {buttonContent}
-        </button>
-      );
+        </Comp>
+    );
+
       
     if (!tooltip || sidebarState === 'expanded' || isMobile) {
       return button;
