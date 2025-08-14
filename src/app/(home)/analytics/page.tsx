@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuthContext } from '@/context/auth-context';
-import { listenToChatMessages, ChatMessage } from '@/services/firestore-service';
+import { listenToChatMessages, ChatMessage, listenToRecentRepliesForHeatmap, listenToEmailStats, EmailStats } from '@/services/firestore-service';
 import { listenToUser, UserProfile } from '@/services/user-service';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -45,7 +45,7 @@ export default function AnalyticsPage() {
       const unsubChat = listenToChatMessages(user.uid, (messages) => {
         setChatHistory(messages);
         calculateOverview(messages);
-        if (loading) setLoading(false);
+        setLoading(false);
       }, (err) => {
         console.error(err);
         setLoading(false);
@@ -60,7 +60,7 @@ export default function AnalyticsPage() {
         unsubUser();
       };
     }
-  }, [user, loading]);
+  }, [user]);
 
 
   const calculateOverview = (messages: ChatMessage[]) => {
