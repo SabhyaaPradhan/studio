@@ -200,8 +200,11 @@ export default function AnalyticsPage() {
             </CardContent>
         </Card>
 
-        {loading || !userProfile ? <PlanUsageSkeleton /> : <PlanUsage userProfile={userProfile} />}
-      </div>
+        {/* Plan Usage Section */}
+        <div className="lg:col-span-1">
+          {loading || !userProfile ? <PlanUsageSkeleton /> : <PlanUsage userProfile={userProfile} />}
+        </div>
+        </div>
     </div>
   );
 }
