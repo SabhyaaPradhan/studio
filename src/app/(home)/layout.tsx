@@ -294,6 +294,9 @@ export default function AuthenticatedLayout({
     { href: "/support", label: "Support" },
   ];
 
+  const pathsWithoutSidebar = ['/home', '/billing', '/settings', '/support'];
+  const showSidebar = !pathsWithoutSidebar.includes(pathname);
+
   return (
     <SidebarProvider>
       <div className="flex flex-col min-h-screen bg-background">
@@ -358,6 +361,7 @@ export default function AuthenticatedLayout({
             </div>
         </header>
         <div className="flex flex-1 overflow-hidden">
+          {showSidebar && (
             <Sidebar>
               <SidebarContent>
                 <SidebarMenu>
@@ -395,6 +399,7 @@ export default function AuthenticatedLayout({
                 </SidebarMenu>
               </SidebarContent>
             </Sidebar>
+           )}
           <main className="flex-1 overflow-y-auto">
               {children}
               <AnimatedFooter />
