@@ -2,9 +2,14 @@
 'use client';
 
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import type { DailyAnalytics } from '@/services/firestore-service';
 import { format } from 'date-fns';
 import { Skeleton } from '../ui/skeleton';
+
+interface DailyAnalytics {
+    id: string;
+    date: string;
+    assistant_messages?: number;
+}
 
 interface DailyUsageChartProps {
   data: DailyAnalytics[];

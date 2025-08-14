@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuthContext } from '@/context/auth-context';
-import { listenToAnalyticsDaily, DailyAnalytics } from '@/services/firestore-service';
+import { listenToChatMessages, ChatMessage } from '@/services/firestore-service';
 import { listenToUser, UserProfile } from '@/services/user-service';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +11,7 @@ import { BarChart3, MessageSquare, TrendingUp, Target, Clock, AlertTriangle, Shi
 import { MetricCard, MetricCardSkeleton } from '@/components/analytics/metric-card';
 import { DailyUsageChart, DailyUsageChartSkeleton } from '@/components/analytics/daily-usage-chart';
 import { PlanUsage, PlanUsageSkeleton } from '@/components/analytics/plan-usage';
+import { subDays, startOfDay } from 'date-fns';
 
 interface OverviewStats {
   totalResponses: number;
@@ -22,18 +23,24 @@ interface OverviewStats {
   successRate: number;
 }
 
+interface DailySummary {
+    [key: string]: {
+        assistant_messages: number;
+    }
+}
+
 export default function AnalyticsPage() {
   const { user } = useAuthContext();
-  const [dailyData, setDailyData] = useState<DailyAnalytics[]>([]);
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [overview, setOverview] = useState<OverviewStats | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user) {
-      const unsubDaily = listenToAnalyticsDaily(user.uid, 30, (data) => {
-        setDailyData(data);
-        calculateOverview(data);
+      const unsubChat = listenToChatMessages(user.uid, (messages) => {
+        setChatHistory(messages);
+        calculateOverview(messages);
         if (loading) setLoading(false);
       }, (err) => {
         console.error(err);
@@ -45,43 +52,41 @@ export default function AnalyticsPage() {
       });
       
       return () => {
-        unsubDaily();
+        unsubChat();
         unsubUser();
       };
     }
   }, [user, loading]);
 
-  const calculateOverview = (data: DailyAnalytics[]) => {
-    const totalResponses = data.reduce((sum, day) => sum + (day.assistant_messages || 0), 0);
-    const thisWeekResponses = data.slice(0, 7).reduce((sum, day) => sum + (day.assistant_messages || 0), 0);
+  const calculateOverview = (messages: ChatMessage[]) => {
+    const thirtyDaysAgo = subDays(new Date(), 30);
+    const sevenDaysAgo = subDays(new Date(), 7);
+
+    const recentMessages = messages.filter(msg => new Date(msg.createdAt) >= thirtyDaysAgo);
+    const aiMessages = recentMessages.filter(msg => msg.role === 'model');
+
+    const totalResponses = aiMessages.length;
+    const thisWeekResponses = aiMessages.filter(msg => new Date(msg.createdAt) >= sevenDaysAgo).length;
     
     let totalConfidenceSum = 0;
-    let confidenceCount = 0;
     let totalLatencySum = 0;
-    let latencyCount = 0;
     let highQualityCount = 0;
     let lowQualityCount = 0;
 
-    data.forEach(day => {
-      if (day.confidence_buckets) {
-        Object.entries(day.confidence_buckets).forEach(([bucket, count]) => {
-          const [min] = bucket.split('-').map(Number);
-          if (min >= 0.8) highQualityCount += count;
-          if (min < 0.4) lowQualityCount += count; // Assuming < 40% is "low quality"
-          const midPoint = (parseFloat(bucket.split('-')[0]) + parseFloat(bucket.split('-')[1])) / 2;
-          totalConfidenceSum += midPoint * count;
-          confidenceCount += count;
-        });
+    aiMessages.forEach(msg => {
+      if(msg.confidence !== undefined) {
+          totalConfidenceSum += msg.confidence;
+          if (msg.confidence >= 0.8) highQualityCount++;
+          if (msg.confidence < 0.4) lowQualityCount++;
       }
-      if(day.sum_latency_ms && day.assistant_messages) {
-        totalLatencySum += day.sum_latency_ms;
-        latencyCount += day.assistant_messages;
+      if(msg.latency_ms !== undefined) {
+        totalLatencySum += msg.latency_ms;
       }
     });
 
-    const avgConfidence = confidenceCount > 0 ? (totalConfidenceSum / confidenceCount) * 100 : 0;
-    const avgResponseTime = latencyCount > 0 ? totalLatencySum / latencyCount : 0;
-    const successRate = totalResponses > 0 ? ( (totalResponses - lowQualityCount) / totalResponses) * 100 : 100;
+    const avgConfidence = totalResponses > 0 ? (totalConfidenceSum / totalResponses) * 100 : 0;
+    const avgResponseTime = totalResponses > 0 ? totalLatencySum / totalResponses : 0;
+    const successRate = totalResponses > 0 ? ((totalResponses - lowQualityCount) / totalResponses) * 100 : 100;
 
     setOverview({
       totalResponses,
@@ -93,6 +98,37 @@ export default function AnalyticsPage() {
       successRate
     });
   };
+  
+    const getDailyUsageData = (messages: ChatMessage[]) => {
+        const dailySummary: DailySummary = {};
+        const thirtyDaysAgo = startOfDay(subDays(new Date(), 29));
+
+        for (let i = 0; i < 30; i++) {
+            const date = startOfDay(subDays(new Date(), i));
+            const dateKey = date.toISOString().split('T')[0];
+            dailySummary[dateKey] = { assistant_messages: 0 };
+        }
+
+        messages.forEach(msg => {
+            if (msg.role === 'model') {
+                const msgDate = startOfDay(new Date(msg.createdAt));
+                if(msgDate >= thirtyDaysAgo) {
+                    const dateKey = msgDate.toISOString().split('T')[0];
+                    if (dailySummary[dateKey]) {
+                        dailySummary[dateKey].assistant_messages += 1;
+                    }
+                }
+            }
+        });
+
+        return Object.entries(dailySummary).map(([date, data]) => ({
+            id: date,
+            date,
+            assistant_messages: data.assistant_messages,
+        })).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }
+
+    const dailyDataForChart = getDailyUsageData(chatHistory);
 
   return (
     <div className="flex-1 space-y-6 p-4 pt-6 md:p-8">
@@ -153,7 +189,7 @@ export default function AnalyticsPage() {
             <CardDescription>AI responses generated over the last 30 days.</CardDescription>
           </CardHeader>
           <CardContent className="h-80">
-            {loading ? <DailyUsageChartSkeleton /> : <DailyUsageChart data={dailyData} />}
+            {loading ? <DailyUsageChartSkeleton /> : <DailyUsageChart data={dailyDataForChart} />}
           </CardContent>
         </Card>
       </div>
