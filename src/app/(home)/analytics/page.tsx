@@ -148,23 +148,14 @@ export default function AnalyticsPage() {
       </div>
       
       {/* Charts Section */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-        <Card className="col-span-1 lg:col-span-3">
+      <div className="grid grid-cols-1 gap-6">
+        <Card>
           <CardHeader>
             <CardTitle>Daily Usage Trend</CardTitle>
             <CardDescription>AI responses generated over the last 30 days.</CardDescription>
           </CardHeader>
           <CardContent className="h-80">
             {loading ? <DailyUsageChartSkeleton /> : <DailyUsageChart data={dailyData} />}
-          </CardContent>
-        </Card>
-        <Card className="col-span-1 lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Popular Templates</CardTitle>
-            <CardDescription>Most frequently used reply templates.</CardDescription>
-          </CardHeader>
-          <CardContent className="h-80">
-             <TemplatesPieChart />
           </CardContent>
         </Card>
       </div>
