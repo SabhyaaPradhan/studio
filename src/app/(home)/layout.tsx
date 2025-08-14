@@ -150,7 +150,7 @@ const NavMenuItem = ({
 
   return (
     <SidebarMenuItem>
-      {plan && isLocked ? <UpgradeTooltip>{children}</UpgradeTooltip> : itemContent}
+      {plan && isLocked ? <UpgradeTooltip>{itemContent}</UpgradeTooltip> : itemContent}
     </SidebarMenuItem>
   );
 };
@@ -288,7 +288,7 @@ export default function AuthenticatedLayout({
     { href: "/home", label: "Home" },
     { href: "/billing", label: "Billing" },
     { href: "/settings", label: "Settings" },
-    { href: "/support", label: "Support" },
+    { href: "/support", label: "FAQ / Support" },
   ];
 
   const pathsWithoutSidebar = ['/home', '/billing', '/settings', '/support'];
@@ -306,13 +306,13 @@ export default function AuthenticatedLayout({
                     <span>Savrii</span>
                 </Link>
             </div>
-            <nav className="hidden md:flex items-center gap-4">
+            <nav className="hidden md:flex items-center gap-6">
               {topNavItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "text-sm font-medium transition-colors hover:text-primary",
+                    "text-lg font-medium transition-colors hover:text-primary",
                     pathname === item.href ? "text-primary" : "text-muted-foreground"
                   )}
                 >
