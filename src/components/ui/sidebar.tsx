@@ -12,7 +12,7 @@ import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import {
   Tooltip,
   TooltipContent,
@@ -204,7 +204,7 @@ const Sidebar = React.forwardRef<
           <SheetContent
             data-sidebar="sidebar"
             data-mobile="true"
-            className="w-[--sidebar-width] bg-background p-0 [&>button]:hidden"
+            className="w-[--sidebar-width] bg-background p-0 flex flex-col"
             style={
               {
                 "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
@@ -212,7 +212,10 @@ const Sidebar = React.forwardRef<
             }
             side={side}
           >
-            <div className="flex h-full w-full flex-col">{children}</div>
+            <SheetHeader>
+                <SheetTitle className="sr-only">Menu</SheetTitle>
+            </SheetHeader>
+            {children}
           </SheetContent>
         </Sheet>
       )
@@ -404,7 +407,7 @@ const SidebarMenuButton = React.forwardRef<
     );
     
     const button = (
-        <Comp href={href!} {...commonProps} ref={ref as React.Ref<any>}>
+        <Comp href={href ?? ''} {...commonProps} ref={ref as React.Ref<any>}>
           {buttonContent}
         </Comp>
     );
@@ -451,33 +454,6 @@ const SidebarMenuSub = React.forwardRef<
 })
 SidebarMenuSub.displayName = "SidebarMenuSub"
 
-const SidebarMenuSubButton = React.forwardRef<
-  HTMLAnchorElement,
-  React.ComponentProps<typeof Link> & {
-    isActive?: boolean
-  }
->(({ isActive, className, ...props }, ref) => {
-
-  return (
-    <Link
-      ref={ref}
-      data-sidebar="menu-sub-button"
-      data-active={isActive}
-      className={cn(
-        "flex h-8 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2 text-sm text-muted-foreground",
-        "outline-none ring-primary focus-visible:ring-2 active:bg-accent active:text-accent-foreground",
-        "hover:bg-accent hover:text-accent-foreground",
-        "disabled:pointer-events-none disabled:opacity-50",
-        "aria-disabled:pointer-events-none aria-disabled:opacity-50",
-        "data-[active=true]:font-medium data-[active=true]:text-foreground",
-        className
-      )}
-      {...props}
-    />
-  )
-})
-SidebarMenuSubButton.displayName = "SidebarMenuSubButton"
-
 export {
   Sidebar,
   SidebarContent,
@@ -486,7 +462,6 @@ export {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
-  SidebarMenuSubButton,
   SidebarProvider,
   SidebarSeparator,
   SidebarTrigger,

@@ -13,6 +13,7 @@ import {
   SidebarMenuButton,
   SidebarMenuSub,
   useSidebar,
+  SidebarFooter
 } from '@/components/ui/sidebar';
 import {
   Home,
@@ -66,8 +67,6 @@ import {
 import { useTheme } from 'next-themes';
 import { Sun, Moon } from "lucide-react";
 import AnimatedFooter from '@/components/common/animated-footer';
-import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { gsap } from 'gsap';
 import { motion, AnimatePresence } from 'framer-motion';
 import { listenToUser, UserProfile, hasPermission } from '@/services/user-service';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -167,10 +166,9 @@ const NavMenuCollapsible = ({
   const isAnyChildActive = items.some(item => pathname.startsWith(item.href));
 
   return (
-    <SidebarMenuItem>
-        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <Collapsible open={isOpen} onOpenChange={setIsOpen} asChild>
+        <SidebarMenuItem>
           <CollapsibleTrigger asChild>
-            <button className={cn("w-full", isAnyChildActive && 'bg-secondary rounded-md')}>
               <SidebarMenuButton as="div" className={cn(isAnyChildActive && 'bg-secondary')}>
                   <Icon className="h-5 w-5" />
                   <span className="flex-1 text-left">{label}</span>
@@ -182,7 +180,6 @@ const NavMenuCollapsible = ({
                     )}
                   />
               </SidebarMenuButton>
-            </button>
           </CollapsibleTrigger>
           <CollapsibleContent asChild>
             <SidebarMenuSub>
@@ -191,8 +188,8 @@ const NavMenuCollapsible = ({
               ))}
             </SidebarMenuSub>
           </CollapsibleContent>
-        </Collapsible>
-    </SidebarMenuItem>
+        </SidebarMenuItem>
+      </Collapsible>
   );
 };
 
@@ -206,11 +203,8 @@ export default function AuthenticatedLayout({
   const pathname = usePathname();
   useAuthRedirectToLogin();
   const { theme, setTheme } = useTheme();
-  const mobileMenuRef = useRef<HTMLDivElement>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
-
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -240,23 +234,6 @@ export default function AuthenticatedLayout({
     setTheme(theme === "light" ? "dark" : "light");
   };
 
-
-  useEffect(() => {
-    if (mobileMenuOpen) {
-        const ctx = gsap.context(() => {
-            gsap.from("[data-mobile-nav-item]", {
-                duration: 0.5,
-                x: -30,
-                opacity: 0,
-                stagger: 0.1,
-                ease: "power3.out"
-            });
-        }, mobileMenuRef);
-        return () => ctx.revert();
-    }
-  }, [mobileMenuOpen]);
-
-
   if (loading || profileLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -281,115 +258,125 @@ export default function AuthenticatedLayout({
   const pathsWithoutSidebar = ['/home', '/billing', '/settings', '/support'];
   const showSidebar = !pathsWithoutSidebar.includes(pathname);
 
+  const NavLink = ({ href, children }: { href: string, children: React.ReactNode }) => (
+    <Link
+      href={href}
+      className={cn(
+        "text-lg font-medium transition-colors hover:text-primary",
+        pathname === href ? "text-primary" : "text-muted-foreground"
+      )}
+    >
+      {children}
+    </Link>
+  );
+
   return (
     <SidebarProvider>
-      <div className="flex flex-col min-h-screen bg-background">
-        <header className="p-4 flex items-center justify-between gap-4 sticky top-0 bg-background/80 backdrop-blur-sm z-10 border-b">
-            <div className="flex items-center gap-2">
-                <SidebarTrigger className="md:hidden">
-                    <Menu className="w-6 h-6" />
-                </SidebarTrigger>
-                <Link href="/dashboard" className="font-semibold text-lg items-center gap-2 text-primary hidden md:flex">
-                    <span>Savrii</span>
-                </Link>
-            </div>
-            <nav className="hidden md:flex items-center gap-6">
-              {topNavItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "text-lg font-medium transition-colors hover:text-primary",
-                    pathname === item.href ? "text-primary" : "text-muted-foreground"
-                  )}
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-            <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" onClick={toggleTheme} className="relative h-9 w-9 overflow-hidden">
-                    <AnimatePresence mode="wait" initial={false}>
-                        <motion.div
-                            key={theme === 'light' ? 'moon' : 'sun'}
-                            initial={{ y: -20, opacity: 0, rotate: -90 }}
-                            animate={{ y: 0, opacity: 1, rotate: 0 }}
-                            exit={{ y: 20, opacity: 0, rotate: 90 }}
-                            transition={{ duration: 0.3 }}
-                            className="absolute"
-                        >
-                            {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-                        </motion.div>
-                    </AnimatePresence>
-                </Button>
-                <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                         <Avatar className="h-9 w-9">
-                            <AvatarImage src={user?.photoURL || ''} />
-                            <AvatarFallback>{userProfile?.first_name?.[0] || user?.email?.[0]}</AvatarFallback>
-                        </Avatar>
-                    </TooltipTrigger>
-                    <TooltipContent align="end">
-                        <div className="p-2">
-                             <p className="font-semibold">{userProfile?.first_name} {userProfile?.last_name}</p>
-                             <p className="text-muted-foreground text-xs">{userProfile?.email}</p>
-                             <Button size="sm" variant="outline" className="w-full mt-4" onClick={handleLogout}>
-                                <LogOut className="h-4 w-4 mr-2" />
-                                Logout
-                             </Button>
-                        </div>
-                    </TooltipContent>
-                </Tooltip>
-                </TooltipProvider>
-            </div>
-        </header>
-        <div className="flex flex-1 overflow-hidden">
-          {showSidebar && (
-            <Sidebar>
-              <SidebarContent>
-                <SidebarMenu>
-                  <div className="p-2 mb-2">
-                     <SidebarTrigger className="md:flex hidden" />
-                  </div>
-                    <NavMenuItem href="/home" icon={Home} label="Home" plan={userPlan} />
-                    <NavMenuItem href="/dashboard" icon={BarChartBig} label="Dashboard" plan={userPlan} />
-                    <NavMenuItem href="/inbox" icon={MessageSquare} label="Inbox" plan={userPlan} isDisabled />
-                    <NavMenuItem href="/chat" icon={Bot} label="Chat / AI Assistant" plan={userPlan} />
-                    <NavMenuItem href="/analytics" icon={BarChart2} label="Analytics" plan={userPlan} requiredPlan="pro" isDisabled />
-                    <NavMenuItem href="/integrations" icon={GitMerge} label="Integrations" plan={userPlan} isDisabled />
-                    <NavMenuItem href="/billing" icon={CreditCard} label="Billing" plan={userPlan} />
+    <div className="flex flex-col min-h-screen bg-background">
+      <header className="p-4 flex items-center justify-between gap-4 sticky top-0 bg-background/80 backdrop-blur-sm z-10 border-b">
+          <div className="flex items-center gap-2">
+              <SidebarTrigger className={cn(
+                  "md:hidden",
+                  !showSidebar && "hidden"
+              )}>
+                  <Menu className="w-6 h-6" />
+              </SidebarTrigger>
+              <Link href="/dashboard" className="font-semibold text-lg items-center gap-2 text-primary hidden md:flex">
+                  <span>Savrii</span>
+              </Link>
+          </div>
+          <nav className="hidden md:flex items-center gap-6">
+            {topNavItems.map((item) => (
+              <NavLink key={item.href} href={item.href}>
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
+          <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" onClick={toggleTheme} className="relative h-9 w-9 overflow-hidden">
+                  <AnimatePresence mode="wait" initial={false}>
+                      <motion.div
+                          key={theme === 'light' ? 'moon' : 'sun'}
+                          initial={{ y: -20, opacity: 0, rotate: -90 }}
+                          animate={{ y: 0, opacity: 1, rotate: 0 }}
+                          exit={{ y: 20, opacity: 0, rotate: 90 }}
+                          transition={{ duration: 0.3 }}
+                          className="absolute"
+                      >
+                          {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+                      </motion.div>
+                  </AnimatePresence>
+              </Button>
+              <TooltipProvider>
+              <Tooltip>
+                  <TooltipTrigger asChild>
+                       <Avatar className="h-9 w-9">
+                          <AvatarImage src={user?.photoURL || ''} />
+                          <AvatarFallback>{userProfile?.first_name?.[0] || user?.email?.[0]}</AvatarFallback>
+                      </Avatar>
+                  </TooltipTrigger>
+                  <TooltipContent align="end">
+                      <div className="p-2">
+                           <p className="font-semibold">{userProfile?.first_name} {userProfile?.last_name}</p>
+                           <p className="text-muted-foreground text-xs">{userProfile?.email}</p>
+                           <Button size="sm" variant="outline" className="w-full mt-4" onClick={handleLogout}>
+                              <LogOut className="h-4 w-4 mr-2" />
+                              Logout
+                           </Button>
+                      </div>
+                  </TooltipContent>
+              </Tooltip>
+              </TooltipProvider>
+          </div>
+      </header>
+      <div className="flex flex-1 overflow-hidden">
+        {showSidebar && (
+          <Sidebar>
+            <SidebarContent>
+              <SidebarMenu>
+                <div className="p-2 mb-2">
+                   <SidebarTrigger className="md:flex hidden" />
+                </div>
+                  <NavMenuItem href="/dashboard" icon={BarChartBig} label="Dashboard" plan={userPlan} />
+                  <NavMenuItem href="/inbox" icon={MessageSquare} label="Inbox" plan={userPlan} isDisabled />
+                  <NavMenuItem href="/chat" icon={Bot} label="Chat / AI Assistant" plan={userPlan} />
+                  <NavMenuItem href="/analytics" icon={BarChart2} label="Analytics" plan={userPlan} requiredPlan="pro" isDisabled />
+                  <NavMenuItem href="/integrations" icon={GitMerge} label="Integrations" plan={userPlan} isDisabled />
+
+                <NavMenuCollapsible icon={Wand2} label="Pro Features" plan={userPlan} items={[
+                    { href: "/prompts", label: "Custom Prompts", requiredPlan: "pro", isDisabled: true },
+                    { href: "/brand-voice", label: "Brand Voice", requiredPlan: "pro", isDisabled: true },
+                    { href: "/prompt-library", label: "Prompt Library", requiredPlan: "pro", isDisabled: true },
+                    { href: "/daily-summary", label: "Daily Summary", requiredPlan: "pro", isDisabled: true },
+                    { href: "/collaboration", label: "Collaboration", requiredPlan: "pro", isDisabled: true },
+                    { href: "/lead-capture", label: "Lead Capture", requiredPlan: "pro", isDisabled: true },
+                    { href: "/export", label: "Export Data", requiredPlan: "pro", isDisabled: true },
+                ]} />
+                
+                <NavMenuCollapsible icon={Shield} label="Enterprise" plan={userPlan} items={[
+                    { href: "/real-time-analytics", label: "Real-Time Analytics", requiredPlan: "enterprise", isDisabled: true },
+                    { href: "/workflow-builder", label: "Workflow Builder", requiredPlan: "enterprise", isDisabled: true },
+                    { href: "/custom-model", label: "Custom AI Model", requiredPlan: "enterprise", isDisabled: true },
+                    { href: "/security", label: "Security", requiredPlan: "enterprise", isDisabled: true },
+                    { href: "/white-label", label: "White-label", requiredPlan: "enterprise", isDisabled: true },
+                    { href: "/webhooks", label: "Webhooks", requiredPlan: "enterprise", isDisabled: true },
+                ]} />
+              </SidebarMenu>
+            </SidebarContent>
+            <SidebarFooter>
+               <SidebarMenu>
                     <NavMenuItem href="/settings" icon={Settings} label="Settings" plan={userPlan} />
                     <NavMenuItem href="/support" icon={HelpCircle} label="Support" plan={userPlan} />
-
-                  <NavMenuCollapsible icon={Wand2} label="Pro Features" plan={userPlan} items={[
-                      { href: "/prompts", label: "Custom Prompts", requiredPlan: "pro", isDisabled: true },
-                      { href: "/brand-voice", label: "Brand Voice", requiredPlan: "pro", isDisabled: true },
-                      { href: "/prompt-library", label: "Prompt Library", requiredPlan: "pro", isDisabled: true },
-                      { href: "/daily-summary", label: "Daily Summary", requiredPlan: "pro", isDisabled: true },
-                      { href: "/collaboration", label: "Collaboration", requiredPlan: "pro", isDisabled: true },
-                      { href: "/lead-capture", label: "Lead Capture", requiredPlan: "pro", isDisabled: true },
-                      { href: "/export", label: "Export Data", requiredPlan: "pro", isDisabled: true },
-                  ]} />
-                  
-                  <NavMenuCollapsible icon={Shield} label="Enterprise" plan={userPlan} items={[
-                      { href: "/real-time-analytics", label: "Real-Time Analytics", requiredPlan: "enterprise", isDisabled: true },
-                      { href: "/workflow-builder", label: "Workflow Builder", requiredPlan: "enterprise", isDisabled: true },
-                      { href: "/custom-model", label: "Custom AI Model", requiredPlan: "enterprise", isDisabled: true },
-                      { href: "/security", label: "Security", requiredPlan: "enterprise", isDisabled: true },
-                      { href: "/white-label", label: "White-label", requiredPlan: "enterprise", isDisabled: true },
-                      { href: "/webhooks", label: "Webhooks", requiredPlan: "enterprise", isDisabled: true },
-                  ]} />
-                </SidebarMenu>
-              </SidebarContent>
-            </Sidebar>
-           )}
-          <main className="flex-1 overflow-y-auto">
-              {children}
-          </main>
-        </div>
-        <AnimatedFooter />
+               </SidebarMenu>
+            </SidebarFooter>
+          </Sidebar>
+         )}
+        <main className="flex-1 overflow-y-auto">
+            {children}
+        </main>
       </div>
-    </SidebarProvider>
+      <AnimatedFooter />
+    </div>
+  </SidebarProvider>
   );
 }
