@@ -12,8 +12,8 @@ import { MetricCard, MetricCardSkeleton } from '@/components/analytics/metric-ca
 import { DailyUsageChart, DailyUsageChartSkeleton } from '@/components/analytics/daily-usage-chart';
 import { PlanUsage, PlanUsageSkeleton } from '@/components/analytics/plan-usage';
 import { GmailRepliesChart, GmailRepliesChartSkeleton } from '@/components/analytics/gmail-replies-chart';
-import { PeakActivityHeatmap, PeakActivityHeatmapSkeleton } from '@/components/analytics/PeakActivityHeatmap';
-import { EngagementRatesChart, EngagementRatesChartSkeleton } from '@/components/analytics/EngagementRatesChart';
+import { PeakActivityHeatmap } from '@/components/analytics/PeakActivityHeatmap';
+import { EngagementRatesChart } from '@/components/analytics/EngagementRatesChart';
 import { subDays, startOfDay, format, eachDayOfInterval } from 'date-fns';
 
 interface OverviewStats {
@@ -313,9 +313,7 @@ export default function AnalyticsPage() {
               <CardDescription>Hourly AI reply volume over the last week.</CardDescription>
             </CardHeader>
             <CardContent className="h-80">
-                {/* For now, using skeleton until data is wired */}
-                <PeakActivityHeatmapSkeleton />
-                {/* <PeakActivityHeatmap data={heatmapData} /> */}
+                <PeakActivityHeatmap />
             </CardContent>
         </Card>
 
@@ -328,9 +326,7 @@ export default function AnalyticsPage() {
               <CardDescription>Open, reply, and bounce rates for emails.</CardDescription>
             </CardHeader>
             <CardContent className="h-80">
-               {/* For now, using skeleton until data is wired */}
-                <EngagementRatesChartSkeleton />
-                {/* <EngagementRatesChart data={engagementData} /> */}
+                <EngagementRatesChart />
             </CardContent>
         </Card>
       </div>
