@@ -286,7 +286,11 @@ export function listenToConversations(
                 updatedAt: data.updatedAt,
             } as Conversation);
         });
-        conversations.sort((a, b) => b.updatedAt.toMillis() - a.updatedAt.toMillis());
+        conversations.sort((a, b) => {
+            const timeA = a.updatedAt?.toMillis() || 0;
+            const timeB = b.updatedAt?.toMillis() || 0;
+            return timeB - timeA;
+        });
         callback(conversations);
     }, (error) => {
         console.error("Error listening to conversations:", error);
