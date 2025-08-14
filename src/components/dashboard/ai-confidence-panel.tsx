@@ -5,34 +5,55 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { Lightbulb } from "lucide-react";
 import { useAuthContext } from "@/context/auth-context";
-import { listenToAnalyticsDaily, DailyAnalytics } from "@/services/firestore-service";
+import { listenToChatMessages, ChatMessage } from "@/services/firestore-service";
 import { useState, useEffect } from "react";
-import { format } from "date-fns";
+import { format, startOfDay, subDays, isAfter } from "date-fns";
 import { Skeleton } from "../ui/skeleton";
+
+interface DailyConfidence {
+    date: string;
+    avg_confidence: number;
+}
 
 export function AIConfidencePanel() {
     const { user } = useAuthContext();
-    const [chartData, setChartData] = useState<any[]>([]);
+    const [chartData, setChartData] = useState<DailyConfidence[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (user) {
             setLoading(true);
-            const unsubscribe = listenToAnalyticsDaily(user.uid, 7, (data) => {
-                const processedData = data
-                    .map(d => {
-                        const totalConfidence = Object.entries(d.confidence_buckets || {}).reduce((acc, [bucket, count]) => {
-                            const bucketMid = (parseFloat(bucket.split('-')[0]) + parseFloat(bucket.split('-')[1])) / 2;
-                            return acc + (bucketMid * count);
-                        }, 0);
-                        const totalCount = Object.values(d.confidence_buckets || {}).reduce((a,b) => a+b, 0);
-                        
-                        return { 
-                            date: format(new Date(d.date), 'MMM d'), 
-                            avg_confidence: totalCount > 0 ? (totalConfidence / totalCount) * 100 : 0
-                        };
-                    })
-                    .reverse();
+            const unsubscribe = listenToChatMessages(user.uid, (messages) => {
+                const sevenDaysAgo = startOfDay(subDays(new Date(), 6));
+                const dailyData: { [key: string]: { totalConfidence: number; count: number } } = {};
+
+                // Initialize daily data for the last 7 days
+                for (let i = 0; i < 7; i++) {
+                    const date = startOfDay(subDays(new Date(), i));
+                    const dateKey = format(date, 'yyyy-MM-dd');
+                    dailyData[dateKey] = { totalConfidence: 0, count: 0 };
+                }
+
+                const aiMessages = messages.filter(msg => 
+                    msg.role === 'model' && 
+                    isAfter(new Date(msg.createdAt), sevenDaysAgo) &&
+                    msg.confidence !== undefined
+                );
+
+                aiMessages.forEach(msg => {
+                    const msgDate = startOfDay(new Date(msg.createdAt));
+                    const dateKey = format(msgDate, 'yyyy-MM-dd');
+                    if (dailyData[dateKey]) {
+                        dailyData[dateKey].totalConfidence += msg.confidence!;
+                        dailyData[dateKey].count += 1;
+                    }
+                });
+
+                const processedData: DailyConfidence[] = Object.entries(dailyData).map(([date, data]) => ({
+                    date: format(new Date(date), 'MMM d'),
+                    avg_confidence: data.count > 0 ? (data.totalConfidence / data.count) * 100 : 0,
+                })).reverse();
+                
                 setChartData(processedData);
                 setLoading(false);
             }, (err) => {
