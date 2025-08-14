@@ -381,7 +381,7 @@ export default function AuthenticatedLayout({
                     {/* --- Main Sidebar Nav --- */}
                       <>
                         <NavMenuItem href="/dashboard" icon={LayoutDashboard} label="Dashboard" plan={userPlan} />
-                        <NavMenuItem href="/inbox" icon={MessageCircle} label="Inbox" plan={userPlan} isDisabled />
+                        <NavMenuItem href="/inbox" icon={MessageCircle} label="Inbox" plan={userPlan} />
                         <NavMenuItem href="/chat" icon={Bot} label="Chat / AI Assistant" plan={userPlan} />
                         <NavMenuItem href="/analytics" icon={BarChart3} label="Analytics" plan={userPlan} requiredPlan="pro" isDisabled />
                         <NavMenuItem href="/integrations" icon={Zap} label="Integrations" plan={userPlan} isDisabled />
