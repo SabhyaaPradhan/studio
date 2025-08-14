@@ -347,9 +347,10 @@ SidebarMenuItem.displayName = "SidebarMenuItem"
 
 const SidebarMenuButton = React.forwardRef<
   HTMLButtonElement | HTMLAnchorElement,
-  (React.ComponentProps<"button"> & React.ComponentProps<typeof Link>) & {
+  (React.ComponentProps<"button"> & Partial<React.ComponentProps<typeof Link>>) & {
     isActive?: boolean;
     tooltip?: React.ReactNode;
+    as?: 'button' | 'a'
   }
 >(
   (
@@ -359,6 +360,7 @@ const SidebarMenuButton = React.forwardRef<
       className,
       children,
       href,
+      as = 'a',
       ...props
     },
     ref
@@ -399,10 +401,14 @@ const SidebarMenuButton = React.forwardRef<
       </>
     );
     
-    const button = (
-        <Link href={href!} {...commonProps} ref={ref as React.Ref<HTMLAnchorElement>}>
+    const button = href ? (
+        <Link href={href} {...commonProps} ref={ref as React.Ref<HTMLAnchorElement>}>
           {buttonContent}
         </Link>
+      ) : (
+        <button {...commonProps} ref={ref as React.Ref<HTMLButtonElement>}>
+          {buttonContent}
+        </button>
       );
       
     if (!tooltip || sidebarState === 'expanded' || isMobile) {

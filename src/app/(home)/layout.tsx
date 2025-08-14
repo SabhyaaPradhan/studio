@@ -186,9 +186,9 @@ const NavMenuCollapsible = ({
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <CollapsibleTrigger asChild>
-        <SidebarMenuButton className={cn("h-10", isAnyChildActive && 'bg-secondary')}>
+        <SidebarMenuButton as="button" className={cn("w-full", isAnyChildActive && 'bg-secondary')}>
             <Icon className="h-5 w-5" />
-            <span className="flex-1">{label}</span>
+            <span className="flex-1 text-left">{label}</span>
             <ChevronDown
               className={cn(
                 'ml-auto h-4 w-4 transition-transform duration-200',
