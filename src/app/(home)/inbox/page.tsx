@@ -173,9 +173,9 @@ export default function Inbox() {
         const result = await generateInboxReply({
             conversationId: selectedConversation.id,
             messageId: replyForm.messageId,
-            replyType: replyForm.replyType,
+            replyType: replyForm.replyType as any,
             customInstructions: replyForm.customInstructions,
-            history: selectedConversation.messages
+            history: selectedConversation.messages.map(m => ({...m, createdAt: new Date(m.createdAt).toISOString()}))
         });
         const endTime = Date.now();
         
