@@ -1,65 +1,139 @@
 
 'use client';
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mail, CheckCircle } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from 'react';
+import { useAuthContext } from '@/context/auth-context';
+import { useToast } from '@/hooks/use-toast';
+import { listenToIntegrations, connectIntegration, disconnectIntegration, Integration } from '@/services/firestore-service';
+import { IntegrationCard, IntegrationCardSkeleton } from '@/components/integrations/integration-card';
+import { Mail, MessageSquare, Slack } from 'lucide-react';
+import { motion } from 'framer-motion';
+
+
+const availableIntegrations = [
+  { 
+    id: "gmail", 
+    name: "Gmail", 
+    logo: Mail, 
+    description: "Reply to emails automatically and track analytics.",
+    comingSoon: false,
+  },
+  { 
+    id: "outlook", 
+    name: "Outlook", 
+    logo: Mail, 
+    description: "Connect your Microsoft account.",
+    comingSoon: true,
+  },
+  { 
+    id: "slack", 
+    name: "Slack", 
+    logo: Slack,
+    description: "Respond to customer queries directly in Slack.",
+    comingSoon: true,
+  },
+  {
+    id: "whatsapp",
+    name: "WhatsApp",
+    logo: MessageSquare,
+    description: "Automate replies on the world's most popular messaging app.",
+    comingSoon: true,
+  }
+];
 
 export default function IntegrationsPage() {
+    const { user } = useAuthContext();
     const { toast } = useToast();
-    const [isConnected, setIsConnected] = useState(false);
+    const [integrations, setIntegrations] = useState<Integration[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const handleConnect = () => {
-        // In a real app, this would trigger the OAuth flow
-        toast({
-            title: "Connecting to Gmail...",
-            description: "Please follow the instructions in the popup.",
-        });
-        setTimeout(() => {
-            setIsConnected(true);
-            toast({
-                title: "Successfully connected!",
-                description: "Your Gmail account is now integrated.",
+    useEffect(() => {
+        if (user) {
+            setLoading(true);
+            const unsubscribe = listenToIntegrations(user.uid, (data) => {
+                setIntegrations(data);
+                setLoading(false);
+            }, (error) => {
+                console.error("Failed to load integrations:", error);
+                toast({ variant: "destructive", title: "Error", description: "Could not load integrations." });
+                setLoading(false);
             });
-        }, 2000);
-    }
 
+            return () => unsubscribe();
+        }
+    }, [user, toast]);
+
+    const handleConnect = async (integrationId: string) => {
+        if (!user) return;
+        try {
+            // In a real app, this would trigger the OAuth flow.
+            // We'll simulate it and assume success.
+            await connectIntegration(user.uid, integrationId, { email: user.email });
+            toast({
+                title: "Integration Connected!",
+                description: `Successfully connected to ${integrationId}.`
+            });
+        } catch (error) {
+            console.error(`Failed to connect ${integrationId}:`, error);
+            toast({ variant: "destructive", title: "Connection Failed", description: `Could not connect to ${integrationId}.` });
+        }
+    };
+
+    const handleDisconnect = async (integrationId: string) => {
+        if (!user) return;
+        try {
+            await disconnectIntegration(user.uid, integrationId);
+            toast({
+                title: "Integration Disconnected",
+                description: `Successfully disconnected from ${integrationId}.`
+            });
+        } catch (error) {
+            console.error(`Failed to disconnect ${integrationId}:`, error);
+            toast({ variant: "destructive", title: "Disconnection Failed", description: `Could not disconnect from ${integrationId}.` });
+        }
+    };
+    
     return (
         <div className="flex-1 space-y-8 p-4 pt-6 md:p-8">
-            <div className="space-y-2">
+            <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="space-y-2"
+            >
                 <h1 className="text-3xl font-bold tracking-tight">Integrations</h1>
-                <p className="text-muted-foreground">Connect your tools and services to Savrii.</p>
-            </div>
+                <p className="text-muted-foreground">Connect Savrii with your favorite platforms for automated replies and insights.</p>
+            </motion.div>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Email Integrations</CardTitle>
-                    <CardDescription>Connect your email accounts to manage them directly from the Savrii Inbox.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex items-center gap-4">
-                            <div className="p-2 bg-red-100 dark:bg-red-900/20 rounded-full">
-                                <Mail className="h-6 w-6 text-red-600" />
-                            </div>
-                            <div>
-                                <p className="font-semibold">Gmail</p>
-                                <p className="text-sm text-muted-foreground">Connect your Google account</p>
-                            </div>
-                        </div>
-                        {isConnected ? (
-                             <div className="flex items-center gap-2 text-green-600">
-                                <CheckCircle className="h-5 w-5" />
-                                <span className="font-medium">Connected</span>
-                            </div>
-                        ) : (
-                            <Button onClick={handleConnect}>Connect</Button>
-                        )}
-                    </div>
-                </CardContent>
-            </Card>
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                {loading ? (
+                    <>
+                        <IntegrationCardSkeleton />
+                        <IntegrationCardSkeleton />
+                        <IntegrationCardSkeleton />
+                    </>
+                ) : (
+                    availableIntegrations.map((integrationInfo, index) => {
+                        const connectedIntegration = integrations.find(i => i.id === integrationInfo.id);
+                        return (
+                             <motion.div
+                                key={integrationInfo.id}
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ duration: 0.3, delay: index * 0.1 }}
+                            >
+                                <IntegrationCard
+                                    integration={integrationInfo}
+                                    isConnected={!!connectedIntegration}
+                                    connectionDetails={connectedIntegration?.details}
+                                    onConnect={() => handleConnect(integrationInfo.id)}
+                                    onDisconnect={() => handleDisconnect(integrationInfo.id)}
+                                />
+                            </motion.div>
+                        );
+                    })
+                )}
+            </div>
         </div>
     );
 }

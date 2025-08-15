@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { app } from '@/lib/firebase';
@@ -23,7 +22,9 @@ import {
     orderBy,
     where,
     startAt,
-    collectionGroup
+    collectionGroup,
+    setDoc,
+    deleteDoc
 } from 'firebase/firestore';
 import { format, subDays } from 'date-fns';
 
@@ -136,6 +137,17 @@ export interface RealtimeAnalytics {
     today_tokens: number;
     updated_at: Timestamp;
 }
+
+
+export interface Integration {
+    id: string; // e.g., 'gmail', 'outlook'
+    connectedAt: Timestamp;
+    details: {
+        email?: string;
+        [key: string]: any;
+    }
+}
+
 
 // --- Functions ---
 
@@ -345,7 +357,8 @@ export function listenToConversations(
     }
 
     const q = query(
-        collection(db, 'users', userId, 'conversations'), 
+        collectionGroup(db, 'conversations'),
+        where("userId", "==", userId),
         orderBy("lastMessageAt", "desc")
     );
 
@@ -498,4 +511,59 @@ export function listenToAnalyticsRealtime(userId: string, callback: (data: Realt
             callback(null); // Document might not exist yet
         }
     }, onError);
+}
+
+
+// --- Integrations Service ---
+
+/**
+ * Listens for real-time updates to a user's integrations.
+ */
+export function listenToIntegrations(
+    userId: string, 
+    callback: (integrations: Integration[]) => void, 
+    onError: (error: FirestoreError) => void
+): Unsubscribe {
+    if (!userId) {
+        onError({ code: 'invalid-argument', message: 'User ID is required.' } as FirestoreError);
+        return () => {};
+    }
+
+    const q = query(collection(db, 'users', userId, 'integrations'));
+
+    return onSnapshot(q, (snapshot) => {
+        const integrations: Integration[] = [];
+        snapshot.forEach((doc) => {
+            integrations.push({ id: doc.id, ...doc.data() } as Integration);
+        });
+        callback(integrations);
+    }, (error) => {
+        console.error("Error listening to integrations:", error);
+        onError(error);
+    });
+}
+
+/**
+ * Connects a new integration for a user.
+ */
+export async function connectIntegration(
+    userId: string, 
+    integrationId: string, 
+    details: { [key: string]: any }
+) {
+    if (!userId || !integrationId) throw new Error("User ID and Integration ID are required.");
+    const docRef = doc(db, 'users', userId, 'integrations', integrationId);
+    await setDoc(docRef, {
+        connectedAt: serverTimestamp(),
+        details: details
+    });
+}
+
+/**
+ * Disconnects an integration for a user.
+ */
+export async function disconnectIntegration(userId: string, integrationId: string) {
+    if (!userId || !integrationId) throw new Error("User ID and Integration ID are required.");
+    const docRef = doc(db, 'users', userId, 'integrations', integrationId);
+    await deleteDoc(docRef);
 }
