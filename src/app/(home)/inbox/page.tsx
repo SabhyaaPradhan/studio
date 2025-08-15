@@ -98,39 +98,47 @@ export default function Inbox() {
 
 
   useEffect(() => {
-    // In a real app, this would be a fetch call
-    setTimeout(() => {
-        setEmailIntegrations(mockIntegrations); // Set to mock data for now
+    if (user) {
+      // Fetch integrations
+      setIntegrationsLoading(true);
+      setTimeout(() => {
+        setEmailIntegrations(mockIntegrations);
         setIntegrationsLoading(false);
-    }, 1000);
-  }, []);
+      }, 1000);
 
-  useEffect(() => {
-    if (user && emailIntegrations.length > 0) {
+      // Listen to conversations - dependent on integrations being loaded
       setConversationsLoading(true);
-      const unsubscribe = listenToConversations(user.uid, (data) => {
+      const unsubscribeConversations = listenToConversations(user.uid, (data) => {
         setConversations(data);
         setConversationsLoading(false);
       }, (err) => {
         console.error(err);
         setConversationsLoading(false);
       });
-      return () => unsubscribe();
+      
+      // Listen to recent replies
+      setRepliesLoading(true);
+      const unsubscribeReplies = listenToRecentReplies(user.uid, (data) => {
+          setRecentReplies(data);
+          setRepliesLoading(false);
+      }, (err) => {
+          console.error(err);
+          setRepliesLoading(false);
+      });
+      
+      return () => {
+        unsubscribeConversations();
+        unsubscribeReplies();
+      };
+    } else {
+        // Reset states if user logs out
+        setIntegrationsLoading(false);
+        setConversationsLoading(false);
+        setRepliesLoading(false);
+        setEmailIntegrations([]);
+        setConversations([]);
+        setRecentReplies([]);
     }
-  }, [user, emailIntegrations]);
-
-  useEffect(() => {
-      if (user) {
-          setRepliesLoading(true);
-          const unsubscribe = listenToRecentReplies(user.uid, (data) => {
-              setRecentReplies(data);
-              setRepliesLoading(false);
-          }, (err) => {
-              console.error(err);
-              setRepliesLoading(false);
-          });
-          return () => unsubscribe();
-      }
   }, [user]);
 
   // This is a mock sync function
