@@ -152,7 +152,7 @@ export default function Inbox() {
         setConversationsLoading(false);
         setRepliesLoading(false);
     }
-  }, [user, isEmailActive, toast, selectedConversation]);
+  }, [user, isEmailActive, toast, selectedConversation?.id]);
 
   const handleSyncEmails = async () => {
     if (!user) return;
@@ -403,3 +403,5 @@ export default function Inbox() {
     </div>
   );
 }
+
+    
