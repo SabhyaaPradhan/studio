@@ -345,8 +345,7 @@ export function listenToConversations(
     }
 
     const q = query(
-        collectionGroup(db, 'conversations'), 
-        where("userId", "==", userId), 
+        collection(db, 'users', userId, 'conversations'), 
         orderBy("lastMessageAt", "desc")
     );
 
@@ -409,8 +408,7 @@ export function listenToRecentRepliesForHeatmap(
     const q = query(
         collectionGroup(db, 'ai_replies'),
         where("userId", "==", userId),
-        where("createdAt", ">=", startDate),
-        orderBy("createdAt", "desc")
+        where("createdAt", ">=", startDate)
     );
 
     return onSnapshot(q, (snapshot) => {
