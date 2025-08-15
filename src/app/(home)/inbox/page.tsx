@@ -30,7 +30,7 @@ import {
   Loader2
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { listenToConversations, Conversation, CustomerMessage, AiGeneratedReply, listenToRecentReplies } from "@/services/firestore-service";
+import { listenToConversations, Conversation, CustomerMessage, AiGeneratedReply, listenToRecentReplies, Integration, listenToIntegrations } from "@/services/firestore-service";
 import { generateInboxReply } from "@/ai/flows/generate-inbox-reply";
 
 
@@ -63,10 +63,6 @@ const channelIcons: { [key: string]: React.ElementType } = {
   chat: MessageSquare,
 };
 
-// Mock integrations data
-const mockIntegrations = [{ provider: 'gmail', email: 'test@example.com', status: 'connected', tokenStatus: 'valid' }];
-
-
 export default function Inbox() {
   const { user } = useAuthContext();
   const { toast } = useToast();
@@ -86,7 +82,7 @@ export default function Inbox() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   
-  const [emailIntegrations, setEmailIntegrations] = useState<any[]>([]);
+  const [emailIntegrations, setEmailIntegrations] = useState<Integration[]>([]);
   const [integrationsLoading, setIntegrationsLoading] = useState(true);
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -99,47 +95,59 @@ export default function Inbox() {
 
   useEffect(() => {
     if (user) {
-      // Fetch integrations
       setIntegrationsLoading(true);
-      setTimeout(() => {
-        setEmailIntegrations(mockIntegrations);
-        setIntegrationsLoading(false);
-      }, 1000);
 
-      // Listen to conversations - dependent on integrations being loaded
-      setConversationsLoading(true);
-      const unsubscribeConversations = listenToConversations(user.uid, (data) => {
-        setConversations(data);
-        setConversationsLoading(false);
-      }, (err) => {
-        console.error(err);
-        setConversationsLoading(false);
-      });
-      
-      // Listen to recent replies
-      setRepliesLoading(true);
-      const unsubscribeReplies = listenToRecentReplies(user.uid, (data) => {
-          setRecentReplies(data);
-          setRepliesLoading(false);
-      }, (err) => {
-          console.error(err);
-          setRepliesLoading(false);
-      });
-      
-      return () => {
-        unsubscribeConversations();
-        unsubscribeReplies();
-      };
+      const unsubIntegrations = listenToIntegrations(
+        user.uid,
+        (integrations) => {
+          setEmailIntegrations(integrations.filter(i => i.id === 'gmail'));
+          setIntegrationsLoading(false);
+        },
+        (error) => {
+          console.error("Failed to load integrations:", error);
+          toast({ variant: "destructive", title: "Error", description: "Could not load integrations." });
+          setIntegrationsLoading(false);
+        }
+      );
+
+      return () => unsubIntegrations();
     } else {
-        // Reset states if user logs out
         setIntegrationsLoading(false);
+        setEmailIntegrations([]);
+    }
+  }, [user, toast]);
+
+  useEffect(() => {
+    if (user && !integrationsLoading && emailIntegrations.length > 0) {
+        
+        const unsubConversations = listenToConversations(user.uid, (data) => {
+            setConversations(data);
+            setConversationsLoading(false);
+        }, (err) => {
+            console.error(err);
+            setConversationsLoading(false);
+        });
+        
+        const unsubReplies = listenToRecentReplies(user.uid, (data) => {
+            setRecentReplies(data);
+            setRepliesLoading(false);
+        }, (err) => {
+            console.error(err);
+            setRepliesLoading(false);
+        });
+
+        return () => {
+            unsubConversations();
+            unsubReplies();
+        };
+    } else if (!integrationsLoading) {
         setConversationsLoading(false);
         setRepliesLoading(false);
-        setEmailIntegrations([]);
         setConversations([]);
         setRecentReplies([]);
     }
-  }, [user]);
+  }, [user, integrationsLoading, emailIntegrations]);
+
 
   // This is a mock sync function
   const syncEmails = () => {
@@ -205,7 +213,15 @@ export default function Inbox() {
   };
 
 
-  if (!integrationsLoading && emailIntegrations.length === 0) {
+  if (integrationsLoading) {
+    return (
+        <div className="h-full w-full flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+    );
+  }
+
+  if (emailIntegrations.length === 0) {
     return (
       <div className="container mx-auto p-6 space-y-8">
         <div className="text-center py-16">
@@ -670,3 +686,5 @@ export default function Inbox() {
     </div>
   );
 }
+
+    
