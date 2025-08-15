@@ -356,8 +356,9 @@ export function listenToConversations(
         return () => {};
     }
 
+    // Query the denormalized collection for faster client-side rendering
     const q = query(
-        collection(db, 'users', userId, 'conversations'),
+        collection(db, 'users', userId, 'conversations_denorm'),
         orderBy("lastMessageAt", "desc")
     );
 
@@ -372,7 +373,7 @@ export function listenToConversations(
         });
         callback(conversations);
     }, (error) => {
-        console.error("Error listening to conversations:", error);
+        console.error("Error listening to denormalized conversations:", error);
         onError(error);
     });
 
@@ -419,8 +420,7 @@ export function listenToRecentRepliesForHeatmap(
 
     const q = query(
         collection(db, `users/${userId}/ai_replies`),
-        where("createdAt", ">=", startDate),
-        orderBy("createdAt", "desc")
+        where("createdAt", ">=", startDate)
     );
 
     return onSnapshot(q, (snapshot) => {
@@ -446,18 +446,16 @@ export function listenToEmailStats(
         return () => {};
     }
 
-    const q = query(
-        collection(db, `users/${userId}/email_stats`),
-        orderBy('date', 'desc'),
-        limit(1)
-    );
+    // In a real app, you would aggregate this data.
+    // For this demo, we'll listen to a single document that would be updated by a cloud function.
+    const docRef = doc(db, `users/${userId}/analytics`, 'email_summary');
 
-    return onSnapshot(q, (snapshot) => {
-        if (snapshot.empty) {
-            callback(null);
+    return onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+            callback({ id: docSnap.id, ...docSnap.data() } as EmailStats);
         } else {
-            const doc = snapshot.docs[0];
-            callback({ id: doc.id, ...doc.data() } as EmailStats);
+            // Return a default empty state if no stats document exists
+            callback({ id: 'summary', sent: 0, opened: 0, replied: 0, bounced: 0, date: Timestamp.now() });
         }
     }, onError);
 }

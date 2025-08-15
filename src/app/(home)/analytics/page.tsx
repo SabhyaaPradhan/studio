@@ -7,7 +7,7 @@ import { listenToChatMessages, ChatMessage, listenToRecentRepliesForHeatmap, lis
 import { listenToUser, UserProfile } from '@/services/user-service';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { BarChart3, MessageSquare, TrendingUp, Target, Clock, AlertTriangle, ShieldCheck, BarChartHorizontal, Activity, Eye } from 'lucide-react';
+import { BarChart3, MessageSquare, TrendingUp, Target, Clock, AlertTriangle, ShieldCheck, BarChartHorizontal, Activity, Eye, Info } from 'lucide-react';
 import { MetricCard, MetricCardSkeleton } from '@/components/analytics/metric-card';
 import { DailyUsageChart, DailyUsageChartSkeleton } from '@/components/analytics/daily-usage-chart';
 import { PlanUsage, PlanUsageSkeleton } from '@/components/analytics/plan-usage';
@@ -242,6 +242,7 @@ export default function AnalyticsPage() {
 
         {/* Plan Usage Section */}
         <div className="lg:col-span-1">
+            <PlanUsage userProfile={userProfile} />
         </div>
       </div>
       

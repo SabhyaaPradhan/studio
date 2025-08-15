@@ -5,7 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 import { Skeleton } from '../ui/skeleton';
 import { listenToRecentRepliesForHeatmap, AiGeneratedReply } from '@/services/firestore-service';
 import { useEffect, useState } from 'react';
-import { format, getDay, getHours } from 'date-fns';
+import { getDay, getHours } from 'date-fns';
 import { Info } from 'lucide-react';
 
 const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -71,8 +71,10 @@ export function PeakActivityHeatmap({ userId }: PeakActivityHeatmapProps) {
     if (loading) {
         return <PeakActivityHeatmapSkeleton />;
     }
+    
+    const hasActivity = heatmapData.some(hour => daysOfWeek.some(day => (hour[day] as number) > 0));
 
-    if (heatmapData.length === 0) {
+    if (!hasActivity) {
         return (
              <div className="h-full w-full flex flex-col items-center justify-center text-center text-muted-foreground">
                 <Info className="w-8 h-8 mb-4" />
@@ -84,7 +86,7 @@ export function PeakActivityHeatmap({ userId }: PeakActivityHeatmapProps) {
     
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={heatmapData} layout="vertical" margin={{ top: 20, right: 30, left: 20, bottom: 5 }} barCategoryGap="10%">
+      <BarChart data={heatmapData} layout="vertical" margin={{ top: 20, right: 30, left: 30, bottom: 5 }} barCategoryGap="10%">
         <CartesianGrid strokeDasharray="3 3" horizontal={false} />
         <XAxis type="number" tick={{ fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} allowDecimals={false} />
         <YAxis 
@@ -94,7 +96,7 @@ export function PeakActivityHeatmap({ userId }: PeakActivityHeatmapProps) {
             tickLine={false} 
             axisLine={false} 
             interval={2}
-            width={80}
+            width={40}
         />
         <Tooltip
             cursor={{ fill: 'hsl(var(--secondary))' }}

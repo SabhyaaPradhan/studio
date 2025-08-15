@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -27,7 +27,9 @@ import {
   Sparkles,
   Bot,
   Copy,
-  Loader2
+  Loader2,
+  RefreshCw,
+  AlertCircle
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { listenToConversations, Conversation, CustomerMessage, AiGeneratedReply, listenToRecentReplies, Integration, listenToIntegrations } from "@/services/firestore-service";
@@ -68,7 +70,6 @@ export default function Inbox() {
   const { toast } = useToast();
   const router = useRouter();
   
-  // State variables
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -82,8 +83,9 @@ export default function Inbox() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   
-  const [emailIntegrations, setEmailIntegrations] = useState<Integration[]>([]);
+  const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [integrationsLoading, setIntegrationsLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [conversationsLoading, setConversationsLoading] = useState(true);
@@ -91,101 +93,82 @@ export default function Inbox() {
   const [recentReplies, setRecentReplies] = useState<AiGeneratedReply[]>([]);
   const [repliesLoading, setRepliesLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
-
+  
+  const isEmailActive = integrations.some(i => i.id === 'gmail');
 
   useEffect(() => {
     if (user) {
-      setIntegrationsLoading(true);
+        setIntegrationsLoading(true);
+        const unsubIntegrations = listenToIntegrations(user.uid, 
+            (data) => {
+                setIntegrations(data);
+                setIntegrationsLoading(false);
+            },
+            (error) => {
+                console.error("Failed to load integrations:", error);
+                toast({ variant: "destructive", title: "Error", description: "Could not load integrations." });
+                setIntegrationsLoading(false);
+            }
+        );
 
-      const unsubIntegrations = listenToIntegrations(
-        user.uid,
-        (integrations) => {
-          setEmailIntegrations(integrations.filter(i => i.id === 'gmail'));
-          setIntegrationsLoading(false);
-        },
-        (error) => {
-          console.error("Failed to load integrations:", error);
-          toast({ variant: "destructive", title: "Error", description: "Could not load integrations." });
-          setIntegrationsLoading(false);
-        }
-      );
-
-      return () => unsubIntegrations();
+        return () => unsubIntegrations();
     } else {
         setIntegrationsLoading(false);
-        setEmailIntegrations([]);
     }
   }, [user, toast]);
-
+  
   useEffect(() => {
-    if (user && !integrationsLoading && emailIntegrations.length > 0) {
-        
-        const unsubConversations = listenToConversations(user.uid, (data) => {
-            setConversations(data);
-            setConversationsLoading(false);
-        }, (err) => {
-            console.error(err);
-            setConversationsLoading(false);
-        });
-        
-        const unsubReplies = listenToRecentReplies(user.uid, (data) => {
-            setRecentReplies(data);
-            setRepliesLoading(false);
-        }, (err) => {
-            console.error(err);
-            setRepliesLoading(false);
-        });
+    if (user && isEmailActive) {
+      setConversationsLoading(true);
+      setRepliesLoading(true);
 
-        return () => {
-            unsubConversations();
-            unsubReplies();
-        };
-    } else if (!integrationsLoading) {
+      const unsubConversations = listenToConversations(user.uid, (data) => {
+        setConversations(data);
+        if (data.length > 0 && !selectedConversation) {
+            setSelectedConversation(data[0]);
+        }
         setConversationsLoading(false);
+      }, (err) => {
+        console.error(err);
+        setConversationsLoading(false);
+      });
+
+      const unsubReplies = listenToRecentReplies(user.uid, (data) => {
+        setRecentReplies(data);
         setRepliesLoading(false);
+      }, (err) => {
+        console.error(err);
+        setRepliesLoading(false);
+      });
+
+      return () => {
+        unsubConversations();
+        unsubReplies();
+      };
+    } else if (!isEmailActive) {
         setConversations([]);
         setRecentReplies([]);
+        setConversationsLoading(false);
+        setRepliesLoading(false);
     }
-  }, [user, integrationsLoading, emailIntegrations]);
+  }, [user, isEmailActive, selectedConversation]);
 
-
-  // This is a mock sync function
-  const syncEmails = () => {
-    toast({
-      title: "Sync in progress...",
-      description: "Fetching latest emails.",
-    });
-    // In a real app, this would trigger a backend process
-    setTimeout(() => {
-        toast({
-            title: "Emails Synced",
-            description: "Your latest emails have been synchronized.",
-        });
-    }, 2000);
-  }
+  const handleSyncEmails = async () => {
+    setIsSyncing(true);
+    toast({ title: "Syncing emails...", description: "This may take a moment." });
+    // In a real app, this would be an API call:
+    // const response = await fetch('/api/email/sync', { method: 'POST' });
+    // For now, we'll simulate a sync.
+    await new Promise(res => setTimeout(res, 2500));
+    toast({ title: "Sync Complete!", description: "Your inbox is up to date." });
+    setIsSyncing(false);
+  };
 
   const handleGenerateReply = async () => {
-    if (!replyForm.replyType || !selectedConversation) {
-      toast({
-        title: "Missing Information",
-        description: "Please select a reply type and a conversation.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (replyForm.replyType === "custom" && !replyForm.customInstructions) {
-      toast({
-        title: "Custom Instructions Required",
-        description: "Please provide custom instructions for your reply.",
-        variant: "destructive",
-      });
-      return;
-    }
+    if (!replyForm.replyType || !selectedConversation) return;
 
     setIsGenerating(true);
     try {
-        const startTime = Date.now();
         const result = await generateInboxReply({
             conversationId: selectedConversation.id,
             messageId: replyForm.messageId,
@@ -193,25 +176,18 @@ export default function Inbox() {
             customInstructions: replyForm.customInstructions,
             history: selectedConversation.messages.map(m => ({...m, createdAt: new Date(m.createdAt).toISOString()}))
         });
-        const endTime = Date.now();
-        
         setGeneratedReply(result.generatedReply);
         setIsPreviewOpen(true);
-        toast({
-            title: "Reply Generated!",
-            description: `AI response generated in ${endTime - startTime}ms with ${result.confidence}% confidence.`
-        });
     } catch (error: any) {
          toast({
             title: "Generation Failed",
-            description: error.message || "Failed to generate reply. Please try again.",
+            description: error.message || "Failed to generate reply.",
             variant: "destructive",
         });
     } finally {
         setIsGenerating(false);
     }
   };
-
 
   if (integrationsLoading) {
     return (
@@ -221,38 +197,21 @@ export default function Inbox() {
     );
   }
 
-  if (emailIntegrations.length === 0) {
+  if (!isEmailActive) {
     return (
-      <div className="container mx-auto p-6 space-y-8">
-        <div className="text-center py-16">
+      <div className="container mx-auto p-6 flex items-center justify-center h-full">
+        <div className="text-center py-16 max-w-lg">
           <div className="mx-auto mb-6 p-4 bg-amber-100 dark:bg-amber-900/20 rounded-full w-fit">
             <Mail className="h-12 w-12 text-amber-600" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-            Email Integration Required
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
-            Connect your Gmail account to start managing messages with AI-powered reply generation. 
-            Available for Pro and Enterprise plans.
+          <h1 className="text-3xl font-bold mb-4">Email Integration Required</h1>
+          <p className="text-muted-foreground mb-8">
+            Connect your Gmail account to start managing messages and generating AI-powered replies.
           </p>
-          <Button 
-            onClick={() => router.push('/integrations')}
-          >
+          <Button onClick={() => router.push('/integrations')}>
             <Mail className="h-4 w-4 mr-2" />
-            Connect Email Account
+            Connect Your Email
           </Button>
-          <div className="mt-8 grid md:grid-cols-2 gap-4 max-w-lg mx-auto">
-            <div className="text-center p-4 border rounded-lg">
-              <Mail className="h-6 w-6 text-red-500 mx-auto mb-2" />
-              <p className="text-sm font-medium">Gmail</p>
-              <p className="text-xs text-gray-500">OAuth 2.0</p>
-            </div>
-            <div className="text-center p-4 border rounded-lg opacity-60">
-              <Mail className="h-6 w-6 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm font-medium text-gray-500">Outlook</p>
-              <p className="text-xs text-gray-400">Coming Soon</p>
-            </div>
-          </div>
         </div>
       </div>
     );
@@ -269,353 +228,142 @@ export default function Inbox() {
 
   const handleReplyToMessage = (conversation: Conversation, message: CustomerMessage) => {
     setSelectedConversation(conversation);
-    setReplyForm({
-      replyType: "",
-      customInstructions: "",
-      messageId: message.id,
-    });
+    setReplyForm({ replyType: "", customInstructions: "", messageId: message.id });
     setIsReplyModalOpen(true);
   };
 
-  const getPriorityColor = (priority: string) => {
-    return priorityColors[priority] || priorityColors.normal;
-  };
-
-  const getChannelIcon = (channel: string) => {
-    const IconComponent = channelIcons[channel] || Mail;
-    return IconComponent;
-  };
-
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto p-6 space-y-6 h-full flex flex-col">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Customer Inbox
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Manage customer conversations with AI-assisted replies
-          </p>
+          <h1 className="text-3xl font-bold">Customer Inbox</h1>
+          <p className="text-muted-foreground mt-2">Manage conversations with AI-assisted replies</p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="secondary">
-            {filteredConversations.length} conversations
-          </Badge>
-          <Button onClick={syncEmails} variant="outline">
-            <Mail className="w-4 h-4 mr-2" />
+          <Badge variant="secondary">{filteredConversations.length} conversations</Badge>
+          <Button onClick={handleSyncEmails} variant="outline" disabled={isSyncing}>
+            {isSyncing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
             Sync Emails
           </Button>
         </div>
       </div>
 
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
+      <Card className="flex-1">
+        <CardContent className="p-4 h-full grid lg:grid-cols-3 gap-6">
+          {/* Conversation List Column */}
+          <div className="lg:col-span-1 flex flex-col h-full">
+            <div className="flex flex-col sm:flex-row gap-4 p-2">
+              <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Search conversations..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
+                <Input placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10"/>
               </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full sm:w-[200px]"><Filter className="w-4 h-4 mr-2" /><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {statusFilters.map(f => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-[200px]">
-                <Filter className="w-4 h-4 mr-2" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {statusFilters.map((filter) => (
-                  <SelectItem key={filter.value} value={filter.value}>
-                    {filter.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <InboxIcon className="w-5 h-5" />
-                Conversations
-              </CardTitle>
-              <CardDescription>
-                Click on a conversation to view details and reply
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
+            <Separator className="my-2" />
+            <ScrollArea className="flex-grow">
               {conversationsLoading ? (
-                <div className="p-8 text-center">
-                  <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-gray-400" />
-                  <p className="text-muted-foreground">Loading conversations...</p>
-                </div>
+                <div className="p-8 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-muted-foreground" /></div>
               ) : filteredConversations.length === 0 ? (
-                <div className="p-8 text-center text-muted-foreground">
-                  <InboxIcon className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p className="font-medium mb-2">No conversations found</p>
-                  <p className="text-sm">Customer messages will appear here when they arrive.</p>
-                </div>
+                <div className="p-8 text-center text-muted-foreground"><InboxIcon className="w-12 h-12 mx-auto mb-4 opacity-50" /><p className="font-medium">No conversations found</p></div>
               ) : (
-                <ScrollArea className="h-[600px]">
-                  <div className="space-y-1">
-                    {filteredConversations.map((conversation: Conversation) => {
-                      const ChannelIcon = getChannelIcon(conversation.channel);
-                      return (
-                        <div
-                          key={conversation.id}
-                          className={`p-4 border-b hover:bg-secondary cursor-pointer transition-colors ${
-                            selectedConversation?.id === conversation.id ? 'bg-muted' : ''
-                          }`}
-                          onClick={() => setSelectedConversation(conversation)}
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-2">
-                                <ChannelIcon className="w-4 h-4 text-muted-foreground" />
-                                <span className="font-medium truncate">
-                                  {conversation.customerName}
-                                </span>
-                                <Badge className={getPriorityColor(conversation.priority)}>
-                                  {conversation.priority}
-                                </Badge>
-                                {conversation.unreadCount > 0 && (
-                                  <Badge variant="destructive" className="text-xs">
-                                    {conversation.unreadCount}
-                                  </Badge>
-                                )}
-                              </div>
-                              <p className="text-sm text-foreground mb-1">
-                                {conversation.subject || conversation.customerEmail}
-                              </p>
-                              {conversation.messages[conversation.messages.length -1] && (
-                                <p className="text-sm text-muted-foreground truncate">
-                                  {conversation.messages[conversation.messages.length -1].content.substring(0, 100)}...
-                                </p>
-                              )}
-                            </div>
-                            <div className="flex flex-col items-end gap-2 ml-4">
-                              <span className="text-xs text-muted-foreground">
-                                {formatDistanceToNow(new Date(conversation.lastMessageAt.toDate()), { addSuffix: true })}
-                              </span>
-                              <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                            </div>
-                          </div>
+                <div className="space-y-1 p-2">
+                  {filteredConversations.map(c => {
+                    const ChannelIcon = channelIcons[c.channel] || Mail;
+                    return (
+                      <div key={c.id}
+                           className={`p-3 border-l-4 rounded-r-md cursor-pointer ${selectedConversation?.id === c.id ? 'border-primary bg-secondary' : 'border-transparent hover:bg-secondary'}`}
+                           onClick={() => setSelectedConversation(c)}>
+                        <div className="flex items-center gap-2 mb-1">
+                          <ChannelIcon className="w-4 h-4 text-muted-foreground" />
+                          <span className="font-semibold text-sm truncate">{c.customerName}</span>
+                          {c.unreadCount > 0 && <Badge variant="destructive" className="h-5 px-2">{c.unreadCount}</Badge>}
+                          <span className="text-xs text-muted-foreground ml-auto">{formatDistanceToNow(new Date(c.lastMessageAt.toDate()), { addSuffix: true })}</span>
                         </div>
-                      );
-                    })}
-                  </div>
-                </ScrollArea>
+                        <p className="text-sm font-medium truncate">{c.subject}</p>
+                        <p className="text-sm text-muted-foreground truncate">{c.messages[c.messages.length - 1]?.content}</p>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
-            </CardContent>
-          </Card>
-        </div>
+            </ScrollArea>
+          </div>
 
-        <div className="space-y-6">
-          {selectedConversation ? (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span className="truncate">{selectedConversation.customerName}</span>
-                  <Badge className={getPriorityColor(selectedConversation.priority)}>
-                    {selectedConversation.priority}
-                  </Badge>
-                </CardTitle>
-                <CardDescription>
-                  {selectedConversation.customerEmail}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <Label className="text-xs font-medium text-muted-foreground">Channel</Label>
-                    <p className="capitalize">{selectedConversation.channel}</p>
-                  </div>
-                  <div>
-                    <Label className="text-xs font-medium text-muted-foreground">Status</Label>
-                    <p className="capitalize">{selectedConversation.status}</p>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <div>
-                  <Label className="text-sm font-medium mb-2 block">Messages</Label>
-                  <ScrollArea className="h-[300px] border rounded-lg p-3">
-                    <div className="space-y-3">
-                      {selectedConversation.messages.map((message) => (
-                        <div
-                          key={message.id}
-                          className={`p-3 rounded-lg ${
-                            message.messageType === 'incoming'
-                              ? 'bg-secondary mr-8'
-                              : 'bg-primary/10 ml-8'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs font-medium">
-                              {message.senderName}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
-                            </span>
-                          </div>
-                          <p className="text-sm">{message.content}</p>
-                          {message.messageType === 'incoming' && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="mt-2 h-6 px-2 text-xs"
-                              onClick={() => handleReplyToMessage(selectedConversation, message)}
-                            >
-                              <Bot className="w-3 h-3 mr-1" />
-                              AI Reply
-                            </Button>
-                          )}
-                        </div>
-                      ))}
+          {/* Message View Column */}
+          <div className="lg:col-span-2 flex flex-col h-full border-l">
+            {selectedConversation ? (
+              <>
+                <div className="p-4 border-b">
+                  <div className="flex items-center justify-between">
+                    <div>
+                        <h2 className="font-semibold text-lg">{selectedConversation.subject}</h2>
+                        <p className="text-sm text-muted-foreground">{selectedConversation.customerName} &lt;{selectedConversation.customerEmail}&gt;</p>
                     </div>
-                  </ScrollArea>
+                    <Badge variant="outline" className={priorityColors[selectedConversation.priority]}>{selectedConversation.priority}</Badge>
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <MessageSquare className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-muted-foreground">Select a conversation to view details</p>
-              </CardContent>
-            </Card>
-          )}
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Recent AI Replies</CardTitle>
-              <CardDescription>
-                Your recent AI-assisted responses
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {repliesLoading ? (
-                <div className="text-center py-4">
-                  <Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
-                </div>
-              ) : recentReplies.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  No recent replies
-                </p>
-              ) : (
-                <ScrollArea className="h-[200px]">
-                  <div className="space-y-3">
-                    {recentReplies.slice(0, 5).map((reply) => (
-                      <div key={reply.id} className="border rounded-lg p-3">
+                <ScrollArea className="flex-grow p-4 bg-muted/20">
+                  <div className="space-y-4">
+                    {selectedConversation.messages.map(m => (
+                      <div key={m.id} className={`p-4 rounded-lg max-w-[80%] ${m.messageType === 'incoming' ? 'bg-card mr-auto' : 'bg-primary/10 ml-auto'}`}>
                         <div className="flex items-center justify-between mb-2">
-                          <Badge 
-                            variant={reply.status === 'sent' ? 'default' : 'secondary'}
-                            className="text-xs"
-                          >
-                            {reply.status}
-                          </Badge>
-                          <span className="text-xs text-muted-foreground">
-                            {formatDistanceToNow(new Date(reply.createdAt.toDate()), { addSuffix: true })}
-                          </span>
+                          <span className="text-xs font-bold">{m.senderName}</span>
+                          <span className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(m.createdAt), { addSuffix: true })}</span>
                         </div>
-                        <p className="text-sm truncate mb-1">
-                          To: {reply.conversation.customerName}
-                        </p>
-                        <p className="text-xs text-muted-foreground line-clamp-2">
-                          {reply.finalReply || reply.generatedReply}
-                        </p>
+                        <p className="text-sm whitespace-pre-wrap">{m.content}</p>
+                        {m.messageType === 'incoming' && (
+                          <Button size="sm" variant="ghost" className="mt-2 h-7 px-2 text-xs" onClick={() => handleReplyToMessage(selectedConversation, m)}>
+                            <Bot className="w-3 h-3 mr-1" /> AI Reply
+                          </Button>
+                        )}
                       </div>
                     ))}
                   </div>
                 </ScrollArea>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      <Dialog open={isReplyModalOpen} onOpenChange={setIsReplyModalOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Generate AI Reply</DialogTitle>
-            <DialogDescription>
-              Select the type of response you'd like to generate for this customer message.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            {selectedConversation && (
-              <div className="p-3 bg-secondary rounded-lg">
-                <Label className="text-xs font-medium text-muted-foreground">Customer Message:</Label>
-                <p className="text-sm mt-1">
-                  {selectedConversation.messages.find(m => m.id === replyForm.messageId)?.content}
-                </p>
+                <div className="p-4 border-t">
+                  <Textarea placeholder="Write a reply..." />
+                   <div className="flex justify-end gap-2 mt-2">
+                        <Button variant="outline">Attach File</Button>
+                        <Button><Send className="w-4 h-4 mr-2" /> Send</Button>
+                    </div>
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center justify-center h-full text-center text-muted-foreground">
+                <div>
+                  <MessageSquare className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                  <p>Select a conversation to view messages</p>
+                </div>
               </div>
             )}
-
+          </div>
+        </CardContent>
+      </Card>
+      
+      <Dialog open={isReplyModalOpen} onOpenChange={setIsReplyModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle>Generate AI Reply</DialogTitle><DialogDescription>Select a response type for this message.</DialogDescription></DialogHeader>
+          <div className="space-y-4 py-4">
+            {selectedConversation && (<div className="p-3 bg-secondary rounded-lg"><Label className="text-xs font-medium text-muted-foreground">Customer Message:</Label><p className="text-sm mt-1">{selectedConversation.messages.find(m => m.id === replyForm.messageId)?.content}</p></div>)}
             <div>
               <Label htmlFor="replyType">Reply Type</Label>
-              <Select 
-                value={replyForm.replyType} 
-                onValueChange={(value) => setReplyForm({...replyForm, replyType: value})}
-              >
-                <SelectTrigger className="mt-2">
-                  <SelectValue placeholder="Select reply type" />
-                </SelectTrigger>
+              <Select value={replyForm.replyType} onValueChange={(value) => setReplyForm({...replyForm, replyType: value})}>
+                <SelectTrigger className="mt-2"><SelectValue placeholder="Select reply type" /></SelectTrigger>
                 <SelectContent>
-                  {replyTypes.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      <div>
-                        <div className="font-medium">{type.label}</div>
-                        <div className="text-xs text-muted-foreground">{type.description}</div>
-                      </div>
-                    </SelectItem>
-                  ))}
+                  {replyTypes.map(t => (<SelectItem key={t.value} value={t.value}><div><div className="font-medium">{t.label}</div><div className="text-xs text-muted-foreground">{t.description}</div></div></SelectItem>))}
                 </SelectContent>
               </Select>
             </div>
-
-            {replyForm.replyType === "custom" && (
-              <div>
-                <Label htmlFor="customInstructions">Custom Instructions</Label>
-                <Textarea
-                  id="customInstructions"
-                  placeholder="Describe how you want to respond to this customer..."
-                  value={replyForm.customInstructions}
-                  onChange={(e) => setReplyForm({...replyForm, customInstructions: e.target.value})}
-                  className="mt-2"
-                />
-              </div>
-            )}
-
-            <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setIsReplyModalOpen(false)}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleGenerateReply}
-                disabled={isGenerating || !replyForm.replyType}
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Generate Reply
-                  </>
-                )}
+            {replyForm.replyType === "custom" && (<div><Label htmlFor="customInstructions">Custom Instructions</Label><Textarea id="customInstructions" placeholder="Describe how you want to respond..." value={replyForm.customInstructions} onChange={(e) => setReplyForm({...replyForm, customInstructions: e.target.value})} className="mt-2"/></div>)}
+            <div className="flex justify-end gap-3 pt-4">
+              <Button variant="outline" onClick={() => setIsReplyModalOpen(false)}>Cancel</Button>
+              <Button onClick={handleGenerateReply} disabled={isGenerating || !replyForm.replyType}>
+                {isGenerating ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating...</>) : (<><Sparkles className="w-4 h-4 mr-2" />Generate Reply</>)}
               </Button>
             </div>
           </div>
@@ -623,61 +371,14 @@ export default function Inbox() {
       </Dialog>
 
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Preview AI Reply</DialogTitle>
-            <DialogDescription>
-              Review the generated response and edit if needed before sending.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="generatedReply">AI Generated Reply</Label>
-              <Textarea
-                id="generatedReply"
-                value={generatedReply}
-                onChange={(e) => setGeneratedReply(e.target.value)}
-                className="mt-2 min-h-[150px]"
-              />
-            </div>
-
-            <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setIsPreviewOpen(false)}>
-                Cancel
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  navigator.clipboard.writeText(generatedReply);
-                  toast({ title: "Copied to clipboard" });
-                }}
-              >
-                <Copy className="w-4 h-4 mr-2" />
-                Copy
-              </Button>
-              <Button 
-                onClick={() => {
-                  toast({
-                    title: "Reply Sent",
-                    description: "Your response has been sent to the customer.",
-                  });
-                  setIsPreviewOpen(false);
-                  setIsReplyModalOpen(false);
-                }}
-                disabled={isSending}
-              >
-                {isSending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Sending...
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-4 h-4 mr-2" />
-                    Send Reply
-                  </>
-                )}
+        <DialogContent className="max-w-2xl"><DialogHeader><DialogTitle>Preview AI Reply</DialogTitle><DialogDescription>Review and edit the response before sending.</DialogDescription></DialogHeader>
+          <div className="space-y-4 py-4">
+            <div><Label htmlFor="generatedReply">AI Generated Reply</Label><Textarea id="generatedReply" value={generatedReply} onChange={(e) => setGeneratedReply(e.target.value)} className="mt-2 min-h-[150px]"/></div>
+            <div className="flex justify-end gap-3 pt-4">
+              <Button variant="outline" onClick={() => setIsPreviewOpen(false)}>Cancel</Button>
+              <Button variant="outline" onClick={() => { navigator.clipboard.writeText(generatedReply); toast({ title: "Copied to clipboard" }); }}><Copy className="w-4 h-4 mr-2" />Copy</Button>
+              <Button onClick={() => { toast({ title: "Reply Sent" }); setIsPreviewOpen(false); setIsReplyModalOpen(false); }} disabled={isSending}>
+                {isSending ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Sending...</>) : (<><Send className="w-4 h-4 mr-2" />Send Reply</>)}
               </Button>
             </div>
           </div>
@@ -686,5 +387,3 @@ export default function Inbox() {
     </div>
   );
 }
-
-    
