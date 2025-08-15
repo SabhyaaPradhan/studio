@@ -152,17 +152,32 @@ export default function Inbox() {
         setConversationsLoading(false);
         setRepliesLoading(false);
     }
-  }, [user, isEmailActive]);
+  }, [user, isEmailActive, toast, selectedConversation]);
 
   const handleSyncEmails = async () => {
+    if (!user) return;
     setIsSyncing(true);
     toast({ title: "Syncing emails...", description: "This may take a moment." });
-    // In a real app, this would be an API call:
-    // const response = await fetch('/api/email/sync', { method: 'POST' });
-    // For now, we'll simulate a sync.
-    await new Promise(res => setTimeout(res, 2500));
-    toast({ title: "Sync Complete!", description: "Your inbox is up to date." });
-    setIsSyncing(false);
+    
+    try {
+        const response = await fetch('/api/email/sync', { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: user.uid })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to sync emails.');
+        }
+
+        toast({ title: "Sync Complete!", description: `Synced ${data.syncedConversations} conversations and ${data.syncedMessages} messages.` });
+    } catch (error: any) {
+        toast({ variant: "destructive", title: "Sync Failed", description: error.message });
+    } finally {
+        setIsSyncing(false);
+    }
   };
 
   const handleGenerateReply = async () => {
@@ -270,7 +285,7 @@ export default function Inbox() {
               {conversationsLoading ? (
                 <div className="p-8 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-muted-foreground" /></div>
               ) : filteredConversations.length === 0 ? (
-                <div className="p-8 text-center text-muted-foreground"><InboxIcon className="w-12 h-12 mx-auto mb-4 opacity-50" /><p className="font-medium">No conversations found</p><p className="text-sm mt-1">Customer messages will appear here when they arrive.</p></div>
+                <div className="p-8 text-center text-muted-foreground"><InboxIcon className="w-12 h-12 mx-auto mb-4 opacity-50" /><p className="font-medium">No conversations found</p><p className="text-sm mt-1">Click "Sync Emails" to fetch your latest messages.</p></div>
               ) : (
                 <div className="space-y-1 p-2">
                   {filteredConversations.map(c => {
@@ -283,7 +298,7 @@ export default function Inbox() {
                           <ChannelIcon className="w-4 h-4 text-muted-foreground" />
                           <span className="font-semibold text-sm truncate">{c.customerName}</span>
                           {c.unreadCount > 0 && <Badge variant="destructive" className="h-5 px-2">{c.unreadCount}</Badge>}
-                          <span className="text-xs text-muted-foreground ml-auto">{formatDistanceToNow(new Date(c.lastMessageAt.toDate()), { addSuffix: true })}</span>
+                          <span className="text-xs text-muted-foreground ml-auto">{c.lastMessageAt ? formatDistanceToNow(new Date((c.lastMessageAt as any).toDate()), { addSuffix: true }) : ''}</span>
                         </div>
                         <p className="text-sm font-medium truncate">{c.subject}</p>
                         <p className="text-sm text-muted-foreground truncate">{c.messages[c.messages.length - 1]?.content}</p>

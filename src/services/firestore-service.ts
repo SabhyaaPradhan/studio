@@ -365,9 +365,13 @@ export function listenToConversations(
         const conversations: Conversation[] = [];
         querySnapshot.forEach((doc) => {
             const data = doc.data();
+            // Firestore timestamps need to be converted to Date objects for use in the client
+            const lastMessageAt = data.lastMessageAt instanceof Timestamp ? data.lastMessageAt.toDate() : new Date();
+            
             conversations.push({
                 ...data,
                 id: doc.id,
+                lastMessageAt,
             } as Conversation);
         });
         callback(conversations);
