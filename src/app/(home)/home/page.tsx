@@ -1,24 +1,48 @@
 
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthContext } from '@/context/auth-context';
-import { BrainCircuit, CalendarDays, DollarSign, MessageSquare, ArrowRight, Lightbulb, UserCheck } from 'lucide-react';
+import { BrainCircuit, CalendarDays, DollarSign, MessageSquare, ArrowRight, Lightbulb, UserCheck, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { RecentActivity } from '@/components/home/recent-activity';
+import { listenToAnalyticsRealtime, RealtimeAnalytics } from '@/services/firestore-service';
 
 gsap.registerPlugin(ScrollTrigger);
 
 export default function HomePage() {
     const { user } = useAuthContext();
     const containerRef = useRef<HTMLDivElement>(null);
+    const [realtimeStats, setRealtimeStats] = useState<RealtimeAnalytics | null>(null);
+    const [statsLoading, setStatsLoading] = useState(true);
+
+    useEffect(() => {
+        if (user) {
+            setStatsLoading(true);
+            const unsubscribe = listenToAnalyticsRealtime(user.uid, (data) => {
+                setRealtimeStats(data);
+                setStatsLoading(false);
+            }, (error) => {
+                console.error("Failed to load realtime stats:", error);
+                setStatsLoading(false);
+            });
+            return () => unsubscribe();
+        }
+    }, [user]);
 
     const stats = [
-        { title: "AI Replies Today", value: 45, icon: MessageSquare, change: "+5 from yesterday", link: "/dashboard", linkText: "View Details" },
+        { 
+            title: "AI Replies Today", 
+            value: statsLoading ? -1 : (realtimeStats?.today_assistant_messages ?? 0), 
+            icon: MessageSquare, 
+            change: "Total replies generated today", 
+            link: "/dashboard", 
+            linkText: "View Details" 
+        },
         { title: "Plan", value: "Free", icon: DollarSign, change: "Upgrade to Pro", link: "/billing", linkText: "Upgrade" },
         { title: "Knowledge Sources", value: 1, icon: BrainCircuit, change: "+0 this week", link: "/dashboard", linkText: "Manage" },
         { title: "Trial Ends In", value: "N/A", icon: CalendarDays, change: "", link: "/billing", linkText: "View Plans" }
@@ -33,11 +57,9 @@ export default function HomePage() {
 
     useEffect(() => {
         const ctx = gsap.context(() => {
-            // Animate Welcome Message
             gsap.from("[data-animate='welcome-title']", { duration: 0.8, y: 30, opacity: 0, ease: 'power3.out', delay: 0.2 });
             gsap.from("[data-animate='welcome-desc']", { duration: 0.8, y: 30, opacity: 0, ease: 'power3.out', delay: 0.4 });
 
-            // Animate Stat Cards and Counters
             gsap.utils.toArray<HTMLDivElement>("[data-animate='stat-card']").forEach((card, i) => {
                 gsap.from(card, {
                     duration: 0.8,
@@ -52,11 +74,11 @@ export default function HomePage() {
                 });
 
                 const statValueEl = card.querySelector("[data-animate='stat-value']");
-                if (statValueEl) {
+                if (statValueEl && !statsLoading) {
                     const endValue = parseFloat(statValueEl.textContent || '0');
-                    if (!isNaN(endValue)) {
-                        gsap.to(statValueEl, {
-                            duration: 2,
+                    if (!isNaN(endValue) && endValue > 0) {
+                         gsap.to(statValueEl, {
+                            duration: 1.5,
                             innerText: endValue,
                             roundProps: "innerText",
                             ease: "power2.inOut",
@@ -69,7 +91,6 @@ export default function HomePage() {
                 }
             });
 
-             // Animate Quick Actions
             gsap.from("[data-animate='quick-actions-title']", {
                 scrollTrigger: { trigger: "[data-animate='quick-actions-title']", start: "top 90%" },
                 duration: 0.8, y: 30, opacity: 0, ease: 'power3.out'
@@ -80,10 +101,9 @@ export default function HomePage() {
                 duration: 0.5, y: 30, opacity: 0, ease: 'power3.out', stagger: 0.15
             });
 
-
         }, containerRef);
         return () => ctx.revert();
-    }, []);
+    }, [statsLoading]);
 
     return (
         <div ref={containerRef} className="flex-1 space-y-12 p-4 pt-6 md:p-8">
@@ -102,7 +122,7 @@ export default function HomePage() {
                         </CardHeader>
                         <CardContent>
                             <div className="text-3xl font-bold" data-animate="stat-value">
-                                {typeof stat.value === 'number' ? '0' : stat.value}
+                                {stat.value === -1 ? <Loader2 className="h-6 w-6 animate-spin" /> : (typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value)}
                             </div>
                             <p className="text-xs text-muted-foreground">{stat.change}</p>
                         </CardContent>
