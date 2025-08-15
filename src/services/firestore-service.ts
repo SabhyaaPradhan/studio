@@ -356,9 +356,8 @@ export function listenToConversations(
         return () => {};
     }
 
-    // Query the denormalized collection for faster client-side rendering
     const q = query(
-        collection(db, 'users', userId, 'conversations_denorm'),
+        collection(db, 'users', userId, 'conversations'),
         orderBy("lastMessageAt", "desc")
     );
 
@@ -373,7 +372,7 @@ export function listenToConversations(
         });
         callback(conversations);
     }, (error) => {
-        console.error("Error listening to denormalized conversations:", error);
+        console.error("Error listening to conversations:", error);
         onError(error);
     });
 

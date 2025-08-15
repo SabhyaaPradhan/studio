@@ -130,6 +130,7 @@ export default function Inbox() {
         setConversationsLoading(false);
       }, (err) => {
         console.error(err);
+        toast({ variant: "destructive", title: "Error", description: "Could not load conversations."});
         setConversationsLoading(false);
       });
 
@@ -151,7 +152,7 @@ export default function Inbox() {
         setConversationsLoading(false);
         setRepliesLoading(false);
     }
-  }, [user, isEmailActive, selectedConversation]);
+  }, [user, isEmailActive]);
 
   const handleSyncEmails = async () => {
     setIsSyncing(true);
@@ -269,7 +270,7 @@ export default function Inbox() {
               {conversationsLoading ? (
                 <div className="p-8 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-muted-foreground" /></div>
               ) : filteredConversations.length === 0 ? (
-                <div className="p-8 text-center text-muted-foreground"><InboxIcon className="w-12 h-12 mx-auto mb-4 opacity-50" /><p className="font-medium">No conversations found</p></div>
+                <div className="p-8 text-center text-muted-foreground"><InboxIcon className="w-12 h-12 mx-auto mb-4 opacity-50" /><p className="font-medium">No conversations found</p><p className="text-sm mt-1">Customer messages will appear here when they arrive.</p></div>
               ) : (
                 <div className="space-y-1 p-2">
                   {filteredConversations.map(c => {
