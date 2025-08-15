@@ -357,7 +357,8 @@ export function listenToConversations(
     }
 
     const q = query(
-        collection(db, `users/${userId}/conversations`),
+        collectionGroup(db, 'conversations'),
+        where("userId", "==", userId),
         orderBy("lastMessageAt", "desc")
     );
 
