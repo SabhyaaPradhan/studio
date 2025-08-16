@@ -298,7 +298,7 @@ export default function Inbox() {
                           <ChannelIcon className="w-4 h-4 text-muted-foreground" />
                           <span className="font-semibold text-sm truncate">{c.customerName}</span>
                           {c.unreadCount > 0 && <Badge variant="destructive" className="h-5 px-2">{c.unreadCount}</Badge>}
-                          <span className="text-xs text-muted-foreground ml-auto">{c.lastMessageAt ? formatDistanceToNow(new Date((c.lastMessageAt as any).toDate()), { addSuffix: true }) : ''}</span>
+                          <span className="text-xs text-muted-foreground ml-auto">{c.lastMessageAt ? formatDistanceToNow(new Date(c.lastMessageAt as any), { addSuffix: true }) : ''}</span>
                         </div>
                         <p className="text-sm font-medium truncate">{c.subject}</p>
                         <p className="text-sm text-muted-foreground truncate">{c.messages[c.messages.length - 1]?.content}</p>
@@ -403,5 +403,3 @@ export default function Inbox() {
     </div>
   );
 }
-
-    

@@ -22,10 +22,13 @@ const getHeader = (headers: any[], name: string) => {
     return header ? header.value : '';
 };
 
+// Updated and more robust parser
 const parseSender = (fromHeader: string) => {
-    const match = fromHeader.match(/^(.*)<(.*)>$/);
+    const match = fromHeader.match(/(?:"?([^"]*)"?\s)?(?:<?(.+@[^>]+)>?)/);
     if (match) {
-        return { name: match[1].trim().replace(/"/g, ''), email: match[2].trim() };
+        const name = match[1] || match[2]; // Use email as name if name part is not present
+        const email = match[2];
+        return { name: name.trim(), email: email.trim() };
     }
     return { name: fromHeader, email: fromHeader };
 };
@@ -94,7 +97,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             const sender = parseSender(fromHeader);
 
             const isIncoming = sender.email !== integrationData.details.email;
-            if (!isIncoming) continue; // Skip messages sent by the user for now
+            if (!isIncoming) {
+                console.log(`Skipping outgoing message from ${sender.email}`);
+                continue;
+            }
 
             syncedMessagesCount++;
 
