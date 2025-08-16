@@ -56,7 +56,6 @@ import { useAuthContext } from '@/context/auth-context';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import { useAuthRedirectToLogin } from '@/hooks/use-auth-redirect-to-login';
 import { Loader } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -216,7 +215,6 @@ export default function AuthenticatedLayout({
   const { user, loading } = useAuthContext();
   const router = useRouter();
   const pathname = usePathname();
-  useAuthRedirectToLogin();
   const { theme, setTheme } = useTheme();
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
