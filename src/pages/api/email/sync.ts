@@ -43,13 +43,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(405).json({ message: 'Method Not Allowed' });
     }
 
-    // In a real app, you would get userId from a secure session or auth token
-    const { userId } = req.body;
-    if (!userId) {
-        return res.status(401).json({ error: 'Unauthorized: User ID is missing.' });
-    }
-
     try {
+        const { userId } = req.body;
+        if (!userId) {
+            return res.status(401).json({ error: 'Unauthorized: User ID is missing.' });
+        }
+
         const integrationRef = doc(db, `users/${userId}/integrations/gmail`);
         const integrationSnap = await getDoc(integrationRef);
 
@@ -57,9 +56,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(404).json({ error: 'Gmail integration not found or not connected.' });
         }
         
-        const integrationData = integrationSnap.data() as Integration;
+        const integrationData = integrationSnap.data() as Integration & {tokens?: any};
         const userEmail = integrationData.details?.email;
-        const tokens = (integrationData as any).tokens;
+        const tokens = integrationData.tokens;
 
         if (!userEmail) {
             return res.status(400).json({ error: 'User email not found in integration details.' });
@@ -178,3 +177,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         res.status(500).json({ error: 'Failed to sync Gmail.', details: error.message });
     }
 }
+
+    

@@ -125,7 +125,10 @@ export default function Inbox() {
       const unsubConversations = listenToConversations(user.uid, (data) => {
         setConversations(data);
         if (data.length > 0 && !selectedConversation) {
-            setSelectedConversation(data[0]);
+            const currentSelected = conversations.find(c => c.id === selectedConversation?.id);
+            if (!currentSelected) {
+                setSelectedConversation(data[0]);
+            }
         }
         setConversationsLoading(false);
       }, (err) => {
@@ -146,7 +149,7 @@ export default function Inbox() {
         unsubConversations();
         unsubReplies();
       };
-    } else if (!isEmailActive) {
+    } else {
         setConversations([]);
         setRecentReplies([]);
         setConversationsLoading(false);
@@ -403,3 +406,5 @@ export default function Inbox() {
     </div>
   );
 }
+
+    
