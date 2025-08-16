@@ -24,13 +24,17 @@ const getHeader = (headers: any[], name: string) => {
 
 // Updated and more robust parser
 const parseSender = (fromHeader: string) => {
-    const match = fromHeader.match(/(?:"?([^"]*)"?\s)?(?:<?(.+@[^>]+)>?)/);
+    const match = fromHeader.match(/(?:"?([^"]*)"?\s)?<?(.+@[^>]+)>?/);
     if (match) {
-        const name = match[1] || match[2]; // Use email as name if name part is not present
+        const name = match[1] || match[2].split('@')[0]; // Use name, or local-part of email as fallback
         const email = match[2];
         return { name: name.trim(), email: email.trim() };
     }
-    return { name: fromHeader, email: fromHeader };
+    // Fallback for simple email addresses without names
+    if (fromHeader.includes('@')) {
+        return { name: fromHeader.split('@')[0], email: fromHeader };
+    }
+    return { name: fromHeader, email: '' }; // Return empty email if parsing fails
 };
 
 
@@ -54,8 +58,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
         
         const integrationData = integrationSnap.data() as Integration;
+        const userEmail = integrationData.details?.email;
         const tokens = (integrationData as any).tokens;
 
+        if (!userEmail) {
+            return res.status(400).json({ error: 'User email not found in integration details.' });
+        }
         if (!tokens || !tokens.refresh_token) {
             return res.status(400).json({ error: 'Refresh token not found. Please reconnect Gmail.' });
         }
@@ -96,7 +104,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             const fromHeader = getHeader(headers, 'From');
             const sender = parseSender(fromHeader);
 
-            const isIncoming = sender.email !== integrationData.details.email;
+            // Defensive check to ensure sender email was parsed correctly
+            if (!sender.email) {
+                console.warn(`Skipping message ${messageHeader.id} due to invalid 'From' header: ${fromHeader}`);
+                continue;
+            }
+
+            const isIncoming = sender.email !== userEmail;
             if (!isIncoming) {
                 console.log(`Skipping outgoing message from ${sender.email}`);
                 continue;
@@ -134,8 +148,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             conversation.customerEmail = sender.email;
             const messageDate = new Date(parseInt(messageData.internalDate || '0'));
             
-            if (!conversation.lastMessageAt || messageDate > new Date((conversation.lastMessageAt as any).toDate())) {
-                conversation.lastMessageAt = Timestamp.fromDate(messageDate);
+            if (!conversation.lastMessageAt || messageDate > new Date((conversation.lastMessageAt as any).toDate ? (conversation.lastMessageAt as any).toDate() : conversation.lastMessageAt)) {
+              conversation.lastMessageAt = Timestamp.fromDate(messageDate);
             }
 
             if (messageData.labelIds?.includes('UNREAD')) {
