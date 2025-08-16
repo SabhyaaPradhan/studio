@@ -80,8 +80,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const listRes = await gmail.users.messages.list({
             userId: 'me',
             maxResults: 20, // Fetch last 20 messages for this sync
-            labelIds: ['INBOX'],
-            q: 'is:unread' // Let's sync unread messages first to be efficient
+            q: 'in:inbox'
         });
 
         const messages = listRes.data.messages || [];
@@ -109,19 +108,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 continue;
             }
 
-            const isIncoming = sender.email !== userEmail;
-            if (!isIncoming) {
-                console.log(`Skipping outgoing message from ${sender.email}`);
-                continue;
-            }
-
             syncedMessagesCount++;
 
             const messageDocRef = doc(db, `users/${userId}/conversations/${messageData.threadId}/messages`, messageData.id);
             const messagePayload: CustomerMessage = {
                 id: messageData.id,
                 conversationId: messageData.threadId,
-                messageType: 'incoming',
+                messageType: sender.email.toLowerCase() === userEmail.toLowerCase() ? 'outgoing' : 'incoming',
                 senderName: sender.name,
                 senderEmail: sender.email,
                 content: messageData.snippet || 'No snippet available.', // Simplified for now
@@ -132,35 +125,45 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             batch.set(messageDocRef, messagePayload);
 
             // Upsert conversation details
-            const conversation = conversationsMap.get(messageData.threadId) || {
-                id: messageData.threadId,
-                userId,
-                channel: 'email',
-                status: 'open',
-                priority: 'normal',
-                unreadCount: 0,
-                messages: [], // Will be handled by subcollection
-            };
+            if (!conversationsMap.has(messageData.threadId)) {
+                 const conversation: Partial<Conversation> = {
+                    id: messageData.threadId,
+                    userId,
+                    channel: 'email',
+                    status: 'open',
+                    priority: 'normal',
+                    unreadCount: 0,
+                    messages: [], // Will be handled by subcollection
+                };
+                conversationsMap.set(messageData.threadId, conversation);
+            }
+           
+            const conversation = conversationsMap.get(messageData.threadId)!;
             
-            conversation.subject = getHeader(headers, 'Subject');
-            conversation.customerName = sender.name;
-            conversation.customerEmail = sender.email;
+            // Set conversation subject and customer details from the first incoming message
+            if (messagePayload.messageType === 'incoming' && !conversation.customerEmail) {
+                conversation.subject = getHeader(headers, 'Subject');
+                conversation.customerName = sender.name;
+                conversation.customerEmail = sender.email;
+            }
+            
             const messageDate = new Date(parseInt(messageData.internalDate || '0'));
             
-            if (!conversation.lastMessageAt || messageDate > new Date((conversation.lastMessageAt as any).toDate ? (conversation.lastMessageAt as any).toDate() : conversation.lastMessageAt)) {
+            if (!conversation.lastMessageAt || messageDate > new Date((conversation.lastMessageAt as any)?.toDate ? (conversation.lastMessageAt as any).toDate() : conversation.lastMessageAt || 0)) {
               conversation.lastMessageAt = Timestamp.fromDate(messageDate);
             }
 
-            if (messageData.labelIds?.includes('UNREAD')) {
+            if (messagePayload.messageType === 'incoming' && messageData.labelIds?.includes('UNREAD')) {
                 conversation.unreadCount = (conversation.unreadCount || 0) + 1;
             }
-            conversationsMap.set(messageData.threadId, conversation);
         }
 
         // Set conversation documents
         for (const [threadId, convData] of conversationsMap.entries()) {
-            const convRef = doc(db, `users/${userId}/conversations`, threadId);
-            batch.set(convRef, convData, { merge: true });
+             if (convData.customerEmail) { // Only save conversations with a customer
+                const convRef = doc(db, `users/${userId}/conversations`, threadId);
+                batch.set(convRef, convData, { merge: true });
+            }
         }
         
         await batch.commit();
