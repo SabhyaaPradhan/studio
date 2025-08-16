@@ -90,8 +90,6 @@ export default function Inbox() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [conversationsLoading, setConversationsLoading] = useState(true);
   
-  const [recentReplies, setRecentReplies] = useState<AiGeneratedReply[]>([]);
-  const [repliesLoading, setRepliesLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   
   const isEmailActive = integrations.some(i => i.id === 'gmail');
@@ -120,15 +118,11 @@ export default function Inbox() {
   useEffect(() => {
     if (user && isEmailActive) {
       setConversationsLoading(true);
-      setRepliesLoading(true);
 
       const unsubConversations = listenToConversations(user.uid, (data) => {
         setConversations(data);
         if (data.length > 0 && !selectedConversation) {
-            const currentSelected = conversations.find(c => c.id === selectedConversation?.id);
-            if (!currentSelected) {
-                setSelectedConversation(data[0]);
-            }
+            setSelectedConversation(data[0]);
         }
         setConversationsLoading(false);
       }, (err) => {
@@ -137,25 +131,14 @@ export default function Inbox() {
         setConversationsLoading(false);
       });
 
-      const unsubReplies = listenToRecentReplies(user.uid, (data) => {
-        setRecentReplies(data);
-        setRepliesLoading(false);
-      }, (err) => {
-        console.error(err);
-        setRepliesLoading(false);
-      });
-
       return () => {
         unsubConversations();
-        unsubReplies();
       };
     } else {
         setConversations([]);
-        setRecentReplies([]);
         setConversationsLoading(false);
-        setRepliesLoading(false);
     }
-  }, [user, isEmailActive, toast, selectedConversation?.id]);
+  }, [user, isEmailActive, toast, selectedConversation]);
 
   const handleSyncEmails = async () => {
     if (!user) return;

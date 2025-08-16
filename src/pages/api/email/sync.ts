@@ -2,18 +2,18 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { google } from 'googleapis';
 import { getFirestore, doc, getDoc, writeBatch, serverTimestamp, Timestamp } from 'firebase/firestore';
-import { app } from '@/lib/firebase-admin'; // Using admin-app for backend
-import { Conversation, CustomerMessage, Integration } from '@/services/firestore-service';
+import { app } from '@/lib/firebase-admin';
+import { Integration, CustomerMessage, Conversation } from '@/services/firestore-service';
 
 const db = getFirestore(app);
 
 // Helper function to decode base64url
 const base64UrlDecode = (input: string) => {
-    input = input.replace(/-/g, '+').replace(/_/g, '/');
-    while (input.length % 4) {
-        input += '=';
+    let base64 = input.replace(/-/g, '+').replace(/_/g, '/');
+    while (base64.length % 4) {
+        base64 += '=';
     }
-    return Buffer.from(input, 'base64').toString('utf-8');
+    return Buffer.from(base64, 'base64').toString('utf-8');
 };
 
 // Helper to get a header value
@@ -22,19 +22,37 @@ const getHeader = (headers: any[], name: string) => {
     return header ? header.value : '';
 };
 
-// Updated and more robust parser
-const parseSender = (fromHeader: string) => {
+// Robustly parse sender's name and email
+const parseSender = (fromHeader: string): { name: string; email: string } => {
     const match = fromHeader.match(/(?:"?([^"]*)"?\s)?<?(.+@[^>]+)>?/);
     if (match) {
-        const name = match[1] || match[2].split('@')[0]; // Use name, or local-part of email as fallback
+        const name = match[1] || match[2].split('@')[0];
         const email = match[2];
         return { name: name.trim(), email: email.trim() };
     }
-    // Fallback for simple email addresses without names
     if (fromHeader.includes('@')) {
         return { name: fromHeader.split('@')[0], email: fromHeader };
     }
-    return { name: fromHeader, email: '' }; // Return empty email if parsing fails
+    return { name: fromHeader, email: '' };
+};
+
+// Find the body of the email
+const getBody = (payload: any): string => {
+    if (payload.body?.data) {
+        return base64UrlDecode(payload.body.data);
+    }
+    if (payload.parts) {
+        const textPart = payload.parts.find((part: any) => part.mimeType === 'text/plain');
+        if (textPart && textPart.body?.data) {
+            return base64UrlDecode(textPart.body.data);
+        }
+        const htmlPart = payload.parts.find((part: any) => part.mimeType === 'text/html');
+        if (htmlPart && htmlPart.body?.data) {
+            const htmlDecoded = base64UrlDecode(htmlPart.body.data);
+            return htmlDecoded.replace(/<[^>]*>?/gm, ''); // Basic HTML strip
+        }
+    }
+    return payload.snippet || 'No readable content.';
 };
 
 
@@ -55,15 +73,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (!integrationSnap.exists()) {
             return res.status(404).json({ error: 'Gmail integration not found or not connected.' });
         }
-        
-        const integrationData = integrationSnap.data() as Integration & {tokens?: any};
+
+        const integrationData = integrationSnap.data() as Integration & { tokens?: { refresh_token?: string } };
         const userEmail = integrationData.details?.email;
         const tokens = integrationData.tokens;
 
         if (!userEmail) {
             return res.status(400).json({ error: 'User email not found in integration details.' });
         }
-        if (!tokens || !tokens.refresh_token) {
+        if (!tokens?.refresh_token) {
             return res.status(400).json({ error: 'Refresh token not found. Please reconnect Gmail.' });
         }
 
@@ -77,100 +95,100 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });
 
-        const listRes = await gmail.users.messages.list({
+        const listRes = await gmail.users.threads.list({
             userId: 'me',
-            maxResults: 20, // Fetch last 20 messages for this sync
+            maxResults: 20,
             q: 'in:inbox'
         });
 
-        const messages = listRes.data.messages || [];
-        if (messages.length === 0) {
-            return res.status(200).json({ message: 'No new messages to sync.', syncedConversations: 0, syncedMessages: 0 });
+        const threads = listRes.data.threads || [];
+        if (threads.length === 0) {
+            return res.status(200).json({ message: 'No new threads to sync.', syncedConversations: 0, syncedMessages: 0 });
         }
 
         const batch = writeBatch(db);
-        const conversationsMap = new Map<string, Partial<Conversation>>();
+        let syncedConversationsCount = 0;
         let syncedMessagesCount = 0;
 
-        for (const messageHeader of messages) {
-            if (!messageHeader.id || !messageHeader.threadId) continue;
+        for (const threadHeader of threads) {
+            if (!threadHeader.id) continue;
+
+            const threadRes = await gmail.users.threads.get({ userId: 'me', id: threadHeader.id, format: 'full' });
+            const threadData = threadRes.data;
             
-            const messageRes = await gmail.users.messages.get({ userId: 'me', id: messageHeader.id, format: 'full' });
-            const messageData = messageRes.data;
-            const headers = messageData.payload?.headers || [];
+            if (!threadData?.messages || threadData.messages.length === 0) continue;
+
+            syncedConversationsCount++;
             
-            const fromHeader = getHeader(headers, 'From');
-            const sender = parseSender(fromHeader);
+            let customerName = 'Unknown';
+            let customerEmail = '';
+            let subject = 'No Subject';
+            let unreadCount = 0;
+            let lastMessageAt = new Date(0);
 
-            // Defensive check to ensure sender email was parsed correctly
-            if (!sender.email) {
-                console.warn(`Skipping message ${messageHeader.id} due to invalid 'From' header: ${fromHeader}`);
-                continue;
-            }
+            const conversationMessages: CustomerMessage[] = threadData.messages.map(msg => {
+                syncedMessagesCount++;
+                const headers = msg.payload?.headers || [];
+                const fromHeader = getHeader(headers, 'From');
+                const sender = parseSender(fromHeader);
 
-            syncedMessagesCount++;
+                const msgDate = new Date(parseInt(msg.internalDate || '0'));
+                if (msgDate > lastMessageAt) {
+                    lastMessageAt = msgDate;
+                    subject = getHeader(headers, 'Subject');
+                }
 
-            const messageDocRef = doc(db, `users/${userId}/conversations/${messageData.threadId}/messages`, messageData.id);
-            const messagePayload: CustomerMessage = {
-                id: messageData.id,
-                conversationId: messageData.threadId,
-                messageType: sender.email.toLowerCase() === userEmail.toLowerCase() ? 'outgoing' : 'incoming',
-                senderName: sender.name,
-                senderEmail: sender.email,
-                content: messageData.snippet || 'No snippet available.', // Simplified for now
-                isRead: !(messageData.labelIds?.includes('UNREAD')),
-                deliveryStatus: 'read',
-                createdAt: new Date(parseInt(messageData.internalDate || '0')).toISOString(),
-            };
-            batch.set(messageDocRef, messagePayload);
+                const isIncoming = sender.email.toLowerCase() !== userEmail.toLowerCase();
+                const isUnread = !!msg.labelIds?.includes('UNREAD');
 
-            // Upsert conversation details
-            if (!conversationsMap.has(messageData.threadId)) {
-                 const conversation: Partial<Conversation> = {
-                    id: messageData.threadId,
-                    userId,
-                    channel: 'email',
-                    status: 'open',
-                    priority: 'normal',
-                    unreadCount: 0,
-                    messages: [], // Will be handled by subcollection
+                if (isIncoming) {
+                    if (!customerEmail) {
+                        customerName = sender.name;
+                        customerEmail = sender.email;
+                    }
+                    if (isUnread) {
+                        unreadCount++;
+                    }
+                }
+                
+                return {
+                    id: msg.id!,
+                    conversationId: threadData.id!,
+                    messageType: isIncoming ? 'incoming' : 'outgoing',
+                    senderName: sender.name,
+                    senderEmail: sender.email,
+                    content: getBody(msg.payload),
+                    isRead: !isUnread,
+                    deliveryStatus: isUnread ? 'unread' : 'read',
+                    createdAt: msgDate.toISOString(),
                 };
-                conversationsMap.set(messageData.threadId, conversation);
-            }
-           
-            const conversation = conversationsMap.get(messageData.threadId)!;
+            }).sort((a,b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()); // sort messages chronologically
             
-            // Set conversation subject and customer details from the first incoming message
-            if (messagePayload.messageType === 'incoming' && !conversation.customerEmail) {
-                conversation.subject = getHeader(headers, 'Subject');
-                conversation.customerName = sender.name;
-                conversation.customerEmail = sender.email;
-            }
-            
-            const messageDate = new Date(parseInt(messageData.internalDate || '0'));
-            
-            if (!conversation.lastMessageAt || messageDate > new Date((conversation.lastMessageAt as any)?.toDate ? (conversation.lastMessageAt as any).toDate() : conversation.lastMessageAt || 0)) {
-              conversation.lastMessageAt = Timestamp.fromDate(messageDate);
-            }
+            if (!customerEmail) continue; // Skip threads with no external participant
 
-            if (messagePayload.messageType === 'incoming' && messageData.labelIds?.includes('UNREAD')) {
-                conversation.unreadCount = (conversation.unreadCount || 0) + 1;
-            }
-        }
+            const conversation: Conversation = {
+                id: threadData.id!,
+                userId,
+                customerName,
+                customerEmail,
+                channel: 'email',
+                subject,
+                status: unreadCount > 0 ? 'open' : 'closed',
+                priority: 'normal',
+                lastMessageAt: Timestamp.fromDate(lastMessageAt),
+                unreadCount,
+                messages: conversationMessages,
+            };
 
-        // Set conversation documents
-        for (const [threadId, convData] of conversationsMap.entries()) {
-             if (convData.customerEmail) { // Only save conversations with a customer
-                const convRef = doc(db, `users/${userId}/conversations`, threadId);
-                batch.set(convRef, convData, { merge: true });
-            }
+            const convRef = doc(db, `users/${userId}/conversations`, conversation.id);
+            batch.set(convRef, conversation, { merge: true });
         }
         
         await batch.commit();
 
         res.status(200).json({
             message: 'Sync successful',
-            syncedConversations: conversationsMap.size,
+            syncedConversations: syncedConversationsCount,
             syncedMessages: syncedMessagesCount,
             lastSyncAt: new Date().toISOString(),
         });
@@ -180,3 +198,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         res.status(500).json({ error: 'Failed to sync Gmail.', details: error.message });
     }
 }
+
+    
