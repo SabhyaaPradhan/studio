@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useAuthContext } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import { listenToIntegrations, connectIntegration, disconnectIntegration, Integration } from '@/services/firestore-service';
+import { listenToIntegrations, disconnectIntegration, Integration } from '@/services/firestore-service';
 import { IntegrationCard, IntegrationCardSkeleton } from '@/components/integrations/integration-card';
 import { Mail, MessageSquare, Slack } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -62,20 +62,45 @@ export default function IntegrationsPage() {
             return () => unsubscribe();
         }
     }, [user, toast]);
+    
+    useEffect(() => {
+        // This effect runs when the user is redirected back from Google OAuth
+        const urlParams = new URLSearchParams(window.location.search);
+        const error = urlParams.get('error');
+        const success = urlParams.get('success');
+
+        if (success) {
+            toast({
+                title: "Integration Connected!",
+                description: "Successfully connected to Gmail. Your inbox will be synced shortly."
+            });
+            // Clean up the URL
+            window.history.replaceState({}, document.title, "/integrations");
+        }
+        if (error) {
+            toast({
+                variant: "destructive",
+                title: "Connection Failed",
+                description: decodeURIComponent(error),
+            });
+             window.history.replaceState({}, document.title, "/integrations");
+        }
+    }, [toast]);
 
     const handleConnect = async (integrationId: string) => {
         if (!user) return;
-        try {
-            // In a real app, this would trigger the OAuth flow.
-            // We'll simulate it and assume success.
-            await connectIntegration(user.uid, integrationId, { email: user.email });
-            toast({
-                title: "Integration Connected!",
-                description: `Successfully connected to ${integrationId}.`
-            });
-        } catch (error) {
-            console.error(`Failed to connect ${integrationId}:`, error);
-            toast({ variant: "destructive", title: "Connection Failed", description: `Could not connect to ${integrationId}.` });
+        if (integrationId === 'gmail') {
+            try {
+                const res = await fetch(`/api/auth/google?userId=${user.uid}`);
+                const data = await res.json();
+                if (data.url) {
+                    window.location.href = data.url;
+                } else {
+                    throw new Error('Could not get authentication URL.');
+                }
+            } catch (error: any) {
+                toast({ variant: "destructive", title: "Connection Failed", description: error.message });
+            }
         }
     };
 
