@@ -116,29 +116,33 @@ export default function Inbox() {
   }, [user, toast]);
   
   useEffect(() => {
-    if (user && isEmailActive) {
-      setConversationsLoading(true);
-
-      const unsubConversations = listenToConversations(user.uid, (data) => {
-        setConversations(data);
-        if (data.length > 0 && !selectedConversation) {
-            setSelectedConversation(data[0]);
-        }
-        setConversationsLoading(false);
-      }, (err) => {
-        console.error(err);
-        toast({ variant: "destructive", title: "Error", description: "Could not load conversations."});
-        setConversationsLoading(false);
-      });
-
-      return () => {
-        unsubConversations();
-      };
-    } else {
-        setConversations([]);
-        setConversationsLoading(false);
+    if (!user || !isEmailActive) {
+      setConversations([]);
+      setConversationsLoading(false);
+      return;
     }
-  }, [user, isEmailActive, toast, selectedConversation]);
+    
+    setConversationsLoading(true);
+    const unsubConversations = listenToConversations(user.uid, 
+        (data) => {
+            setConversations(data);
+            if (data.length > 0 && !selectedConversation) {
+                setSelectedConversation(data[0]);
+            } else if (data.length === 0) {
+                setSelectedConversation(null);
+            }
+            setConversationsLoading(false);
+        }, 
+        (err) => {
+            console.error(err);
+            toast({ variant: "destructive", title: "Error", description: "Could not load conversations."});
+            setConversationsLoading(false);
+        }
+    );
+
+    return () => unsubConversations();
+  }, [user, isEmailActive, toast]);
+
 
   const handleSyncEmails = async () => {
     if (!user) return;

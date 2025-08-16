@@ -84,17 +84,11 @@ export default function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-[300px] sm:w-[400px] bg-background">
-              <SheetHeader className="p-4 border-b flex-row justify-between items-center">
+              <SheetHeader className="p-4 border-b">
                 <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
                  <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
                     <span className="text-2xl font-bold text-primary">Savrii</span>
                  </Link>
-                 <SheetClose asChild>
-                    <Button variant="ghost" size="icon">
-                        <X className="h-6 w-6" />
-                        <span className="sr-only">Close menu</span>
-                    </Button>
-                 </SheetClose>
               </SheetHeader>
               <div className="flex flex-col h-full">
                 <nav className="flex flex-col gap-6 p-4 text-lg font-medium flex-grow">
@@ -133,3 +127,5 @@ export default function Header() {
     </header>
   );
 }
+
+    
