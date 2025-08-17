@@ -19,5 +19,5 @@ export function useAuthRedirect() {
     if (user) {
       router.push('/home');
     }
-  }, [user, loading, router]);
+  }, [user?.uid, loading, router]);
 }
