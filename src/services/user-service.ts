@@ -9,6 +9,8 @@ import {
     FirestoreError,
     Unsubscribe
 } from 'firebase/firestore';
+import type { Subscription } from '@/context/subscription-context';
+
 
 const db = getFirestore(app);
 
@@ -19,11 +21,7 @@ export interface UserProfile {
     first_name: string;
     last_name: string;
     email: string;
-    plan: 'free' | 'pro' | 'enterprise' | 'starter';
-    plan_start_date: string; // ISO string
-    plan_end_date: string | null; // ISO string or null
-    trial_start_date: string; // ISO string
-    trial_end_date: string; // ISO string
+    subscription: Subscription;
     updatedAt: string; // ISO string
 }
 
@@ -44,11 +42,12 @@ function docToProfile(docSnap: DocumentData): UserProfile {
         first_name: data.first_name || '',
         last_name: data.last_name || '',
         email: data.email || '',
-        plan: data.plan || 'starter',
-        plan_start_date: toISOString(data.plan_start_date),
-        plan_end_date: data.plan_end_date ? toISOString(data.plan_end_date) : null,
-        trial_start_date: toISOString(data.trial_start_date),
-        trial_end_date: toISOString(data.trial_end_date),
+        subscription: data.subscription || {
+            plan: 'starter',
+            status: 'trialing',
+            trialStart: new Date().toISOString(),
+            trialEnd: new Date().toISOString()
+        },
         updatedAt: toISOString(data.updatedAt),
     };
     return profile;

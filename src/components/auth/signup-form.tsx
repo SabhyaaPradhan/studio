@@ -20,7 +20,7 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { auth, db } from "@/lib/firebase";
 import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification, signOut } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { Checkbox } from "../ui/checkbox";
 import { useRouter } from "next/navigation";
 
@@ -58,10 +58,8 @@ export default function SignupForm() {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
       
-      // Update Firebase Auth profile
       await updateProfile(user, { displayName: values.name });
 
-      // Create user document in Firestore
       const [firstName, ...lastNameParts] = values.name.split(' ');
       const lastName = lastNameParts.join(' ');
       
@@ -69,17 +67,19 @@ export default function SignupForm() {
       const trialEndDate = new Date();
       trialEndDate.setDate(now.getDate() + 14);
 
+      // Create user document with subscription details
       await setDoc(doc(db, "users", user.uid), {
         first_name: firstName,
         last_name: lastName,
         email: user.email,
-        plan: 'starter',
-        plan_start_date: now.toISOString(),
-        plan_end_date: null,
-        trial_start_date: now.toISOString(),
-        trial_end_date: trialEndDate.toISOString(),
-        createdAt: now.toISOString(),
-        updatedAt: now.toISOString(),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        subscription: {
+          plan: 'starter',
+          status: 'trialing',
+          trialStart: now.toISOString(),
+          trialEnd: trialEndDate.toISOString(),
+        }
       });
       
       await sendEmailVerification(user);
