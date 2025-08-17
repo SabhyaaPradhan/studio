@@ -251,10 +251,9 @@ const FullLayout = ({
       <div className="flex min-h-screen flex-col bg-background">
         <header className="sticky top-0 z-10 flex h-20 items-center justify-between gap-4 border-b bg-background/80 px-4 backdrop-blur-sm">
           <div className="flex items-center gap-2">
-            <SidebarTrigger className={cn('md:hidden')} />
             <Link
               href="/dashboard"
-              className="hidden items-center gap-2 text-lg font-semibold text-primary md:flex"
+              className="flex items-center gap-2 text-lg font-semibold text-primary"
             >
               <span>Savrii</span>
             </Link>
@@ -507,7 +506,7 @@ export default function AuthenticatedLayout({
   const [profileLoading, setProfileLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
+    if (user?.uid) {
       setProfileLoading(true);
       const unsubscribe = listenToUser(
         user.uid,
@@ -526,7 +525,7 @@ export default function AuthenticatedLayout({
       setUserProfile(null);
       setProfileLoading(false);
     }
-  }, [user, loading]);
+  }, [user?.uid, loading]);
 
   if (loading || profileLoading) {
     return (
