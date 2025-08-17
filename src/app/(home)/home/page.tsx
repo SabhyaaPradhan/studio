@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthContext } from '@/context/auth-context';
+import { useSubscription } from '@/context/subscription-context';
+import { differenceInDays, isPast } from 'date-fns';
 import { BrainCircuit, CalendarDays, DollarSign, MessageSquare, ArrowRight, Lightbulb, UserCheck, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { gsap } from 'gsap';
@@ -16,6 +18,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 export default function HomePage() {
     const { user } = useAuthContext();
+    const { subscription, loading: subLoading } = useSubscription();
     const containerRef = useRef<HTMLDivElement>(null);
     const [realtimeStats, setRealtimeStats] = useState<RealtimeAnalytics | null>(null);
     const [statsLoading, setStatsLoading] = useState(true);
@@ -34,6 +37,14 @@ export default function HomePage() {
         }
     }, [user]);
 
+    const getTrialDaysLeft = () => {
+        if (!subscription || subscription.status !== 'trialing') return "N/A";
+        const trialEndDate = new Date(subscription.trialEnd);
+        if (isPast(trialEndDate)) return "Expired";
+        const daysLeft = differenceInDays(trialEndDate, new Date());
+        return `${daysLeft} day${daysLeft !== 1 ? 's' : ''}`;
+    }
+
     const stats = [
         { 
             title: "AI Replies Today", 
@@ -43,9 +54,30 @@ export default function HomePage() {
             link: "/dashboard", 
             linkText: "View Details" 
         },
-        { title: "Plan", value: "Free", icon: DollarSign, change: "Upgrade to Pro", link: "/billing", linkText: "Upgrade" },
-        { title: "Knowledge Sources", value: 1, icon: BrainCircuit, change: "+0 this week", link: "/dashboard", linkText: "Manage" },
-        { title: "Trial Ends In", value: "N/A", icon: CalendarDays, change: "", link: "/billing", linkText: "View Plans" }
+        { 
+            title: "Plan", 
+            value: subLoading ? "..." : (subscription?.plan ?? 'starter'), 
+            icon: DollarSign, 
+            change: "Upgrade to Pro", 
+            link: "/billing", 
+            linkText: "Upgrade" 
+        },
+        { 
+            title: "Knowledge Sources", 
+            value: 1, 
+            icon: BrainCircuit, 
+            change: "+0 this week", 
+            link: "/dashboard", 
+            linkText: "Manage" 
+        },
+        { 
+            title: "Trial Ends In", 
+            value: subLoading ? "..." : getTrialDaysLeft(), 
+            icon: CalendarDays, 
+            change: "", 
+            link: "/billing", 
+            linkText: "View Plans" 
+        }
     ];
 
     const quickActions = [
@@ -74,7 +106,7 @@ export default function HomePage() {
                 });
 
                 const statValueEl = card.querySelector("[data-animate='stat-value']");
-                if (statValueEl && !statsLoading) {
+                if (statValueEl && !statsLoading && !subLoading) {
                     const endValue = parseFloat(statValueEl.textContent || '0');
                     if (!isNaN(endValue) && endValue > 0) {
                          gsap.to(statValueEl, {
@@ -103,7 +135,7 @@ export default function HomePage() {
 
         }, containerRef);
         return () => ctx.revert();
-    }, [statsLoading]);
+    }, [statsLoading, subLoading]);
 
     return (
         <div ref={containerRef} className="flex-1 space-y-12 p-4 pt-6 md:p-8">
@@ -121,7 +153,7 @@ export default function HomePage() {
                             <stat.icon className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-3xl font-bold" data-animate="stat-value">
+                            <div className="text-3xl font-bold capitalize" data-animate="stat-value">
                                 {stat.value === -1 ? <Loader2 className="h-6 w-6 animate-spin" /> : (typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value)}
                             </div>
                             <p className="text-xs text-muted-foreground">{stat.change}</p>
