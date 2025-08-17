@@ -14,8 +14,6 @@ import {
   SidebarMenuSub,
   useSidebar,
   SidebarFooter,
-  SheetHeader,
-  SheetTitle
 } from '@/components/ui/sidebar';
 import {
   Home,
@@ -48,7 +46,7 @@ import {
   MessageCircle,
   BarChart3,
   Zap,
-  Paintbrush
+  Paintbrush,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -71,27 +69,31 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { useTheme } from 'next-themes';
-import { Sun, Moon } from "lucide-react";
+import { Sun, Moon } from 'lucide-react';
 import AnimatedFooter from '@/components/common/animated-footer';
 import { motion, AnimatePresence } from 'framer-motion';
 import { listenToUser, UserProfile } from '@/services/user-service';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
-
+import { SimpleHeader } from '@/components/common/simple-header';
 
 type UserPlan = 'starter' | 'pro' | 'enterprise' | 'free';
 
 const hasPermission = (plan: UserPlan, requiredPlan: 'pro' | 'enterprise') => {
-    if (plan === 'enterprise') return true;
-    if (plan === 'pro' && requiredPlan === 'pro') return true;
-    return false;
-}
+  if (plan === 'enterprise') return true;
+  if (plan === 'pro' && requiredPlan === 'pro') return true;
+  return false;
+};
 
 const UpgradeTooltip = ({ children }: { children: React.ReactNode }) => (
   <TooltipProvider>
     <Tooltip>
       <TooltipTrigger asChild>{children}</TooltipTrigger>
-      <TooltipContent side="right" align="center" className="bg-primary text-primary-foreground">
+      <TooltipContent
+        side="right"
+        align="center"
+        className="bg-primary text-primary-foreground"
+      >
         <div className="flex flex-col items-center gap-2 p-2">
           <p className="font-semibold">Upgrade to unlock</p>
           <Button size="sm" asChild>
@@ -130,7 +132,7 @@ const NavMenuItem = ({
       e.preventDefault();
       router.push('/billing');
     }
-  }
+  };
 
   const itemContent = (
     <SidebarMenuButton
@@ -149,11 +151,14 @@ const NavMenuItem = ({
 
   return (
     <SidebarMenuItem>
-      {plan && isLocked ? <UpgradeTooltip>{itemContent}</UpgradeTooltip> : itemContent}
+      {plan && isLocked ? (
+        <UpgradeTooltip>{itemContent}</UpgradeTooltip>
+      ) : (
+        itemContent
+      )}
     </SidebarMenuItem>
   );
 };
-
 
 const NavMenuCollapsible = ({
   icon,
@@ -177,66 +182,58 @@ const NavMenuCollapsible = ({
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
 
-  const isAnyChildActive = items.some(item => pathname.startsWith(item.href));
+  const isAnyChildActive = items.some((item) => pathname.startsWith(item.href));
 
   return (
-      <SidebarMenuItem>
-        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-            <CollapsibleTrigger asChild>
-                <SidebarMenuButton as="button" className={cn('w-full', isAnyChildActive && 'bg-secondary')}>
-                    <Icon className="h-5 w-5" />
-                    <span className="flex-1 text-left">{label}</span>
-                    <ChevronDown
-                        className={cn(
-                        'ml-auto h-4 w-4 transition-transform duration-200',
-                        isOpen ? 'rotate-180' : '',
-                        state === 'collapsed' && 'hidden'
-                        )}
-                    />
-                </SidebarMenuButton>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-                <SidebarMenuSub>
-                {items.map((item) => (
-                    <NavMenuItem key={item.href} href={item.href} icon={item.icon} label={item.label} plan={plan} requiredPlan={item.requiredPlan} isDisabled={item.isDisabled} />
-                ))}
-                </SidebarMenuSub>
-            </CollapsibleContent>
-        </Collapsible>
-      </SidebarMenuItem>
+    <SidebarMenuItem>
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <CollapsibleTrigger asChild>
+          <SidebarMenuButton
+            as="button"
+            className={cn('w-full', isAnyChildActive && 'bg-secondary')}
+          >
+            <Icon className="h-5 w-5" />
+            <span className="flex-1 text-left">{label}</span>
+            <ChevronDown
+              className={cn(
+                'ml-auto h-4 w-4 transition-transform duration-200',
+                isOpen ? 'rotate-180' : '',
+                state === 'collapsed' && 'hidden'
+              )}
+            />
+          </SidebarMenuButton>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <SidebarMenuSub>
+            {items.map((item) => (
+              <NavMenuItem
+                key={item.href}
+                href={item.href}
+                icon={item.icon}
+                label={item.label}
+                plan={plan}
+                requiredPlan={item.requiredPlan}
+                isDisabled={item.isDisabled}
+              />
+            ))}
+          </SidebarMenuSub>
+        </CollapsibleContent>
+      </Collapsible>
+    </SidebarMenuItem>
   );
 };
 
-export default function AuthenticatedLayout({
+const FullLayout = ({
+  user,
+  userProfile,
   children,
 }: {
+  user: any;
+  userProfile: UserProfile | null;
   children: React.ReactNode;
-}) {
-  const { user, loading } = useAuthContext();
-  const router = useRouter();
-  const pathname = usePathname();
+}) => {
   const { theme, setTheme } = useTheme();
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [profileLoading, setProfileLoading] = useState(true);
-
-  useEffect(() => {
-    if (user) {
-        setProfileLoading(true);
-        const unsubscribe = listenToUser(user.uid, (profile) => {
-             setUserProfile(profile);
-             setProfileLoading(false);
-        }, (err) => {
-            console.error("Layout: Failed to listen to user profile.", err);
-            setUserProfile(null);
-            setProfileLoading(false);
-        });
-        return () => unsubscribe();
-    } else if (!loading) {
-        setUserProfile(null);
-        setProfileLoading(false);
-    }
-  }, [user, loading]);
-
+  const router = useRouter();
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -244,71 +241,25 @@ export default function AuthenticatedLayout({
   };
 
   const toggleTheme = () => {
-    setTheme(theme === "light" ? "dark" : "light");
+    setTheme(theme === 'light' ? 'dark' : 'light');
   };
 
-  if (loading || profileLoading) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <Loader className="h-10 w-10 animate-spin" />
-      </div>
-    );
-  }
-
   const userPlan = userProfile?.plan as UserPlan | undefined;
-  
-  if (!user) {
-    return null; // or a loading spinner, since redirect will handle it.
-  }
-
-  const topNavItems = [
-    { href: "/home", label: "Home" },
-    { href: "/billing", label: "Billing" },
-    { href: "/settings", label: "Settings" },
-    { href: "/support", label: "Support" },
-  ];
-
-  const pathsWithoutSidebar = ['/home', '/billing', '/settings', '/support'];
-  const showSidebar = !pathsWithoutSidebar.includes(pathname);
-
-  const NavLink = ({ href, children }: { href: string, children: React.ReactNode }) => (
-    <Link
-      href={href}
-      className={cn(
-        "text-lg font-medium transition-colors hover:text-primary",
-        pathname === href ? "text-primary" : "text-muted-foreground"
-      )}
-    >
-      {children}
-    </Link>
-  );
 
   return (
     <SidebarProvider>
       <div className="flex min-h-screen flex-col bg-background">
         <header className="sticky top-0 z-10 flex h-20 items-center justify-between gap-4 border-b bg-background/80 px-4 backdrop-blur-sm">
           <div className="flex items-center gap-2">
-            {showSidebar && (
-              <SidebarTrigger
-                className={cn('md:hidden')}
-              >
-                <Menu className="w-6 h-6" />
-              </SidebarTrigger>
-            )}
-             <Link
+            <SidebarTrigger className={cn('md:hidden')} />
+            <Link
               href="/dashboard"
-              className={cn("items-center gap-2 text-lg font-semibold text-primary", showSidebar ? 'hidden md:flex' : 'flex')}
+              className="hidden items-center gap-2 text-lg font-semibold text-primary md:flex"
             >
               <span>Savrii</span>
             </Link>
           </div>
-          <nav className="hidden items-center gap-6 md:flex">
-            {topNavItems.map((item) => (
-              <NavLink key={item.href} href={item.href}>
-                {item.label}
-              </NavLink>
-            ))}
-          </nav>
+
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
@@ -366,76 +317,250 @@ export default function AuthenticatedLayout({
             </TooltipProvider>
             <div className="md:hidden">
               <SidebarTrigger>
-                  <Menu className="w-6 h-6" />
+                <Menu className="w-6 h-6" />
               </SidebarTrigger>
             </div>
           </div>
         </header>
         <div className="flex flex-1 overflow-hidden">
-          {showSidebar && (
-            <Sidebar>
-                <SidebarContent>
-                  <SidebarMenu>
-                    {/* --- Main Sidebar Nav --- */}
-                      <>
-                        <NavMenuItem href="/dashboard" icon={LayoutDashboard} label="Dashboard" plan={userPlan} />
-                        <NavMenuItem href="/inbox" icon={MessageCircle} label="Inbox" plan={userPlan} />
-                        <NavMenuItem href="/chat" icon={Bot} label="Chat / AI Assistant" plan={userPlan} />
-                        <NavMenuItem href="/analytics" icon={BarChart3} label="Analytics" plan={userPlan} requiredPlan="pro" />
-                        <NavMenuItem href="/integrations" icon={Zap} label="Integrations" plan={userPlan} />
-                      
-                        <NavMenuCollapsible icon={Wand2} label="Pro Features" plan={userPlan} items={[
-                            { href: "/prompts", label: "Custom Prompts", icon: Wand2, requiredPlan: "pro", isDisabled: true },
-                            { href: "/brand-voice", label: "Brand Voice", icon: Palette, requiredPlan: "pro", isDisabled: true },
-                            { href: "/prompt-library", label: "Prompt Library", icon: BookOpen, requiredPlan: "pro", isDisabled: true },
-                            { href: "/daily-summary", label: "Daily Summary", icon: FileText, requiredPlan: "pro", isDisabled: true },
-                            { href: "/collaboration", label: "Collaboration", icon: Users, requiredPlan: "pro", isDisabled: true },
-                            { href: "/lead-capture", label: "Lead Capture", icon: Target, requiredPlan: "pro", isDisabled: true },
-                            { href: "/export", label: "Export Data", icon: Download, requiredPlan: "pro", isDisabled: true },
-                        ]} />
-                      
-                        <NavMenuCollapsible icon={Shield} label="Enterprise" plan={userPlan} items={[
-                            { href: "/real-time-analytics", label: "Real-Time Analytics", icon: TrendingUp, requiredPlan: "enterprise", isDisabled: true },
-                            { href: "/workflow-builder", label: "Workflow Builder", icon: Workflow, requiredPlan: "enterprise", isDisabled: true },
-                            { href: "/custom-model", label: "Custom AI Model", icon: Upload, requiredPlan: "enterprise", isDisabled: true },
-                            { href: "/security", label: "Security", icon: Shield, requiredPlan: "enterprise", isDisabled: true },
-                            { href: "/white-label", label: "White-label", icon: Paintbrush, requiredPlan: "enterprise", isDisabled: true },
-                            { href: "/webhooks", label: "Webhooks", icon: Webhook, requiredPlan: "enterprise", isDisabled: true },
-                        ]} />
-                      </>
+          <Sidebar>
+            <SidebarContent>
+              <SidebarMenu>
+                <NavMenuItem
+                  href="/dashboard"
+                  icon={LayoutDashboard}
+                  label="Dashboard"
+                  plan={userPlan}
+                />
+                <NavMenuItem
+                  href="/inbox"
+                  icon={MessageCircle}
+                  label="Inbox"
+                  plan={userPlan}
+                />
+                <NavMenuItem
+                  href="/chat"
+                  icon={Bot}
+                  label="Chat / AI Assistant"
+                  plan={userPlan}
+                />
+                <NavMenuItem
+                  href="/analytics"
+                  icon={BarChart3}
+                  label="Analytics"
+                  plan={userPlan}
+                  requiredPlan="pro"
+                />
+                <NavMenuItem
+                  href="/integrations"
+                  icon={Zap}
+                  label="Integrations"
+                  plan={userPlan}
+                />
 
-                    {/* --- Mobile Nav (from top bar) --- */}
-                    <div className="md:hidden">
-                       <p className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Navigation</p>
-                      <div className="mt-2 flex flex-col gap-1">
-                          <NavMenuItem href="/home" icon={Home} label="Home" plan={userPlan} />
-                          <NavMenuItem href="/billing" icon={CreditCard} label="Billing" plan={userPlan} />
-                      </div>
-                    </div>
-                  </SidebarMenu>
-                </SidebarContent>
-                <SidebarFooter>
-                  <SidebarMenu>
-                    <NavMenuItem
-                      href="/settings"
-                      icon={Settings}
-                      label="Settings"
-                      plan={userPlan}
-                    />
-                    <NavMenuItem
-                      href="/support"
-                      icon={HelpCircle}
-                      label="Support"
-                      plan={userPlan}
-                    />
-                  </SidebarMenu>
-                </SidebarFooter>
-            </Sidebar>
-          )}
-          <main className={cn("flex-1 overflow-y-auto", !showSidebar && "w-full")}>{children}</main>
+                <NavMenuCollapsible
+                  icon={Wand2}
+                  label="Pro Features"
+                  plan={userPlan}
+                  items={[
+                    {
+                      href: '/prompts',
+                      label: 'Custom Prompts',
+                      icon: Wand2,
+                      requiredPlan: 'pro',
+                      isDisabled: true,
+                    },
+                    {
+                      href: '/brand-voice',
+                      label: 'Brand Voice',
+                      icon: Palette,
+                      requiredPlan: 'pro',
+                      isDisabled: true,
+                    },
+                    {
+                      href: '/prompt-library',
+                      label: 'Prompt Library',
+                      icon: BookOpen,
+                      requiredPlan: 'pro',
+                      isDisabled: true,
+                    },
+                    {
+                      href: '/daily-summary',
+                      label: 'Daily Summary',
+                      icon: FileText,
+                      requiredPlan: 'pro',
+                      isDisabled: true,
+                    },
+                    {
+                      href: '/collaboration',
+                      label: 'Collaboration',
+                      icon: Users,
+                      requiredPlan: 'pro',
+                      isDisabled: true,
+                    },
+                    {
+                      href: '/lead-capture',
+                      label: 'Lead Capture',
+                      icon: Target,
+                      requiredPlan: 'pro',
+                      isDisabled: true,
+                    },
+                    {
+                      href: '/export',
+                      label: 'Export Data',
+                      icon: Download,
+                      requiredPlan: 'pro',
+                      isDisabled: true,
+                    },
+                  ]}
+                />
+
+                <NavMenuCollapsible
+                  icon={Shield}
+                  label="Enterprise"
+                  plan={userPlan}
+                  items={[
+                    {
+                      href: '/real-time-analytics',
+                      label: 'Real-Time Analytics',
+                      icon: TrendingUp,
+                      requiredPlan: 'enterprise',
+                      isDisabled: true,
+                    },
+                    {
+                      href: '/workflow-builder',
+                      label: 'Workflow Builder',
+                      icon: Workflow,
+                      requiredPlan: 'enterprise',
+                      isDisabled: true,
+                    },
+                    {
+                      href: '/custom-model',
+                      label: 'Custom AI Model',
+                      icon: Upload,
+                      requiredPlan: 'enterprise',
+                      isDisabled: true,
+                    },
+                    {
+                      href: '/security',
+                      label: 'Security',
+                      icon: Shield,
+                      requiredPlan: 'enterprise',
+                      isDisabled: true,
+                    },
+                    {
+                      href: '/white-label',
+                      label: 'White-label',
+                      icon: Paintbrush,
+                      requiredPlan: 'enterprise',
+                      isDisabled: true,
+                    },
+                    {
+                      href: '/webhooks',
+                      label: 'Webhooks',
+                      icon: Webhook,
+                      requiredPlan: 'enterprise',
+                      isDisabled: true,
+                    },
+                  ]}
+                />
+                 <Separator className="my-2" />
+                  <NavMenuItem href="/home" icon={Home} label="Home" plan={userPlan} />
+                  <NavMenuItem href="/billing" icon={CreditCard} label="Billing" plan={userPlan} />
+              </SidebarMenu>
+            </SidebarContent>
+            <SidebarFooter>
+              <SidebarMenu>
+                <NavMenuItem
+                  href="/settings"
+                  icon={Settings}
+                  label="Settings"
+                  plan={userPlan}
+                />
+                <NavMenuItem
+                  href="/support"
+                  icon={HelpCircle}
+                  label="Support"
+                  plan={userPlan}
+                />
+              </SidebarMenu>
+            </SidebarFooter>
+          </Sidebar>
+
+          <main className="flex-1 overflow-y-auto w-full">{children}</main>
         </div>
         <AnimatedFooter />
       </div>
     </SidebarProvider>
+  );
+};
+
+export default function AuthenticatedLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const { user, loading } = useAuthContext();
+  const router = useRouter();
+  const pathname = usePathname();
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      setProfileLoading(true);
+      const unsubscribe = listenToUser(
+        user.uid,
+        (profile) => {
+          setUserProfile(profile);
+          setProfileLoading(false);
+        },
+        (err) => {
+          console.error('Layout: Failed to listen to user profile.', err);
+          setUserProfile(null);
+          setProfileLoading(false);
+        }
+      );
+      return () => unsubscribe();
+    } else if (!loading) {
+      setUserProfile(null);
+      setProfileLoading(false);
+    }
+  }, [user, loading]);
+
+  if (loading || profileLoading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <Loader className="h-10 w-10 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    // Redirect logic is better handled by a dedicated hook or middleware,
+    // but returning null here prevents rendering of the layout for non-authed users.
+    if (typeof window !== 'undefined') {
+        router.push('/login');
+    }
+    return null;
+  }
+  
+  const simpleLayoutPages = ['/home', '/billing', '/settings', '/support'];
+  const useSimpleLayout = simpleLayoutPages.includes(pathname);
+
+  if (useSimpleLayout) {
+    return (
+      <div className="flex min-h-screen flex-col bg-background">
+        <SimpleHeader user={user} userProfile={userProfile} />
+        <main className="flex-1 overflow-y-auto">{children}</main>
+        <AnimatedFooter />
+      </div>
+    );
+  }
+
+  return (
+    <FullLayout user={user} userProfile={userProfile}>
+      {children}
+    </FullLayout>
   );
 }
