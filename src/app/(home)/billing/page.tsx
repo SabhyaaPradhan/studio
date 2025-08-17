@@ -6,10 +6,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Check } from "lucide-react";
 import { useState } from "react";
 import { getPlans, Currency } from '@/lib/plans';
+import { useRouter } from 'next/navigation';
 
 type PlanKey = 'starter' | 'pro' | 'enterprise';
 
 export default function BillingPage() {
+    const router = useRouter();
     // In a real app, this would come from user's auth state
     const [currentPlan, setCurrentPlan] = useState<PlanKey>('starter');
     
@@ -23,6 +25,10 @@ export default function BillingPage() {
         }
         return "Switch Plan";
     }
+
+    const handleSwitchPlan = (planName: string) => {
+        router.push(`/checkout?plan=${planName.toLowerCase()}`);
+    };
 
     return (
         <div className="flex-1 space-y-8 p-4 pt-6 md:p-8">
@@ -80,7 +86,7 @@ export default function BillingPage() {
                                 <Button 
                                   className="w-full" 
                                   disabled={getPlanCTA(plan.name) === "Current Plan"}
-                                  onClick={() => setCurrentPlan(plan.name.toLowerCase() as PlanKey)}
+                                  onClick={() => handleSwitchPlan(plan.name)}
                                 >
                                     {getPlanCTA(plan.name)}
                                 </Button>
