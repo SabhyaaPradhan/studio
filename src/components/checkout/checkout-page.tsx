@@ -5,230 +5,160 @@ import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { gsap } from 'gsap';
-import { Flip } from 'gsap/Flip';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Check, ArrowLeft } from 'lucide-react';
-import { getPlans, Plan } from '@/lib/plans';
-import { cn } from '@/lib/utils';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
+import { useForm, FormProvider } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 
-gsap.registerPlugin(Flip);
+import { getPlans, Plan } from '@/lib/plans';
+import CartSummary from './cart-summary';
+import ProgressBar from './progress-bar';
+import AccountStep from './steps/account-step';
+import BillingStep from './steps/billing-step';
+import PaymentStep from './steps/payment-step';
+import ReviewStep from './steps/review-step';
+import SuccessStep from './steps/success-step';
+
+const stepSchemas = [
+  z.object({
+    fullName: z.string().min(3, "Full name must be at least 3 characters"),
+    email: z.string().email("Please enter a valid email"),
+    company: z.string().optional(),
+  }),
+  z.object({
+    address: z.string().min(5, "Address is too short"),
+    city: z.string().min(2, "City name is too short"),
+    country: z.string().min(2, "Please select a country"),
+    zip: z.string().min(4, "Invalid ZIP code"),
+  }),
+  z.object({
+    cardName: z.string().min(3, "Name on card is required"),
+    cardNumber: z.string().length(16, "Invalid card number"),
+    expiry: z.string().regex(/^(0[1-9]|1[0-2])\/\d{2}$/, "Invalid format (MM/YY)"),
+    cvv: z.string().length(3, "Invalid CVV"),
+  }),
+  z.object({}), // Review step
+];
+
+export type CheckoutFormData = z.infer<typeof stepSchemas[0]> &
+  z.infer<typeof stepSchemas[1]> &
+  z.infer<typeof stepSchemas[2]>;
 
 export default function CheckoutPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
-    const [view, setView] = useState<'selection' | 'form' | 'success'>('selection');
-    const [progress, setProgress] = useState(0);
-
-    const plans = getPlans('monthly', 'USD');
     const containerRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-        const planName = searchParams.get('plan');
-        if (planName) {
-            const preselectedPlan = plans.find(p => p.name.toLowerCase() === planName.toLowerCase());
-            if (preselectedPlan) {
-                handleSelectPlan(preselectedPlan);
-            }
+    const [currentStep, setCurrentStep] = useState(0);
+    const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+    const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+
+    const methods = useForm<CheckoutFormData>({
+        resolver: zodResolver(stepSchemas[currentStep]),
+        mode: 'onChange',
+        defaultValues: {
+            fullName: "",
+            email: "",
+            company: "",
+            address: "",
+            city: "",
+            country: "",
+            zip: "",
+            cardName: "",
+            cardNumber: "",
+            expiry: "",
+            cvv: ""
         }
-    }, [searchParams]);
+    });
 
     useEffect(() => {
-        if (view === 'selection') {
-            const tl = gsap.timeline();
-            tl.fromTo('.pricing-card', 
-                { opacity: 0, y: 50 },
-                { opacity: 1, y: 0, stagger: 0.2, duration: 0.8, ease: 'power3.out' }
-            );
-        }
-    }, [view]);
-
-    const handleSelectPlan = (plan: Plan) => {
-        if (!containerRef.current) return;
+        const planName = searchParams.get('plan') || 'pro';
+        const plans = getPlans(billingCycle, 'USD');
+        const plan = plans.find(p => p.name.toLowerCase() === planName.toLowerCase()) || plans[1];
         setSelectedPlan(plan);
+    }, [billingCycle, searchParams]);
 
-        const state = Flip.getState('.pricing-card, .plan-title, .plan-description, .plan-price, .plan-features, .plan-button');
-        
-        setView('form');
+    useEffect(() => {
+      if (containerRef.current) {
+        gsap.fromTo(
+          containerRef.current,
+          { opacity: 0, y: 30 },
+          { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out' }
+        );
+      }
+    }, []);
 
-        const selectedEl = document.querySelector(`[data-plan-name="${plan.name}"]`) as HTMLElement;
-        const otherEls = Array.from(document.querySelectorAll('.pricing-card:not([data-plan-name="' + plan.name + '"])')) as HTMLElement[];
+    const steps = [
+      <AccountStep key="account" />,
+      <BillingStep key="billing" />,
+      <PaymentStep key="payment" />,
+      <ReviewStep key="review" />,
+      <SuccessStep key="success" />
+    ];
+    
+    const handleNextStep = async () => {
+      const isValid = await methods.trigger();
+      if (isValid) {
+        if (currentStep < steps.length - 2) { // Before last step
+          setCurrentStep(currentStep + 1);
+        } else {
+            // Handle final submission/payment
+            console.log("Submitting form...", methods.getValues());
+            setCurrentStep(currentStep + 1);
+        }
+      }
+    };
 
-        gsap.to(otherEls, { opacity: 0, y: 30, duration: 0.3 });
-        selectedEl.classList.add('is-selected');
-
-        Flip.from(state, {
-            duration: 0.7,
-            ease: 'power3.inOut',
-            onComplete: () => {
-                gsap.fromTo('.checkout-form-element',
-                    { opacity: 0, x: -30 },
-                    { opacity: 1, x: 0, stagger: 0.1, duration: 0.5, ease: 'power2.out' }
-                );
-            }
-        });
+    const handlePrevStep = () => {
+        if (currentStep > 0) {
+            setCurrentStep(currentStep - 1);
+        } else {
+            router.push('/pricing');
+        }
     };
     
-    const handleGoBack = () => {
-        if (!containerRef.current || !selectedPlan) return;
-        
-        const state = Flip.getState('.pricing-card, .plan-title, .plan-description, .plan-price, .plan-features, .plan-button');
+    if (!selectedPlan) return <div className="h-screen w-full flex items-center justify-center"><p>Loading plan...</p></div>;
 
-        const selectedEl = document.querySelector(`[data-plan-name="${selectedPlan.name}"]`) as HTMLElement;
-        selectedEl.classList.remove('is-selected');
+    const isSuccessStep = currentStep === steps.length - 1;
 
-        setView('selection');
-
-        const otherEls = Array.from(document.querySelectorAll('.pricing-card:not([data-plan-name="' + selectedPlan.name + '"])')) as HTMLElement[];
-        gsap.to(otherEls, { opacity: 1, y: 0, duration: 0.3, delay: 0.4 });
-        
-        gsap.to('.checkout-form-element', { opacity: 0, duration: 0.1 });
-
-        Flip.from(state, {
-            duration: 0.7,
-            ease: 'power3.inOut',
-        });
-        setSelectedPlan(null);
-    };
-
-    const handleCheckout = () => {
-        setProgress(100);
-        gsap.to('.checkout-form', { opacity: 0, duration: 0.5 });
-        setTimeout(() => {
-            setView('success');
-            gsap.fromTo('.success-animation', { scale: 0.5, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: 'back.out(1.7)' });
-            setTimeout(() => router.push('/dashboard'), 2000);
-        }, 500);
+    if (isSuccessStep) {
+      return <SuccessStep />;
     }
-    
+
     return (
-        <div ref={containerRef} className="w-full max-w-6xl p-4 md:p-8">
-            <AnimatePresence mode="wait">
-            {view === 'selection' && (
-                 <motion.div key="selection" initial={{opacity: 0}} animate={{opacity: 1}} exit={{opacity: 0}}>
-                    <div className="text-center mb-12">
-                        <h1 className="text-4xl md:text-5xl font-bold tracking-tighter">Choose Your Plan</h1>
-                        <p className="mt-4 max-w-xl mx-auto text-lg text-muted-foreground">Start your journey with a plan that fits your needs.</p>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {plans.map((plan) => (
-                            <Card key={plan.name} data-plan-name={plan.name} className="pricing-card bg-card/50 backdrop-blur-sm flex flex-col transition-all duration-300 hover:shadow-primary/20 hover:border-primary/50 hover:scale-105">
-                                <CardHeader>
-                                    <CardTitle className="plan-title text-2xl">{plan.name}</CardTitle>
-                                    <CardDescription className="plan-description">{plan.description}</CardDescription>
-                                </CardHeader>
-                                <CardContent className="flex-grow">
-                                    <p className="plan-price text-4xl font-bold mb-6">{plan.price}<span className="text-base font-normal text-muted-foreground">{plan.priceDetail}</span></p>
-                                    <ul className="plan-features space-y-3">
-                                        {plan.features.map((feature, i) => (
-                                            <li key={i} className="flex items-center gap-2">
-                                                <Check className="h-5 w-5 text-accent" />
-                                                <span>{feature}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </CardContent>
-                                <div className="p-6 pt-0">
-                                    <Button onClick={() => handleSelectPlan(plan)} className="plan-button w-full transition-transform duration-200 hover:scale-105">Select Plan</Button>
-                                </div>
-                            </Card>
-                        ))}
-                    </div>
-                 </motion.div>
-            )}
+        <FormProvider {...methods}>
+            <div ref={containerRef} className="w-full max-w-6xl mx-auto opacity-0">
+                <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-16">
+                    {/* Left Column: Cart Summary */}
+                    <CartSummary plan={selectedPlan} billingCycle={billingCycle} onCycleChange={setBillingCycle} />
 
-            {view === 'form' && selectedPlan && (
-                <motion.div key="form">
-                     <div data-plan-name={selectedPlan.name} className="pricing-card is-selected mx-auto">
-                        <Card className="bg-card/80 backdrop-blur-sm transition-all duration-300">
-                             <CardHeader className="relative">
-                                <Button variant="ghost" size="icon" className="absolute top-4 left-4" onClick={handleGoBack}>
-                                    <ArrowLeft />
-                                </Button>
-                                <div className="text-center">
-                                    <CardTitle className="plan-title text-2xl">Complete Your Purchase</CardTitle>
-                                    <CardDescription className="plan-description">You're seconds away from unlocking the {selectedPlan.name} plan.</CardDescription>
-                                </div>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="checkout-form grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <div className="md:col-span-1 space-y-8">
-                                        <div className="checkout-form-element">
-                                             <Label htmlFor="name">Full Name</Label>
-                                             <Input id="name" placeholder="John Doe" className="mt-2" onFocus={() => setProgress(33)} />
-                                        </div>
-                                        <div className="checkout-form-element">
-                                            <Label htmlFor="email">Email Address</Label>
-                                            <Input id="email" type="email" placeholder="john.doe@example.com" className="mt-2" onFocus={() => setProgress(66)} />
-                                        </div>
-                                         <div className="checkout-form-element">
-                                            <Label>Payment Details</Label>
-                                            <div className="mt-2 p-4 border rounded-md bg-secondary/50 flex items-center justify-center">
-                                                <p className="text-muted-foreground text-sm">Stripe Payment Element would be here.</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="md:col-span-1 flex flex-col justify-between p-6 bg-secondary/50 rounded-lg">
-                                        <div>
-                                            <h3 className="font-semibold text-lg mb-4">Order Summary</h3>
-                                            <div className="flex justify-between items-center mb-2">
-                                                <span className="text-muted-foreground">{selectedPlan.name} Plan (Monthly)</span>
-                                                <span className="font-medium">{selectedPlan.price}</span>
-                                            </div>
-                                             <div className="flex justify-between items-center text-muted-foreground border-b pb-2">
-                                                <span>Taxes</span>
-                                                <span>Calculated at next step</span>
-                                            </div>
-                                             <div className="flex justify-between items-center font-bold text-xl mt-4">
-                                                <span>Total</span>
-                                                <span>{selectedPlan.price}</span>
-                                            </div>
-                                        </div>
-                                        <Button onClick={handleCheckout} className="w-full mt-6" size="lg">Confirm Purchase</Button>
-                                    </div>
-                                </div>
-                                <Progress value={progress} className="mt-6 checkout-form-element" />
-                            </CardContent>
-                        </Card>
+                    {/* Right Column: Checkout Form */}
+                    <div className="bg-card p-6 sm:p-8 rounded-xl shadow-lg mt-8 lg:mt-0">
+                        <ProgressBar currentStep={currentStep} totalSteps={steps.length - 1} />
+                        
+                        <form onSubmit={methods.handleSubmit(handleNextStep)}>
+                            <AnimatePresence mode="wait">
+                                <motion.div
+                                    key={currentStep}
+                                    initial={{ opacity: 0, x: 50 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -50 }}
+                                    transition={{ duration: 0.3, ease: 'easeInOut' }}
+                                >
+                                    {steps[currentStep]}
+                                </motion.div>
+                            </AnimatePresence>
+                             <div className="mt-8 flex justify-between items-center">
+                                <button type="button" onClick={handlePrevStep} className="text-sm text-primary hover:underline">
+                                    &larr; {currentStep === 0 ? 'Back to pricing' : 'Previous step'}
+                                </button>
+                                <button type="submit" className="px-6 py-2 bg-primary text-primary-foreground rounded-md font-semibold hover:bg-primary/90 transition-colors">
+                                    {currentStep === steps.length - 2 ? 'Confirm & Pay' : 'Next Step'}
+                                </button>
+                            </div>
+                        </form>
                     </div>
-                </motion.div>
-            )}
-
-            {view === 'success' && (
-                 <motion.div key="success" className="text-center p-8">
-                    <div className="success-animation inline-block">
-                        <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center mx-auto shadow-2xl shadow-green-500/50">
-                            <Check className="h-16 w-16 text-white" strokeWidth={3} />
-                        </div>
-                        <h2 className="text-3xl font-bold mt-6">Payment Successful!</h2>
-                        <p className="text-muted-foreground mt-2">Redirecting you to the dashboard...</p>
-                    </div>
-                </motion.div>
-            )}
-            </AnimatePresence>
-
-            <style jsx>{`
-                .pricing-card.is-selected {
-                    width: 100%;
-                    max-width: 900px; /* Adjust as needed */
-                    margin: auto;
-                }
-            `}</style>
-        </div>
+                </div>
+            </div>
+        </FormProvider>
     );
-}
-
-// Minimal type definition for Plan to be used within the component
-interface Plan {
-    name: string;
-    price: string;
-    priceDetail: string;
-    description: string;
-    features: string[];
-    isPro: boolean;
-    cta: string;
 }
