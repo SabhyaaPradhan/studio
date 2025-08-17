@@ -8,9 +8,11 @@ import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { AlertTriangle, Crown } from 'lucide-react';
 import Link from 'next/link';
 import { useSubscription } from '@/hooks/use-subscription';
+import { useAuthContext } from '@/context/auth-context';
 
 export function PlanUsage() {
-    const { isLoading, subscription } = useSubscription();
+    const { user } = useAuthContext();
+    const { isLoading, subscription } = useSubscription(user?.uid);
 
     if (isLoading) return <PlanUsageSkeleton />;
     

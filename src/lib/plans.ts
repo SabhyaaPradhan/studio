@@ -1,4 +1,15 @@
 
+
+export interface Plan {
+    name: string;
+    price: string;
+    priceDetail: string;
+    description: string;
+    features: string[];
+    isPro: boolean;
+    cta: string;
+}
+
 export const basePrices = {
     monthly: { pro: 29, enterprise: 99 },
     yearly: { pro: 290, enterprise: 990 },
@@ -13,13 +24,13 @@ export const currencies = {
 
 export type Currency = keyof typeof currencies;
 
-export const getPlans = (billingCycle: "monthly" | "yearly", currency: Currency) => {
+export const getPlans = (billingCycle: "monthly" | "yearly", currency: Currency): Plan[] => {
     const { symbol, rate } = currencies[currency];
     const formatPrice = (price: number) => {
         return `${symbol}${Math.round(price * rate)}`;
     }
 
-    const plans = [
+    const plans: Plan[] = [
         {
             name: "Starter",
             price: "$0",

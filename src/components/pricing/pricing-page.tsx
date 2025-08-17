@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { getPlans, allFeatures, faqs, currencies, Currency } from "@/lib/plans";
+import Link from 'next/link';
 
 
 export default function PricingPage() {
@@ -127,7 +128,7 @@ export default function PricingPage() {
                                 </CardContent>
                                 <CardFooter>
                                     <Button asChild className="w-full" variant={plan.isPro ? "default" : "outline"}>
-                                        <a href={`/signup?plan=${plan.name.toLowerCase()}`}>Get Started</a>
+                                        <Link href={`/checkout?plan=${plan.name.toLowerCase()}`}>Get Started</Link>
                                     </Button>
                                 </CardFooter>
                             </Card>
