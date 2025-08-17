@@ -3,8 +3,7 @@
 
 import { useFormContext } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { FormField, FormItem, FormControl, FormMessage } from '@/components/ui/form';
+import { FormField, FormItem, FormControl, FormMessage, FormLabel } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function BillingStep() {
@@ -18,7 +17,7 @@ export default function BillingStep() {
                 name="address"
                 render={({ field }) => (
                     <FormItem>
-                        <Label htmlFor="address">Address</Label>
+                        <FormLabel>Address</FormLabel>
                         <FormControl>
                             <Input id="address" placeholder="123 Main St" {...field} />
                         </FormControl>
@@ -32,7 +31,7 @@ export default function BillingStep() {
                     name="city"
                     render={({ field }) => (
                         <FormItem>
-                            <Label htmlFor="city">City</Label>
+                            <FormLabel>City</FormLabel>
                             <FormControl>
                                <Input id="city" placeholder="Anytown" {...field} />
                             </FormControl>
@@ -45,7 +44,7 @@ export default function BillingStep() {
                     name="zip"
                     render={({ field }) => (
                         <FormItem>
-                            <Label htmlFor="zip">ZIP / Postal Code</Label>
+                            <FormLabel>ZIP / Postal Code</FormLabel>
                             <FormControl>
                                 <Input id="zip" placeholder="12345" {...field} />
                             </FormControl>
@@ -59,7 +58,7 @@ export default function BillingStep() {
                 name="country"
                 render={({ field }) => (
                     <FormItem>
-                        <Label htmlFor="country">Country</Label>
+                        <FormLabel>Country</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                                <SelectTrigger id="country">

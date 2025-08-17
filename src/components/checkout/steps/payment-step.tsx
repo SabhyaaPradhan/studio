@@ -4,7 +4,7 @@
 import { useFormContext } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { FormField, FormItem, FormControl, FormMessage } from '@/components/ui/form';
+import { FormField, FormItem, FormControl, FormMessage, FormLabel } from '@/components/ui/form';
 
 export default function PaymentStep() {
     const { control } = useFormContext();
@@ -17,7 +17,7 @@ export default function PaymentStep() {
                 name="cardName"
                 render={({ field }) => (
                     <FormItem>
-                        <Label htmlFor="cardName">Name on Card</Label>
+                        <FormLabel>Name on Card</FormLabel>
                         <FormControl>
                             <Input id="cardName" placeholder="John M. Doe" {...field} />
                         </FormControl>
@@ -30,9 +30,9 @@ export default function PaymentStep() {
                 name="cardNumber"
                 render={({ field }) => (
                     <FormItem>
-                        <Label htmlFor="cardNumber">Card Number</Label>
+                        <FormLabel>Card Number</FormLabel>
                         <FormControl>
-                           <Input id="cardNumber" placeholder="•••• •••• •••• ••••" {...field} />
+                           <Input id="cardNumber" placeholder="•••• •••• •••• ••••" {...field} maxLength={16} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -44,7 +44,7 @@ export default function PaymentStep() {
                     name="expiry"
                     render={({ field }) => (
                         <FormItem>
-                            <Label htmlFor="expiry">Expiry (MM/YY)</Label>
+                            <FormLabel>Expiry (MM/YY)</FormLabel>
                             <FormControl>
                                 <Input id="expiry" placeholder="MM/YY" {...field} />
                             </FormControl>
@@ -57,9 +57,9 @@ export default function PaymentStep() {
                     name="cvv"
                     render={({ field }) => (
                         <FormItem>
-                            <Label htmlFor="cvv">CVV</Label>
+                            <FormLabel>CVV</FormLabel>
                             <FormControl>
-                                <Input id="cvv" placeholder="123" {...field} />
+                                <Input id="cvv" placeholder="123" {...field} maxLength={3} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>

@@ -3,8 +3,7 @@
 
 import { useFormContext } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { FormField, FormItem, FormControl, FormMessage } from '@/components/ui/form';
+import { FormField, FormItem, FormControl, FormMessage, FormLabel } from '@/components/ui/form';
 
 export default function AccountStep() {
     const { control } = useFormContext();
@@ -17,7 +16,7 @@ export default function AccountStep() {
                 name="fullName"
                 render={({ field }) => (
                     <FormItem>
-                        <Label htmlFor="fullName">Full Name</Label>
+                        <FormLabel>Full Name</FormLabel>
                         <FormControl>
                             <Input id="fullName" placeholder="John Doe" {...field} />
                         </FormControl>
@@ -30,7 +29,7 @@ export default function AccountStep() {
                 name="email"
                 render={({ field }) => (
                     <FormItem>
-                        <Label htmlFor="email">Email Address</Label>
+                        <FormLabel>Email Address</FormLabel>
                         <FormControl>
                            <Input id="email" type="email" placeholder="john.doe@example.com" {...field} />
                         </FormControl>
@@ -43,7 +42,7 @@ export default function AccountStep() {
                 name="company"
                 render={({ field }) => (
                     <FormItem>
-                        <Label htmlFor="company">Company (Optional)</Label>
+                        <FormLabel>Company (Optional)</FormLabel>
                         <FormControl>
                             <Input id="company" placeholder="Acme Inc." {...field} />
                         </FormControl>

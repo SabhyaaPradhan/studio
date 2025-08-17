@@ -17,31 +17,25 @@ import BillingStep from './steps/billing-step';
 import PaymentStep from './steps/payment-step';
 import ReviewStep from './steps/review-step';
 import SuccessStep from './steps/success-step';
+import { Button } from '../ui/button';
 
-const stepSchemas = [
-  z.object({
-    fullName: z.string().min(3, "Full name must be at least 3 characters"),
-    email: z.string().email("Please enter a valid email"),
-    company: z.string().optional(),
-  }),
-  z.object({
-    address: z.string().min(5, "Address is too short"),
-    city: z.string().min(2, "City name is too short"),
-    country: z.string().min(2, "Please select a country"),
-    zip: z.string().min(4, "Invalid ZIP code"),
-  }),
-  z.object({
-    cardName: z.string().min(3, "Name on card is required"),
-    cardNumber: z.string().length(16, "Invalid card number"),
-    expiry: z.string().regex(/^(0[1-9]|1[0-2])\/\d{2}$/, "Invalid format (MM/YY)"),
-    cvv: z.string().length(3, "Invalid CVV"),
-  }),
-  z.object({}), // Review step
-];
+// Consolidate all schemas into one for robust validation
+const checkoutSchema = z.object({
+  fullName: z.string().min(3, "Full name must be at least 3 characters"),
+  email: z.string().email("Please enter a valid email"),
+  company: z.string().optional(),
+  address: z.string().min(5, "Address is too short"),
+  city: z.string().min(2, "City name is too short"),
+  country: z.string().min(2, "Please select a country"),
+  zip: z.string().min(4, "Invalid ZIP code"),
+  cardName: z.string().min(3, "Name on card is required"),
+  cardNumber: z.string().length(16, "Invalid card number").regex(/^\d+$/, "Card number must be numeric"),
+  expiry: z.string().regex(/^(0[1-9]|1[0-2])\/\d{2}$/, "Invalid format (MM/YY)"),
+  cvv: z.string().length(3, "Invalid CVV").regex(/^\d+$/, "CVV must be numeric"),
+});
 
-export type CheckoutFormData = z.infer<typeof stepSchemas[0]> &
-  z.infer<typeof stepSchemas[1]> &
-  z.infer<typeof stepSchemas[2]>;
+
+export type CheckoutFormData = z.infer<typeof checkoutSchema>;
 
 export default function CheckoutPage() {
     const router = useRouter();
@@ -53,8 +47,8 @@ export default function CheckoutPage() {
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
     const methods = useForm<CheckoutFormData>({
-        resolver: zodResolver(stepSchemas[currentStep]),
-        mode: 'onChange',
+        resolver: zodResolver(checkoutSchema),
+        mode: 'onTouched', // More user-friendly validation trigger
         defaultValues: {
             fullName: "",
             email: "",
@@ -69,6 +63,14 @@ export default function CheckoutPage() {
             cvv: ""
         }
     });
+    
+    // Define the fields required for each step
+    const stepFields: (keyof CheckoutFormData)[][] = [
+        ['fullName', 'email'], // Step 0: Account
+        ['address', 'city', 'country', 'zip'], // Step 1: Billing
+        ['cardName', 'cardNumber', 'expiry', 'cvv'], // Step 2: Payment
+        [], // Step 3: Review
+    ];
 
     useEffect(() => {
         const planName = searchParams.get('plan') || 'pro';
@@ -96,14 +98,16 @@ export default function CheckoutPage() {
     ];
     
     const handleNextStep = async () => {
-      const isValid = await methods.trigger();
+      const fieldsToValidate = stepFields[currentStep];
+      const isValid = await methods.trigger(fieldsToValidate);
+      
       if (isValid) {
-        if (currentStep < steps.length - 2) { // Before last step
+        if (currentStep < steps.length - 2) {
           setCurrentStep(currentStep + 1);
         } else {
-            // Handle final submission/payment
             console.log("Submitting form...", methods.getValues());
-            setCurrentStep(currentStep + 1);
+            // This is where you would handle the final payment submission
+            setCurrentStep(currentStep + 1); 
         }
       }
     };
@@ -128,14 +132,12 @@ export default function CheckoutPage() {
         <FormProvider {...methods}>
             <div ref={containerRef} className="w-full max-w-6xl mx-auto opacity-0">
                 <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-16">
-                    {/* Left Column: Cart Summary */}
                     <CartSummary plan={selectedPlan} billingCycle={billingCycle} onCycleChange={setBillingCycle} />
 
-                    {/* Right Column: Checkout Form */}
                     <div className="bg-card p-6 sm:p-8 rounded-xl shadow-lg mt-8 lg:mt-0">
                         <ProgressBar currentStep={currentStep} totalSteps={steps.length - 1} />
                         
-                        <form onSubmit={methods.handleSubmit(handleNextStep)}>
+                        <form onSubmit={(e) => e.preventDefault()}>
                             <AnimatePresence mode="wait">
                                 <motion.div
                                     key={currentStep}
@@ -148,12 +150,12 @@ export default function CheckoutPage() {
                                 </motion.div>
                             </AnimatePresence>
                              <div className="mt-8 flex justify-between items-center">
-                                <button type="button" onClick={handlePrevStep} className="text-sm text-primary hover:underline">
+                                <Button type="button" variant="link" onClick={handlePrevStep} className="p-0">
                                     &larr; {currentStep === 0 ? 'Back to pricing' : 'Previous step'}
-                                </button>
-                                <button type="submit" className="px-6 py-2 bg-primary text-primary-foreground rounded-md font-semibold hover:bg-primary/90 transition-colors">
+                                </Button>
+                                <Button type="button" onClick={handleNextStep}>
                                     {currentStep === steps.length - 2 ? 'Confirm & Pay' : 'Next Step'}
-                                </button>
+                                </Button>
                             </div>
                         </form>
                     </div>
