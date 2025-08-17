@@ -76,8 +76,8 @@ export function SimpleHeader({ user, userProfile }: SimpleHeaderProps) {
     children: React.ReactNode;
     isMobile?: boolean;
     icon: React.ElementType;
-  }) => (
-    <SheetClose asChild={isMobile}>
+  }) => {
+    const linkElement = (
       <Link
         href={href}
         className={cn(
@@ -93,8 +93,14 @@ export function SimpleHeader({ user, userProfile }: SimpleHeaderProps) {
         {isMobile && <Icon className="h-5 w-5" />}
         <span>{children}</span>
       </Link>
-    </SheetClose>
-  );
+    );
+
+    if (isMobile) {
+        return <SheetClose asChild>{linkElement}</SheetClose>;
+    }
+
+    return linkElement;
+  };
 
   return (
     <header className="sticky top-0 z-10 flex h-20 items-center justify-between gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
