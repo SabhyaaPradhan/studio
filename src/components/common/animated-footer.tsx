@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import * as THREE from "three";
 import { gsap } from "gsap";
 import Link from "next/link";
@@ -14,9 +14,12 @@ export default function AnimatedFooter() {
   const mountRef = useRef<HTMLDivElement>(null);
   const { resolvedTheme } = useTheme();
   const footerRef = useRef<HTMLElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
-    if (!mountRef.current || typeof window === 'undefined') return;
+    if (!mountRef.current || typeof window === 'undefined' || !mounted) return;
 
     const currentMount = mountRef.current;
     
@@ -119,7 +122,7 @@ export default function AnimatedFooter() {
       material.dispose();
       renderer.dispose();
     };
-  }, [resolvedTheme]); // Re-run effect when theme changes
+  }, [resolvedTheme, mounted]); // Re-run effect when theme changes or component mounts
 
   const footerLinkClasses = "footer-link text-sm transition-colors text-muted-foreground hover:text-foreground";
   const socialIconClasses = "social-icon text-muted-foreground transition-colors hover:text-primary";
@@ -129,7 +132,7 @@ export default function AnimatedFooter() {
         ref={footerRef}
         className={cn(
             "relative border-t overflow-hidden py-16 text-center md:text-left",
-            resolvedTheme === 'dark' ? 'bg-black' : 'bg-white'
+            mounted && (resolvedTheme === 'dark' ? 'bg-black' : 'bg-white')
         )}
     >
       <div ref={mountRef} className="absolute inset-0 z-0 opacity-40" />
