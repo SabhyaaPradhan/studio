@@ -4,22 +4,17 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '../ui/skeleton';
-import type { UserProfile } from '@/services/user-service';
-import { differenceInDays, isPast } from 'date-fns';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { AlertTriangle, Crown } from 'lucide-react';
 import Link from 'next/link';
-import { useSubscription } from '@/context/subscription-context';
+import { useSubscription } from '@/hooks/use-subscription';
 
-export function PlanUsage({ userProfile }: { userProfile: UserProfile | null }) {
-    const { subscription, loading } = useSubscription();
+export function PlanUsage() {
+    const { isLoading, subscription } = useSubscription();
 
-    if (loading || !userProfile || !subscription) return <PlanUsageSkeleton />;
+    if (isLoading) return <PlanUsageSkeleton />;
     
-    const trialEndDate = new Date(subscription.trialEnd);
-    const trialDaysLeft = differenceInDays(trialEndDate, new Date());
-    const isTrialActive = subscription.status === 'trialing' && !isPast(trialEndDate);
-    const planName = subscription.plan || '...';
+    const planName = subscription?.plan || 'Starter';
     
     return (
         <Card>
@@ -30,16 +25,16 @@ export function PlanUsage({ userProfile }: { userProfile: UserProfile | null }) 
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-                {isTrialActive && trialDaysLeft > 0 && (
+                {subscription?.status === 'trialing' && subscription.trialDaysLeft != null && subscription.trialDaysLeft > 0 && (
                     <Alert variant="destructive" className="bg-yellow-50 border-yellow-200 text-yellow-800 dark:bg-yellow-900/20 dark:border-yellow-900/50 dark:text-yellow-300 [&>svg]:text-yellow-600">
                         <AlertTriangle className="h-4 w-4" />
                         <AlertTitle>Free Trial</AlertTitle>
                         <AlertDescription>
-                            You have {trialDaysLeft} days left in your Pro trial.
+                            You have {subscription.trialDaysLeft} days left in your Pro trial.
                         </AlertDescription>
                     </Alert>
                 )}
-                 {subscription.status === 'expired' && (
+                 {subscription?.isTrialExpired && (
                     <Alert variant="destructive">
                         <AlertTriangle className="h-4 w-4" />
                         <AlertTitle>Trial Expired</AlertTitle>

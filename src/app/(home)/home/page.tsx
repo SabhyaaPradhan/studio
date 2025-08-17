@@ -5,8 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthContext } from '@/context/auth-context';
-import { useSubscription } from '@/context/subscription-context';
-import { differenceInDays, isPast } from 'date-fns';
+import { useSubscription } from '@/hooks/use-subscription';
 import { BrainCircuit, CalendarDays, DollarSign, MessageSquare, ArrowRight, Lightbulb, UserCheck, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { gsap } from 'gsap';
@@ -18,7 +17,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 export default function HomePage() {
     const { user } = useAuthContext();
-    const { subscription, loading: subLoading } = useSubscription();
+    const { subscription, isLoading: subLoading } = useSubscription();
     const containerRef = useRef<HTMLDivElement>(null);
     const [realtimeStats, setRealtimeStats] = useState<RealtimeAnalytics | null>(null);
     const [statsLoading, setStatsLoading] = useState(true);
@@ -38,13 +37,11 @@ export default function HomePage() {
     }, [user]);
 
     const getTrialDaysLeft = () => {
-        if (subLoading || !subscription) return "...";
-        if (subscription.status !== 'trialing') return "N/A";
+        if (subLoading) return "...";
+        if (subscription?.status !== 'trialing' || subscription.trialDaysLeft === null) return "N/A";
+        if (subscription.isTrialExpired) return "Expired";
         
-        const trialEndDate = new Date(subscription.trialEnd);
-        if (isPast(trialEndDate)) return "Expired";
-        
-        const daysLeft = differenceInDays(trialEndDate, new Date());
+        const daysLeft = subscription.trialDaysLeft;
         return `${daysLeft} day${daysLeft !== 1 ? 's' : ''}`;
     }
 
@@ -59,7 +56,7 @@ export default function HomePage() {
         },
         { 
             title: "Plan", 
-            value: subLoading ? "..." : (subscription?.plan ?? 'starter'), 
+            value: subLoading ? "..." : (subscription?.plan ?? 'Starter'), 
             icon: DollarSign, 
             change: "Upgrade to Pro", 
             link: "/billing", 
