@@ -21,7 +21,8 @@ export interface UserProfile {
     first_name: string;
     last_name: string;
     email: string;
-    subscription: Subscription;
+    plan: 'starter' | 'pro' | 'enterprise';
+    trial_end_date: string; // ISO string
     updatedAt: string; // ISO string
 }
 
@@ -37,17 +38,15 @@ function docToProfile(docSnap: DocumentData): UserProfile {
     const toISOString = (timestamp: any, defaultDate = new Date()) => 
         timestamp instanceof Timestamp ? timestamp.toDate().toISOString() : defaultDate.toISOString();
 
+    const subscriptionData = data.subscription || {};
+
     const profile: UserProfile = {
         id: docSnap.id,
         first_name: data.first_name || '',
         last_name: data.last_name || '',
         email: data.email || '',
-        subscription: data.subscription || {
-            plan: 'starter',
-            status: 'trialing',
-            trialStart: new Date().toISOString(),
-            trialEnd: new Date().toISOString()
-        },
+        plan: subscriptionData.plan || 'starter',
+        trial_end_date: toISOString(subscriptionData.trialEnd),
         updatedAt: toISOString(data.updatedAt),
     };
     return profile;
