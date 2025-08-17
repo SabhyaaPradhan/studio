@@ -38,9 +38,12 @@ export default function HomePage() {
     }, [user]);
 
     const getTrialDaysLeft = () => {
-        if (!subscription || subscription.status !== 'trialing') return "N/A";
+        if (subLoading || !subscription) return "...";
+        if (subscription.status !== 'trialing') return "N/A";
+        
         const trialEndDate = new Date(subscription.trialEnd);
         if (isPast(trialEndDate)) return "Expired";
+        
         const daysLeft = differenceInDays(trialEndDate, new Date());
         return `${daysLeft} day${daysLeft !== 1 ? 's' : ''}`;
     }
@@ -72,7 +75,7 @@ export default function HomePage() {
         },
         { 
             title: "Trial Ends In", 
-            value: subLoading ? "..." : getTrialDaysLeft(), 
+            value: getTrialDaysLeft(), 
             icon: CalendarDays, 
             change: "", 
             link: "/billing", 
