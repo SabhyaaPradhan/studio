@@ -2,13 +2,22 @@
 import CheckoutPage from '@/components/checkout/checkout-page';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Lock } from 'lucide-react';
+import { Lock, Loader2 } from 'lucide-react';
 import AnimatedFooter from '@/components/common/animated-footer';
+import { Suspense } from 'react';
 
 export const metadata = {
     title: 'Checkout – Savrii AI',
     description: 'Complete your subscription to unlock the full power of Savrii AI.',
 };
+
+function CheckoutFallback() {
+    return (
+        <div className="w-full flex items-center justify-center min-h-[60vh]">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+    );
+}
 
 export default function Checkout() {
     return (
@@ -24,7 +33,9 @@ export default function Checkout() {
                 </div>
             </header>
             <main className="flex-grow flex items-center justify-center z-10 pt-20 pb-10">
-                <CheckoutPage />
+                <Suspense fallback={<CheckoutFallback />}>
+                    <CheckoutPage />
+                </Suspense>
             </main>
             <AnimatedFooter />
         </div>
