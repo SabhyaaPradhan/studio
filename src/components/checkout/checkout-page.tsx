@@ -3,74 +3,60 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { gsap } from 'gsap';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 
 import { getPlans, Plan } from '@/lib/plans';
-import CartSummary from './cart-summary';
-import ProgressBar from './progress-bar';
-import AccountStep from './steps/account-step';
-import BillingStep from './steps/billing-step';
-import PaymentStep from './steps/payment-step';
-import ReviewStep from './steps/review-step';
-import SuccessStep from './steps/success-step';
 import { Button } from '../ui/button';
+import { Input } from '@/components/ui/input';
+import { FormField, FormItem, FormControl, FormMessage, FormLabel } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import CartSummary from './cart-summary';
+import { Check, Loader2 } from 'lucide-react';
+import { useAuthContext } from '@/context/auth-context';
 
-// Consolidate all schemas into one for robust validation
 const checkoutSchema = z.object({
-  fullName: z.string().min(3, "Full name must be at least 3 characters"),
+  fullName: z.string().min(3, "Full name is required"),
   email: z.string().email("Please enter a valid email"),
-  company: z.string().optional(),
-  address: z.string().min(5, "Address is too short"),
-  city: z.string().min(2, "City name is too short"),
-  country: z.string().min(2, "Please select a country"),
-  zip: z.string().min(4, "Invalid ZIP code"),
+  address: z.string().min(5, "Address is required"),
+  city: z.string().min(2, "City is required"),
+  country: z.string().min(2, "Country is required"),
+  zip: z.string().min(4, "ZIP code is required"),
   cardName: z.string().min(3, "Name on card is required"),
   cardNumber: z.string().length(16, "Invalid card number").regex(/^\d+$/, "Card number must be numeric"),
   expiry: z.string().regex(/^(0[1-9]|1[0-2])\/\d{2}$/, "Invalid format (MM/YY)"),
   cvv: z.string().length(3, "Invalid CVV").regex(/^\d+$/, "CVV must be numeric"),
 });
 
-
-export type CheckoutFormData = z.infer<typeof checkoutSchema>;
+type CheckoutFormData = z.infer<typeof checkoutSchema>;
 
 export default function CheckoutPage() {
+    const { user } = useAuthContext();
     const router = useRouter();
     const searchParams = useSearchParams();
     const containerRef = useRef<HTMLDivElement>(null);
+    const formRef = useRef<HTMLDivElement>(null);
+    const summaryRef = useRef<HTMLDivElement>(null);
+    const successRef = useRef<HTMLDivElement>(null);
 
-    const [currentStep, setCurrentStep] = useState(0);
     const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSuccess, setIsSuccess] = useState(false);
 
     const methods = useForm<CheckoutFormData>({
         resolver: zodResolver(checkoutSchema),
-        mode: 'onTouched', // More user-friendly validation trigger
+        mode: 'onTouched',
         defaultValues: {
-            fullName: "",
-            email: "",
-            company: "",
-            address: "",
-            city: "",
-            country: "",
-            zip: "",
-            cardName: "",
-            cardNumber: "",
-            expiry: "",
-            cvv: ""
+            fullName: user?.displayName || "",
+            email: user?.email || "",
+            address: "", city: "", country: "", zip: "",
+            cardName: "", cardNumber: "", expiry: "", cvv: ""
         }
     });
-    
-    // Define the fields required for each step
-    const stepFields: (keyof CheckoutFormData)[][] = [
-        ['fullName', 'email'], // Step 0: Account
-        ['address', 'city', 'country', 'zip'], // Step 1: Billing
-        ['cardName', 'cardNumber', 'expiry', 'cvv'], // Step 2: Payment
-        [], // Step 3: Review
-    ];
 
     useEffect(() => {
         const planName = searchParams.get('plan') || 'pro';
@@ -80,84 +66,130 @@ export default function CheckoutPage() {
     }, [billingCycle, searchParams]);
 
     useEffect(() => {
-      if (containerRef.current) {
-        gsap.fromTo(
-          containerRef.current,
-          { opacity: 0, y: 30 },
-          { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out' }
-        );
-      }
+        if(containerRef.current) {
+            gsap.fromTo(formRef.current, 
+                { opacity: 0, x: -50 },
+                { opacity: 1, x: 0, duration: 0.8, ease: 'power3.out', delay: 0.2 }
+            );
+            gsap.fromTo(summaryRef.current,
+                { opacity: 0, scale: 0.95 },
+                { opacity: 1, scale: 1, duration: 0.8, ease: 'power3.out', delay: 0.4 }
+            );
+        }
     }, []);
 
-    const steps = [
-      <AccountStep key="account" />,
-      <BillingStep key="billing" />,
-      <PaymentStep key="payment" />,
-      <ReviewStep key="review" />,
-      <SuccessStep key="success" />
-    ];
-    
-    const handleNextStep = async () => {
-      const fieldsToValidate = stepFields[currentStep];
-      const isValid = await methods.trigger(fieldsToValidate);
-      
-      if (isValid) {
-        if (currentStep < steps.length - 2) {
-          setCurrentStep(currentStep + 1);
-        } else {
-            console.log("Submitting form...", methods.getValues());
-            // This is where you would handle the final payment submission
-            setCurrentStep(currentStep + 1); 
+    const handleSuccessAnimation = () => {
+        const tl = gsap.timeline({ onComplete: () => router.push('/dashboard') });
+        const checkmark = successRef.current?.querySelector('path');
+
+        tl.to(formRef.current, { opacity: 0, y: -20, duration: 0.5, ease: 'power2.in' })
+          .set(successRef.current, { display: 'flex' })
+          .fromTo(successRef.current, { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.6, ease: 'back.out(1.7)' });
+
+        if (checkmark) {
+            const length = checkmark.getTotalLength();
+            gsap.set(checkmark, { strokeDasharray: length, strokeDashoffset: length });
+            tl.to(checkmark, { strokeDashoffset: 0, duration: 1, ease: 'power2.inOut' }, "-=0.3");
         }
-      }
-    };
-
-    const handlePrevStep = () => {
-        if (currentStep > 0) {
-            setCurrentStep(currentStep - 1);
-        } else {
-            router.push('/pricing');
-        }
-    };
-    
-    if (!selectedPlan) return <div className="h-screen w-full flex items-center justify-center"><p>Loading plan...</p></div>;
-
-    const isSuccessStep = currentStep === steps.length - 1;
-
-    if (isSuccessStep) {
-      return <SuccessStep />;
     }
+
+    const onSubmit = async (data: CheckoutFormData) => {
+        setIsSubmitting(true);
+        console.log("Form submitted:", data);
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        setIsSubmitting(false);
+        setIsSuccess(true);
+        handleSuccessAnimation();
+    };
+    
+    if (!selectedPlan) return <div className="h-screen w-full flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
 
     return (
         <FormProvider {...methods}>
-            <div ref={containerRef} className="w-full max-w-6xl mx-auto opacity-0">
-                <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-16">
-                    <CartSummary plan={selectedPlan} billingCycle={billingCycle} onCycleChange={setBillingCycle} />
+            <div ref={containerRef} className="w-full max-w-6xl mx-auto">
+                <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-16 relative">
+                    
+                    {/* Success Overlay */}
+                    <div ref={successRef} className="absolute inset-0 z-20 items-center justify-center bg-background/80 backdrop-blur-sm hidden">
+                         <div className="flex flex-col items-center justify-center text-center p-8">
+                            <svg className="w-24 h-24 text-green-500" viewBox="0 0 52 52">
+                                <circle className="stroke-current opacity-20" cx="26" cy="26" r="25" fill="none" strokeWidth="2"/>
+                                <path className="stroke-current" fill="none" strokeWidth="3" strokeLinecap="round" d="M14 27l5.833 5.833L38 20"/>
+                            </svg>
+                            <h2 className="text-3xl font-bold mt-6">Payment Successful!</h2>
+                            <p className="text-muted-foreground mt-2">Redirecting to your dashboard...</p>
+                        </div>
+                    </div>
 
-                    <div className="bg-card p-6 sm:p-8 rounded-xl shadow-lg mt-8 lg:mt-0">
-                        <ProgressBar currentStep={currentStep} totalSteps={steps.length - 1} />
-                        
-                        <form onSubmit={(e) => e.preventDefault()}>
-                            <AnimatePresence mode="wait">
-                                <motion.div
-                                    key={currentStep}
-                                    initial={{ opacity: 0, x: 50 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0, x: -50 }}
-                                    transition={{ duration: 0.3, ease: 'easeInOut' }}
-                                >
-                                    {steps[currentStep]}
-                                </motion.div>
-                            </AnimatePresence>
-                             <div className="mt-8 flex justify-between items-center">
-                                <Button type="button" variant="link" onClick={handlePrevStep} className="p-0">
-                                    &larr; {currentStep === 0 ? 'Back to pricing' : 'Previous step'}
-                                </Button>
-                                <Button type="button" onClick={handleNextStep}>
-                                    {currentStep === steps.length - 2 ? 'Confirm & Pay' : 'Next Step'}
-                                </Button>
+                    {/* Form Column */}
+                    <div ref={formRef}>
+                        <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-12">
+                             {/* Account Info */}
+                            <div className="space-y-6">
+                                <h3 className="text-xl font-semibold">Account Information</h3>
+                                <div className="grid grid-cols-1 gap-4">
+                                     <FormField control={methods.control} name="fullName" render={({ field }) => (
+                                        <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="John Doe" {...field} /></FormControl><FormMessage /></FormItem>
+                                    )} />
+                                     <FormField control={methods.control} name="email" render={({ field }) => (
+                                        <FormItem><FormLabel>Email Address</FormLabel><FormControl><Input type="email" placeholder="john.doe@example.com" {...field} /></FormControl><FormMessage /></FormItem>
+                                    )} />
+                                </div>
                             </div>
+                            
+                            {/* Billing Info */}
+                            <div className="space-y-6">
+                                <h3 className="text-xl font-semibold">Billing Address</h3>
+                                <div className="space-y-4">
+                                    <FormField control={methods.control} name="address" render={({ field }) => (
+                                        <FormItem><FormLabel>Address</FormLabel><FormControl><Input placeholder="123 Main St" {...field} /></FormControl><FormMessage /></FormItem>
+                                    )} />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <FormField control={methods.control} name="city" render={({ field }) => (
+                                            <FormItem><FormLabel>City</FormLabel><FormControl><Input placeholder="Anytown" {...field} /></FormControl><FormMessage /></FormItem>
+                                        )} />
+                                        <FormField control={methods.control} name="zip" render={({ field }) => (
+                                            <FormItem><FormLabel>ZIP / Postal Code</FormLabel><FormControl><Input placeholder="12345" {...field} /></FormControl><FormMessage /></FormItem>
+                                        )} />
+                                    </div>
+                                    <FormField control={methods.control} name="country" render={({ field }) => (
+                                        <FormItem><FormLabel>Country</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a country" /></SelectTrigger></FormControl><SelectContent><SelectItem value="us">United States</SelectItem><SelectItem value="ca">Canada</SelectItem><SelectItem value="gb">United Kingdom</SelectItem></SelectContent></Select><FormMessage /></FormItem>
+                                    )} />
+                                </div>
+                            </div>
+                            
+                            {/* Payment Info */}
+                            <div className="space-y-6">
+                                <h3 className="text-xl font-semibold">Payment Details</h3>
+                                <div className="space-y-4">
+                                    <FormField control={methods.control} name="cardName" render={({ field }) => (
+                                        <FormItem><FormLabel>Name on Card</FormLabel><FormControl><Input placeholder="John M. Doe" {...field} /></FormControl><FormMessage /></FormItem>
+                                    )} />
+                                    <FormField control={methods.control} name="cardNumber" render={({ field }) => (
+                                        <FormItem><FormLabel>Card Number</FormLabel><FormControl><Input placeholder="•••• •••• •••• ••••" {...field} maxLength={16} /></FormControl><FormMessage /></FormItem>
+                                    )} />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <FormField control={methods.control} name="expiry" render={({ field }) => (
+                                            <FormItem><FormLabel>Expiry (MM/YY)</FormLabel><FormControl><Input placeholder="MM/YY" {...field} /></FormControl><FormMessage /></FormItem>
+                                        )} />
+                                        <FormField control={methods.control} name="cvv" render={({ field }) => (
+                                            <FormItem><FormLabel>CVV</FormLabel><FormControl><Input placeholder="123" {...field} maxLength={3} /></FormControl><FormMessage /></FormItem>
+                                        )} />
+                                    </div>
+                                    <div className="mt-4 p-3 bg-secondary/50 rounded-md text-center text-sm text-muted-foreground">This is a mock payment form. No real transaction will occur.</div>
+                                </div>
+                            </div>
+                            
+                             <Button type="submit" size="lg" className="w-full" disabled={isSubmitting || isSuccess}>
+                                {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</> : 'Complete Checkout'}
+                            </Button>
                         </form>
+                    </div>
+
+                    {/* Summary Column */}
+                    <div ref={summaryRef} className="mt-8 lg:mt-0">
+                         <CartSummary plan={selectedPlan} billingCycle={billingCycle} onCycleChange={setBillingCycle} />
                     </div>
                 </div>
             </div>

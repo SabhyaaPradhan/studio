@@ -5,9 +5,12 @@ import { useEffect, useRef } from 'react';
 import { Plan } from '@/lib/plans';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Check } from 'lucide-react';
+import { Check, Info } from 'lucide-react';
 import { gsap } from 'gsap';
 import { cn } from '@/lib/utils';
+import { useSubscription } from '@/hooks/use-subscription';
+import { useAuthContext } from '@/context/auth-context';
+import { Skeleton } from '../ui/skeleton';
 
 interface CartSummaryProps {
     plan: Plan;
@@ -16,6 +19,8 @@ interface CartSummaryProps {
 }
 
 export default function CartSummary({ plan, billingCycle, onCycleChange }: CartSummaryProps) {
+    const { user } = useAuthContext();
+    const { subscription, isLoading } = useSubscription(user?.uid);
     const priceRef = useRef<HTMLSpanElement>(null);
     
     useEffect(() => {
@@ -36,6 +41,8 @@ export default function CartSummary({ plan, billingCycle, onCycleChange }: CartS
         }
     }, [plan.price]);
     
+    const showTrialInfo = plan.name === 'Starter' && subscription?.status === 'trialing';
+
     return (
         <div className="bg-secondary p-6 sm:p-8 rounded-xl lg:sticky lg:top-24">
             <h2 className="text-2xl font-bold mb-6">Order Summary</h2>
@@ -51,6 +58,14 @@ export default function CartSummary({ plan, billingCycle, onCycleChange }: CartS
                         <p className="text-sm text-muted-foreground">{plan.priceDetail}</p>
                     </div>
                 </div>
+                {isLoading ? (
+                    <Skeleton className="h-6 w-32 mt-2" />
+                ) : showTrialInfo && (
+                     <div className="mt-4 flex items-center gap-2 text-xs text-yellow-600 dark:text-yellow-400 p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-md">
+                        <Info className="h-4 w-4" />
+                        <span>14-day free trial, then {plan.price}{plan.priceDetail}</span>
+                    </div>
+                )}
             </div>
 
             <div className="flex items-center justify-center gap-4 mb-6">
@@ -61,6 +76,7 @@ export default function CartSummary({ plan, billingCycle, onCycleChange }: CartS
                     id="billing-cycle"
                     checked={billingCycle === "yearly"}
                     onCheckedChange={(checked) => onCycleChange(checked ? 'yearly' : 'monthly')}
+                    disabled={plan.name === 'Starter'}
                 />
                 <Label htmlFor="billing-cycle" className={cn("font-medium", billingCycle === "yearly" ? "text-primary" : "text-muted-foreground")}>
                     Yearly <span className="text-accent text-xs">(Save 20%)</span>
