@@ -1,6 +1,5 @@
 
 import CheckoutPage from '@/components/checkout/checkout-page';
-import GridBackground from '@/components/landing/grid-background';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Lock } from 'lucide-react';
@@ -14,7 +13,6 @@ export const metadata = {
 export default function Checkout() {
     return (
         <div className="flex flex-col min-h-screen bg-background text-foreground overflow-x-hidden">
-            <GridBackground />
             <header className="absolute top-0 left-0 right-0 p-4 z-20">
                 <div className="container mx-auto flex justify-between items-center">
                     <Link href="/pricing" className="text-2xl font-bold text-primary">Savrii</Link>
