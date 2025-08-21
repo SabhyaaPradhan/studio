@@ -72,15 +72,7 @@ function parseSubscription(raw: any): Subscription | null {
 export function docToProfile(snap: DocumentSnapshot): UserProfile {
   const data = snap.data() as any || {};
 
-  const subscription =
-    parseSubscription(data.subscription) ||
-    parseSubscription({
-      plan: data.plan,
-      status: data.status,
-      trialStart: data.trialStart,
-      trialEnd: data.trialEnd,
-    }) ||
-    null;
+  const subscription = parseSubscription(data.subscription);
 
   return {
     uid: snap.id,
