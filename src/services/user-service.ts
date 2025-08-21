@@ -52,11 +52,11 @@ function parseSubscription(raw: any): Subscription | null {
   let trialDaysLeft: number | null = null;
   let isTrialExpired = false;
 
-  if (plan === "starter" && trialEnd) {
+  if (trialEnd) {
     const now = new Date();
     const msLeft = trialEnd.getTime() - now.getTime();
     trialDaysLeft = Math.max(0, Math.ceil(msLeft / (1000 * 60 * 60 * 24)));
-    isTrialExpired = msLeft <= 0 || status === "expired";
+    isTrialExpired = msLeft <= 0;
   }
 
   return {

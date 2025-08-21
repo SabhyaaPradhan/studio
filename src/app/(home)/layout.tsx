@@ -72,38 +72,19 @@ import { useTheme } from 'next-themes';
 import { Sun, Moon } from 'lucide-react';
 import AnimatedFooter from '@/components/common/animated-footer';
 import { motion, AnimatePresence } from 'framer-motion';
-import { listenToUser, UserProfile } from '@/services/user-service';
+import { listenToUser, UserProfile, Subscription } from '@/services/user-service';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { SimpleHeader } from '@/components/common/simple-header';
+import { UpgradeModal } from '@/components/common/upgrade-modal';
 
-type UserPlan = 'starter' | 'pro' | 'enterprise' | 'free';
+type UserPlan = 'starter' | 'pro' | 'enterprise';
 
 const hasPermission = (plan: UserPlan, requiredPlan: 'pro' | 'enterprise') => {
   if (plan === 'enterprise') return true;
   if (plan === 'pro' && requiredPlan === 'pro') return true;
   return false;
 };
-
-const UpgradeTooltip = ({ children }: { children: React.ReactNode }) => (
-  <TooltipProvider>
-    <Tooltip>
-      <TooltipTrigger asChild>{children}</TooltipTrigger>
-      <TooltipContent
-        side="right"
-        align="center"
-        className="bg-primary text-primary-foreground"
-      >
-        <div className="flex flex-col items-center gap-2 p-2">
-          <p className="font-semibold">Upgrade to unlock</p>
-          <Button size="sm" asChild>
-            <Link href="/billing">Upgrade Plan</Link>
-          </Button>
-        </div>
-      </TooltipContent>
-    </Tooltip>
-  </TooltipProvider>
-);
 
 const NavMenuItem = ({
   href,
@@ -112,6 +93,7 @@ const NavMenuItem = ({
   plan,
   requiredPlan,
   isDisabled = false,
+  onLockClick,
 }: {
   href?: string;
   icon: React.ElementType;
@@ -119,18 +101,18 @@ const NavMenuItem = ({
   plan?: UserPlan;
   requiredPlan?: 'pro' | 'enterprise';
   isDisabled?: boolean;
+  onLockClick: () => void;
 }) => {
   const pathname = usePathname();
   const Icon = icon;
   const isLocked = plan && requiredPlan ? !hasPermission(plan, requiredPlan) : false;
   const isEffectivelyDisabled = isDisabled || isLocked;
   const isActive = !!(href && pathname === href);
-  const router = useRouter();
 
   const handleClick = (e: React.MouseEvent) => {
     if (isLocked) {
       e.preventDefault();
-      router.push('/billing');
+      onLockClick();
     }
   };
 
@@ -140,8 +122,8 @@ const NavMenuItem = ({
       isActive={isActive}
       className={cn(isEffectivelyDisabled && 'cursor-not-allowed opacity-60')}
       tooltip={label}
-      disabled={isEffectivelyDisabled}
-      onClick={isLocked ? handleClick : undefined}
+      disabled={isDisabled}
+      onClick={handleClick}
     >
       <Icon className="h-5 w-5" />
       <span className="flex-1">{label}</span>
@@ -149,15 +131,7 @@ const NavMenuItem = ({
     </SidebarMenuButton>
   );
 
-  return (
-    <SidebarMenuItem>
-      {plan && isLocked ? (
-        <UpgradeTooltip>{itemContent}</UpgradeTooltip>
-      ) : (
-        itemContent
-      )}
-    </SidebarMenuItem>
-  );
+  return <SidebarMenuItem>{itemContent}</SidebarMenuItem>;
 };
 
 const NavMenuCollapsible = ({
@@ -165,6 +139,7 @@ const NavMenuCollapsible = ({
   label,
   plan,
   items,
+  onLockClick
 }: {
   icon: React.ElementType;
   label: string;
@@ -176,6 +151,7 @@ const NavMenuCollapsible = ({
     requiredPlan?: 'pro' | 'enterprise';
     isDisabled?: boolean;
   }[];
+  onLockClick: () => void;
 }) => {
   const Icon = icon;
   const { state } = useSidebar();
@@ -214,6 +190,7 @@ const NavMenuCollapsible = ({
                 plan={plan}
                 requiredPlan={item.requiredPlan}
                 isDisabled={item.isDisabled}
+                onLockClick={onLockClick}
               />
             ))}
           </SidebarMenuSub>
@@ -225,15 +202,16 @@ const NavMenuCollapsible = ({
 
 const FullLayout = ({
   user,
-  userProfile,
+  subscription,
   children,
 }: {
   user: any;
-  userProfile: UserProfile | null;
+  subscription: Subscription | null;
   children: React.ReactNode;
 }) => {
   const { theme, setTheme } = useTheme();
   const router = useRouter();
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -244,10 +222,11 @@ const FullLayout = ({
     setTheme(theme === 'light' ? 'dark' : 'light');
   };
 
-  const userPlan = userProfile?.plan as UserPlan | undefined;
+  const userPlan = subscription?.plan as UserPlan | undefined;
 
   return (
     <SidebarProvider>
+      {isUpgradeModalOpen && <UpgradeModal onOpenChange={setIsUpgradeModalOpen} />}
       <div className="flex min-h-screen flex-col bg-background">
         <header className="sticky top-0 z-10 flex h-20 items-center justify-between gap-4 border-b bg-background/80 px-4 backdrop-blur-sm">
           <div className="flex items-center gap-2">
@@ -289,17 +268,17 @@ const FullLayout = ({
                   <Avatar className="h-9 w-9">
                     <AvatarImage src={user?.photoURL || ''} />
                     <AvatarFallback>
-                      {userProfile?.first_name?.[0] || user?.email?.[0]}
+                      {user?.displayName?.[0] || user?.email?.[0]}
                     </AvatarFallback>
                   </Avatar>
                 </TooltipTrigger>
                 <TooltipContent align="end">
                   <div className="p-2">
                     <p className="font-semibold">
-                      {userProfile?.first_name} {userProfile?.last_name}
+                      {user?.displayName}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {userProfile?.email}
+                      {user?.email}
                     </p>
                     <Button
                       size="sm"
@@ -330,18 +309,21 @@ const FullLayout = ({
                   icon={LayoutDashboard}
                   label="Dashboard"
                   plan={userPlan}
+                  onLockClick={() => setIsUpgradeModalOpen(true)}
                 />
                 <NavMenuItem
                   href="/inbox"
                   icon={MessageCircle}
                   label="Inbox"
                   plan={userPlan}
+                  onLockClick={() => setIsUpgradeModalOpen(true)}
                 />
                 <NavMenuItem
                   href="/chat"
                   icon={Bot}
                   label="Chat / AI Assistant"
                   plan={userPlan}
+                  onLockClick={() => setIsUpgradeModalOpen(true)}
                 />
                 <NavMenuItem
                   href="/analytics"
@@ -349,18 +331,21 @@ const FullLayout = ({
                   label="Analytics"
                   plan={userPlan}
                   requiredPlan="pro"
+                  onLockClick={() => setIsUpgradeModalOpen(true)}
                 />
                 <NavMenuItem
                   href="/integrations"
                   icon={Zap}
                   label="Integrations"
                   plan={userPlan}
+                  onLockClick={() => setIsUpgradeModalOpen(true)}
                 />
 
                 <NavMenuCollapsible
                   icon={Wand2}
                   label="Pro Features"
                   plan={userPlan}
+                  onLockClick={() => setIsUpgradeModalOpen(true)}
                   items={[
                     {
                       href: '/prompts',
@@ -418,6 +403,7 @@ const FullLayout = ({
                   icon={Shield}
                   label="Enterprise"
                   plan={userPlan}
+                  onLockClick={() => setIsUpgradeModalOpen(true)}
                   items={[
                     {
                       href: '/real-time-analytics',
@@ -464,8 +450,8 @@ const FullLayout = ({
                   ]}
                 />
                  <Separator className="my-2" />
-                  <NavMenuItem href="/home" icon={Home} label="Home" plan={userPlan} />
-                  <NavMenuItem href="/billing" icon={CreditCard} label="Billing" plan={userPlan} />
+                  <NavMenuItem href="/home" icon={Home} label="Home" plan={userPlan} onLockClick={() => setIsUpgradeModalOpen(true)} />
+                  <NavMenuItem href="/billing" icon={CreditCard} label="Billing" plan={userPlan} onLockClick={() => setIsUpgradeModalOpen(true)} />
               </SidebarMenu>
             </SidebarContent>
             <SidebarFooter>
@@ -475,12 +461,14 @@ const FullLayout = ({
                   icon={Settings}
                   label="Settings"
                   plan={userPlan}
+                  onLockClick={() => setIsUpgradeModalOpen(true)}
                 />
                 <NavMenuItem
                   href="/support"
                   icon={HelpCircle}
                   label="Support"
                   plan={userPlan}
+                  onLockClick={() => setIsUpgradeModalOpen(true)}
                 />
               </SidebarMenu>
             </SidebarFooter>
@@ -558,7 +546,7 @@ export default function AuthenticatedLayout({
   }
 
   return (
-    <FullLayout user={user} userProfile={userProfile}>
+    <FullLayout user={user} subscription={userProfile?.subscription ?? null}>
       {children}
     </FullLayout>
   );

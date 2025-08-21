@@ -11,29 +11,44 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import { AlertTriangle } from "lucide-react";
+import { Lock } from "lucide-react";
 
-export function UpgradeModal() {
+interface UpgradeModalProps {
+    onOpenChange: (open: boolean) => void;
+}
+
+export function UpgradeModal({ onOpenChange }: UpgradeModalProps) {
   const router = useRouter();
 
+  const handleUpgrade = () => {
+    onOpenChange(false);
+    router.push('/billing');
+  }
+
   return (
-    <AlertDialog open={true}>
+    <AlertDialog open={true} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/20 mb-4">
-            <AlertTriangle className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-4">
+            <Lock className="h-6 w-6 text-primary" />
           </div>
-          <AlertDialogTitle className="text-center">Your Free Trial Has Ended</AlertDialogTitle>
+          <AlertDialogTitle className="text-center">Upgrade Required</AlertDialogTitle>
           <AlertDialogDescription className="text-center">
-            Your 14-day free trial is over. Please upgrade to a Pro plan to continue using all features.
+            This feature is available on a higher-tier plan. Please upgrade your subscription to unlock it.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter className="sm:justify-center">
+        <AlertDialogFooter className="sm:justify-center flex-row gap-2 pt-2">
+           <Button
+            variant="ghost"
+            onClick={() => onOpenChange(false)}
+          >
+            Cancel
+          </Button>
           <Button
             variant="default"
-            onClick={() => router.push('/pricing')}
+            onClick={handleUpgrade}
           >
-            Upgrade to Pro
+            View Plans
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
