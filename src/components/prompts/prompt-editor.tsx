@@ -56,7 +56,7 @@ export function PromptEditor({ isOpen, onOpenChange }: PromptEditorProps) {
                                 <div>
                                     <h4 className="font-medium mb-2">Variables</h4>
                                     <div className="p-3 bg-secondary rounded-lg text-center text-sm text-muted-foreground">
-                                        Variables like `{{variable_name}}` will appear here.
+                                        Variables like {'{{variable_name}}'} will appear here.
                                     </div>
                                 </div>
                            </div>
