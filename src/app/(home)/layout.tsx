@@ -107,7 +107,7 @@ const NavMenuItem = ({
   const Icon = icon;
   const isLocked = plan && requiredPlan ? !hasPermission(plan, requiredPlan) : false;
   const isEffectivelyDisabled = isDisabled || isLocked;
-  const isActive = !!(href && pathname === href);
+  const isActive = !!(href && pathname.startsWith(href));
 
   const handleClick = (e: React.MouseEvent) => {
     if (isLocked) {
@@ -340,6 +340,14 @@ const FullLayout = ({
                   plan={userPlan}
                   onLockClick={() => setIsUpgradeModalOpen(true)}
                 />
+                <NavMenuItem
+                  href="/prompts"
+                  icon={FileText}
+                  label="Custom Prompts"
+                  plan={userPlan}
+                  requiredPlan="pro"
+                  onLockClick={() => setIsUpgradeModalOpen(true)}
+                />
 
                 <NavMenuCollapsible
                   icon={Wand2}
@@ -347,13 +355,6 @@ const FullLayout = ({
                   plan={userPlan}
                   onLockClick={() => setIsUpgradeModalOpen(true)}
                   items={[
-                    {
-                      href: '/prompts',
-                      label: 'Custom Prompts',
-                      icon: Wand2,
-                      requiredPlan: 'pro',
-                      isDisabled: true,
-                    },
                     {
                       href: '/brand-voice',
                       label: 'Brand Voice',
@@ -532,8 +533,8 @@ export default function AuthenticatedLayout({
     return null;
   }
   
-  const simpleLayoutPages = ['/home', '/billing', '/settings', '/support'];
-  const useSimpleLayout = simpleLayoutPages.includes(pathname);
+  const simpleLayoutPages = ['/home', '/billing', '/settings', '/support', '/prompts'];
+  const useSimpleLayout = simpleLayoutPages.some(p => pathname.startsWith(p));
 
   if (useSimpleLayout) {
     return (
