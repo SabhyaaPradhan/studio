@@ -38,10 +38,14 @@ export default function HomePage() {
 
     const getTrialDaysLeft = () => {
         if (subLoading) return "...";
-        if (subscription?.status !== 'trialing' || subscription.trialDaysLeft === null) return "N/A";
-        if (subscription.isTrialExpired) return "Expired";
+        if (subscription?.status !== 'trialing' || !subscription.trialEnd) return "N/A";
         
-        const daysLeft = subscription.trialDaysLeft;
+        const now = new Date();
+        const endDate = new Date(subscription.trialEnd);
+        if(endDate < now) return "Expired";
+        
+        const diffTime = Math.abs(endDate.getTime() - now.getTime());
+        const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         return `${daysLeft} day${daysLeft !== 1 ? 's' : ''}`;
     }
 
@@ -58,7 +62,7 @@ export default function HomePage() {
             title: "Plan", 
             value: subLoading ? "..." : (subscription?.plan ?? 'Starter'), 
             icon: DollarSign, 
-            change: "Upgrade to Pro", 
+            change: subscription?.plan === 'starter' ? "Upgrade to Pro" : "You're on the best plan!", 
             link: "/billing", 
             linkText: "Upgrade" 
         },
