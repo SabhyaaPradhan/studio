@@ -366,7 +366,6 @@ const FullLayout = ({
                       label: 'Prompt Library',
                       icon: BookOpen,
                       requiredPlan: 'pro',
-                      isDisabled: true,
                     },
                     {
                       href: '/daily-summary',
@@ -532,7 +531,7 @@ export default function AuthenticatedLayout({
     return null;
   }
   
-  const simpleLayoutPages = ['/home', '/billing', '/settings', '/support', '/prompts', '/brand-voice'];
+  const simpleLayoutPages = ['/home', '/billing', '/settings', '/support', '/prompts', '/brand-voice', '/prompt-library'];
   const useSimpleLayout = simpleLayoutPages.some(p => pathname.startsWith(p));
 
   if (useSimpleLayout) {
