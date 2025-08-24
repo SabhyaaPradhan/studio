@@ -30,30 +30,40 @@ export default function DailySummaryPage() {
     const isPro = subscription?.plan === 'pro' || subscription?.plan === 'enterprise';
 
     useEffect(() => {
+        if (isSubLoading) {
+            return; // Wait for subscription info to be loaded
+        }
+        
         if (user && isPro) {
             setIsLoading(true);
             const daysToFetch = subscription?.plan === 'enterprise' ? 30 : 7;
             
             const unsubDaily = listenToAnalyticsDaily(user.uid, daysToFetch, (data) => {
                 setDailyData(data);
-                if(isLoading) setIsLoading(false);
-            }, console.error);
+                setIsLoading(false);
+            }, (error) => {
+                console.error(error);
+                setIsLoading(false);
+            });
 
             const unsubRealtime = listenToAnalyticsRealtime(user.uid, (data) => {
                 setRealtimeData(data);
-                 if(isLoading) setIsLoading(false);
-            }, console.error);
+                 setIsLoading(false);
+            }, (error) => {
+                console.error(error);
+                setIsLoading(false);
+            });
 
             return () => {
                 unsubDaily();
                 unsubRealtime();
             };
-        } else if (!isSubLoading) {
+        } else {
             setIsLoading(false);
         }
-    }, [user, isPro, isSubLoading, isLoading]);
+    }, [user, isPro, isSubLoading]);
 
-    if (isSubLoading) {
+    if (isSubLoading || (isLoading && isPro)) {
          return (
             <div className="flex h-full w-full items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
