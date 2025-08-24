@@ -360,7 +360,6 @@ const FullLayout = ({
                       label: 'Brand Voice',
                       icon: Palette,
                       requiredPlan: 'pro',
-                      isDisabled: true,
                     },
                     {
                       href: '/prompt-library',
@@ -533,7 +532,7 @@ export default function AuthenticatedLayout({
     return null;
   }
   
-  const simpleLayoutPages = ['/home', '/billing', '/settings', '/support', '/prompts'];
+  const simpleLayoutPages = ['/home', '/billing', '/settings', '/support', '/prompts', '/brand-voice'];
   const useSimpleLayout = simpleLayoutPages.some(p => pathname.startsWith(p));
 
   if (useSimpleLayout) {
