@@ -380,7 +380,6 @@ const FullLayout = ({
                       label: 'Collaboration',
                       icon: Users,
                       requiredPlan: 'pro',
-                      isDisabled: true,
                     },
                     {
                       href: '/lead-capture',
@@ -532,7 +531,7 @@ export default function AuthenticatedLayout({
     return null;
   }
   
-  const simpleLayoutPages = ['/home', '/billing', '/settings', '/support', '/prompts', '/brand-voice', '/prompt-library', '/daily-summary'];
+  const simpleLayoutPages = ['/home', '/billing', '/settings', '/support', '/prompts', '/brand-voice', '/prompt-library', '/daily-summary', '/collaboration'];
   const useSimpleLayout = simpleLayoutPages.some(p => pathname.startsWith(p));
 
   if (useSimpleLayout) {
