@@ -4,22 +4,32 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell, Legend } from 'recharts';
+import type { DailyAnalytics } from '@/services/firestore-service';
+import { format } from 'date-fns';
 
-// Placeholder data
-const messagesData = [
-  { date: 'Mon', count: 32 }, { date: 'Tue', count: 45 }, { date: 'Wed', count: 28 },
-  { date: 'Thu', count: 55 }, { date: 'Fri', count: 62 }, { date: 'Sat', count: 75 },
-  { date: 'Sun', count: 88 },
-];
+interface ChartsCardProps {
+    dailyData: DailyAnalytics[];
+}
 
-const categoryData = [
-  { name: 'Support', value: 400, fill: 'hsl(var(--chart-1))' },
-  { name: 'Sales', value: 300, fill: 'hsl(var(--chart-2))' },
-  { name: "Marketing", value: 200, fill: "hsl(var(--chart-3))" },
-  { name: 'Other', value: 100, fill: 'hsl(var(--chart-4))' },
-];
+export function ChartsCard({ dailyData }: ChartsCardProps) {
+    const messagesData = dailyData.map(d => ({
+        date: format(new Date(d.date), 'MMM d'),
+        count: d.assistant_messages || 0,
+    })).reverse();
 
-export function ChartsCard() {
+    const categoryData = Object.entries(
+        dailyData.reduce((acc, day) => {
+            Object.entries(day.by_category || {}).forEach(([cat, count]) => {
+                acc[cat] = (acc[cat] || 0) + count;
+            });
+            return acc;
+        }, {} as Record<string, number>)
+    ).map(([name, value], index) => ({
+        name,
+        value,
+        fill: `hsl(var(--chart-${(index % 5) + 1}))`
+    }));
+
     return (
         <Card>
             <CardHeader>
@@ -29,7 +39,7 @@ export function ChartsCard() {
             <CardContent className="h-[300px]">
               <div className="grid gap-6 md:grid-cols-2 h-full">
                 <div>
-                    <h3 className="text-sm font-medium mb-2 text-center">Messages Sent (Last 7 Days)</h3>
+                    <h3 className="text-sm font-medium mb-2 text-center">AI Messages Sent</h3>
                     <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={messagesData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                              <defs>
@@ -39,8 +49,8 @@ export function ChartsCard() {
                                 </linearGradient>
                             </defs>
                             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                            <XAxis dataKey="date" tick={{ fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} />
-                            <YAxis tick={{ fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} />
+                            <XAxis dataKey="date" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} tickLine={false} axisLine={false} />
+                            <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} tickLine={false} axisLine={false} />
                             <Tooltip
                                 contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}
                                 itemStyle={{ color: 'hsl(var(--primary))' }}
@@ -54,10 +64,10 @@ export function ChartsCard() {
                     <ResponsiveContainer width="100%" height="100%">
                          <PieChart>
                             <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }} />
-                            <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={2}>
+                            <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="40%" innerRadius={50} outerRadius={80} paddingAngle={2}>
                                 {categoryData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.fill} />)}
                             </Pie>
-                            <Legend iconType="circle" />
+                            <Legend wrapperStyle={{top: "85%"}} iconType="circle" />
                         </PieChart>
                     </ResponsiveContainer>
                 </div>

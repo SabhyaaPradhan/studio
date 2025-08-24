@@ -1,11 +1,11 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar as CalendarIcon, FileText } from 'lucide-react';
+import { Calendar as CalendarIcon, FileText, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { KpiCard, KpiCardSkeleton } from '@/components/daily-summary/kpi-card';
@@ -15,16 +15,43 @@ import { ChartsCard, ChartsCardSkeleton } from '@/components/daily-summary/chart
 import { useAuthContext } from '@/context/auth-context';
 import { useSubscription } from '@/hooks/use-subscription';
 import { UpgradeModal } from '@/components/common/upgrade-modal';
-import { Loader2 } from 'lucide-react';
+import { listenToAnalyticsDaily, DailyAnalytics, listenToAnalyticsRealtime, RealtimeAnalytics } from '@/services/firestore-service';
 
 export default function DailySummaryPage() {
     const { user } = useAuthContext();
     const { subscription, isLoading: isSubLoading } = useSubscription();
     const [date, setDate] = useState<Date | undefined>(new Date());
-    const [isLoading, setIsLoading] = useState(false); // For data fetching
+    const [isLoading, setIsLoading] = useState(true);
     const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
     
+    const [dailyData, setDailyData] = useState<DailyAnalytics[]>([]);
+    const [realtimeData, setRealtimeData] = useState<RealtimeAnalytics | null>(null);
+
     const isPro = subscription?.plan === 'pro' || subscription?.plan === 'enterprise';
+
+    useEffect(() => {
+        if (user && isPro) {
+            setIsLoading(true);
+            const daysToFetch = subscription?.plan === 'enterprise' ? 30 : 7;
+            
+            const unsubDaily = listenToAnalyticsDaily(user.uid, daysToFetch, (data) => {
+                setDailyData(data);
+                if(isLoading) setIsLoading(false);
+            }, console.error);
+
+            const unsubRealtime = listenToAnalyticsRealtime(user.uid, (data) => {
+                setRealtimeData(data);
+                 if(isLoading) setIsLoading(false);
+            }, console.error);
+
+            return () => {
+                unsubDaily();
+                unsubRealtime();
+            };
+        } else if (!isSubLoading) {
+            setIsLoading(false);
+        }
+    }, [user, isPro, isSubLoading, isLoading]);
 
     if (isSubLoading) {
          return (
@@ -44,6 +71,8 @@ export default function DailySummaryPage() {
             </div>
         )
     }
+
+    const selectedDayData = dailyData.find(d => d.id === format(date || new Date(), 'yyyy-MM-dd'));
 
     return (
         <div className="flex-1 space-y-8 p-4 pt-6 md:p-8">
@@ -75,6 +104,7 @@ export default function DailySummaryPage() {
                         selected={date}
                         onSelect={setDate}
                         initialFocus
+                        disabled={(d) => d > new Date() || d < new Date(new Date().setDate(new Date().getDate() - 30))}
                     />
                     </PopoverContent>
                 </Popover>
@@ -82,15 +112,15 @@ export default function DailySummaryPage() {
 
             <main className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 <section className="lg:col-span-3 grid gap-6 sm:grid-cols-2 md:grid-cols-4">
-                    {isLoading ? <KpiCardSkeleton /> : <KpiCard title="Messages Sent" value="152" trend="+5%" />}
-                    {isLoading ? <KpiCardSkeleton /> : <KpiCard title="Prompts Used" value="28" trend="-2%" />}
-                    {isLoading ? <KpiCardSkeleton /> : <KpiCard title="Team Members Active" value="3" trend="+1" />}
-                    {isLoading ? <KpiCardSkeleton /> : <KpiCard title="Reports Exported" value="1" trend="0%" />}
+                    {isLoading ? <KpiCardSkeleton /> : <KpiCard title="Messages Sent" value={(selectedDayData?.total_messages ?? 0).toLocaleString()} trend="+0%" />}
+                    {isLoading ? <KpiCardSkeleton /> : <KpiCard title="Prompts Used" value={(selectedDayData?.assistant_messages ?? 0).toLocaleString()} trend="+0%" />}
+                    {isLoading ? <KpiCardSkeleton /> : <KpiCard title="Avg. Latency" value={`${(selectedDayData?.avg_latency_ms ?? 0).toFixed(0)}ms`} trend="-0%" />}
+                    {isLoading ? <KpiCardSkeleton /> : <KpiCard title="Total Tokens" value={(selectedDayData?.total_tokens ?? 0).toLocaleString()} trend="+0%" />}
                 </section>
                 
                 <section className="lg:col-span-2 space-y-6">
-                    {isLoading ? <AiSummaryCardSkeleton /> : <AiSummaryCard />}
-                    {isLoading ? <ChartsCardSkeleton /> : <ChartsCard />}
+                    {isLoading ? <AiSummaryCardSkeleton /> : <AiSummaryCard summaryData={selectedDayData} />}
+                    {isLoading ? <ChartsCardSkeleton /> : <ChartsCard dailyData={dailyData} />}
                 </section>
                 
                 <aside className="lg:col-span-1">
