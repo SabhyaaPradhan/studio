@@ -103,9 +103,9 @@ function ChatPageContent() {
                 const promptFromUrl = searchParams.get('prompt');
                 if (promptFromUrl && !promptHandled.current) {
                     const decodedPrompt = decodeURIComponent(promptFromUrl);
-                    handleSendMessage(decodedPrompt);
+                    setMessage(decodedPrompt); // Populate the textarea instead of sending
                     promptHandled.current = true; // Ensure it only runs once
-                    router.replace('/chat'); // Clean the URL
+                    router.replace('/chat', { scroll: false }); // Clean the URL without scrolling
                 }
             },
             (error) => {
