@@ -2,7 +2,8 @@
 
 'use client';
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
+import { useSearchParams, useRouter }from "next/navigation";
 import { useAuthContext } from "@/context/auth-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,14 +24,18 @@ import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { listenToChatMessages, ChatMessage, writeChatMessageEvent } from "@/services/firestore-service";
 
-export default function ChatPage() {
+function ChatPageContent() {
   const { user } = useAuthContext();
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const promptHandled = useRef(false);
 
   const scrollToBottom = () => {
     if (scrollAreaRef.current) {
@@ -38,49 +43,27 @@ export default function ChatPage() {
     }
   };
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, isSending]);
-
-  useEffect(() => {
-    if (user) {
-        setIsLoadingHistory(true);
-        const unsubscribe = listenToChatMessages(
-            user.uid, 
-            (loadedMessages) => {
-                setMessages(loadedMessages);
-                setIsLoadingHistory(false);
-            },
-            (error) => {
-                console.error("Failed to load messages:", error);
-                toast({ title: "Error", description: "Could not load chat history.", variant: "destructive"});
-                setIsLoadingHistory(false);
-            }
-        );
-
-        return () => unsubscribe();
-    }
-  }, [user, toast]);
-
-  const handleSendMessage = async () => {
-    if (!message.trim() || !user) return;
+  const handleSendMessage = async (initialMessage?: string) => {
+    const messageToSend = initialMessage || message;
+    if (!messageToSend.trim() || !user) return;
     
-    const userMessageContent = message;
-    setMessage("");
+    if (!initialMessage) {
+        setMessage("");
+    }
     setIsSending(true);
 
     try {
         const userMessage: Omit<ChatMessage, 'id' | 'createdAt'> = {
             role: 'user',
-            content: userMessageContent,
-            tokens: userMessageContent.split(' ').length, // Approximate tokens
+            content: messageToSend,
+            tokens: messageToSend.split(' ').length, // Approximate tokens
         };
         
         await writeChatMessageEvent(user.uid, userMessage);
 
         const history = messages.map(m => ({ role: m.role, content: m.content })) || [];
 
-        const aiResult = await generateChatResponse({ message: userMessageContent, history });
+        const aiResult = await generateChatResponse({ message: messageToSend, history });
 
         const aiMessage: Omit<ChatMessage, 'id' | 'createdAt'> = {
             role: 'model',
@@ -103,6 +86,39 @@ export default function ChatPage() {
         setIsSending(false);
     }
   };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isSending]);
+
+  useEffect(() => {
+    if (user) {
+        setIsLoadingHistory(true);
+        const unsubscribe = listenToChatMessages(
+            user.uid, 
+            (loadedMessages) => {
+                setMessages(loadedMessages);
+                setIsLoadingHistory(false);
+                
+                const promptFromUrl = searchParams.get('prompt');
+                if (promptFromUrl && !promptHandled.current) {
+                    const decodedPrompt = decodeURIComponent(promptFromUrl);
+                    handleSendMessage(decodedPrompt);
+                    promptHandled.current = true; // Ensure it only runs once
+                    router.replace('/chat'); // Clean the URL
+                }
+            },
+            (error) => {
+                console.error("Failed to load messages:", error);
+                toast({ title: "Error", description: "Could not load chat history.", variant: "destructive"});
+                setIsLoadingHistory(false);
+            }
+        );
+
+        return () => unsubscribe();
+    }
+  }, [user, toast, searchParams, router]);
+
 
   const copyToClipboard = (content: string) => {
     navigator.clipboard.writeText(content);
@@ -213,7 +229,7 @@ export default function ChatPage() {
                             />
                             <Button 
                                 size="icon"
-                                onClick={handleSendMessage} 
+                                onClick={() => handleSendMessage()} 
                                 className="absolute right-3 top-1/2 -translate-y-1/2 h-8 w-8"
                                 disabled={isSending || !message.trim()}
                             >
@@ -238,3 +254,11 @@ const Avatar = ({ Icon, isUser = false }: { Icon: React.ElementType, isUser?: bo
         <Icon className="w-5 h-5" />
     </div>
 )
+
+export default function ChatPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <ChatPageContent />
+        </Suspense>
+    )
+}
