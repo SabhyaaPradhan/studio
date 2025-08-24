@@ -28,6 +28,7 @@ import {
   CreditCard,
   Settings,
   HelpCircle,
+  LayoutDashboard
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTheme } from 'next-themes';
@@ -85,7 +86,7 @@ export function SimpleHeader({ user, userProfile }: SimpleHeaderProps) {
           isMobile
             ? 'flex items-center gap-4 p-2 rounded-md text-lg'
             : 'text-sm font-medium',
-          pathname === href
+          pathname.startsWith(href)
             ? 'text-primary'
             : 'text-muted-foreground'
         )}
@@ -104,12 +105,18 @@ export function SimpleHeader({ user, userProfile }: SimpleHeaderProps) {
 
   return (
     <header className="sticky top-0 z-10 flex h-20 items-center justify-between gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
-      <Link
-        href="/home"
-        className="flex items-center gap-2 text-lg font-semibold text-primary"
-      >
-        <span>Savrii</span>
-      </Link>
+      <div className='flex items-center gap-6'>
+        <Link
+          href="/home"
+          className="flex items-center gap-2 text-lg font-semibold text-primary"
+        >
+          <span>Savrii</span>
+        </Link>
+        <Link href="/dashboard" className='hidden md:flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors'>
+          <LayoutDashboard className='h-4 w-4 mr-2' />
+          Dashboard
+        </Link>
+      </div>
 
       <nav className="hidden items-center gap-6 md:flex">
         {navItems.map((item) => (
@@ -187,6 +194,12 @@ export function SimpleHeader({ user, userProfile }: SimpleHeaderProps) {
                 <SheetTitle>Menu</SheetTitle>
               </SheetHeader>
               <nav className="mt-8 flex flex-col gap-4">
+                <SheetClose asChild>
+                  <Link href="/dashboard" className="flex items-center gap-4 p-2 rounded-md text-lg text-muted-foreground hover:text-primary">
+                    <LayoutDashboard className='h-5 w-5' />
+                    Dashboard
+                  </Link>
+                </SheetClose>
                 {navItems.map((item) => (
                   <NavLink
                     key={item.href}

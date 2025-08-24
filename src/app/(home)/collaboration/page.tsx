@@ -10,6 +10,7 @@ import { UpgradePlaceholder } from '@/components/collaboration/upgrade-placehold
 import { MemberList } from '@/components/collaboration/member-list';
 import { SharedPromptsList } from '@/components/collaboration/shared-prompts-list';
 import { InvitationsList } from '@/components/collaboration/invitations-list';
+import { Loader2 } from 'lucide-react';
 
 export default function CollaborationPage() {
     const { subscription, isLoading } = useSubscription();
@@ -17,8 +18,11 @@ export default function CollaborationPage() {
     const canCollaborate = subscription?.plan === 'pro' || subscription?.plan === 'enterprise';
 
     if (isLoading) {
-        // You might want a skeleton loader here
-        return <div>Loading...</div>;
+        return (
+             <div className="flex h-full w-full items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        );
     }
     
     if (!canCollaborate) {
