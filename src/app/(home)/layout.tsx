@@ -72,11 +72,13 @@ import { useTheme } from 'next-themes';
 import { Sun, Moon } from 'lucide-react';
 import AnimatedFooter from '@/components/common/animated-footer';
 import { motion, AnimatePresence } from 'framer-motion';
-import { listenToUser, UserProfile, Subscription } from '@/services/user-service';
+import { listenToUser, UserProfile } from '@/services/user-service';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { SimpleHeader } from '@/components/common/simple-header';
 import { UpgradeModal } from '@/components/common/upgrade-modal';
+import type { Subscription } from '@/services/user-service';
+
 
 type UserPlan = 'starter' | 'pro' | 'enterprise';
 
@@ -372,7 +374,6 @@ const FullLayout = ({
                       label: 'Daily Summary',
                       icon: FileText,
                       requiredPlan: 'pro',
-                      isDisabled: true,
                     },
                     {
                       href: '/collaboration',
@@ -531,7 +532,7 @@ export default function AuthenticatedLayout({
     return null;
   }
   
-  const simpleLayoutPages = ['/home', '/billing', '/settings', '/support', '/prompts', '/brand-voice', '/prompt-library'];
+  const simpleLayoutPages = ['/home', '/billing', '/settings', '/support', '/prompts', '/brand-voice', '/prompt-library', '/daily-summary'];
   const useSimpleLayout = simpleLayoutPages.some(p => pathname.startsWith(p));
 
   if (useSimpleLayout) {
