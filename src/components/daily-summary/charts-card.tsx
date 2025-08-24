@@ -15,7 +15,7 @@ const messagesData = [
 const categoryData = [
   { name: 'Support', value: 400, fill: 'hsl(var(--chart-1))' },
   { name: 'Sales', value: 300, fill: 'hsl(var(--chart-2))' },
-  { name: 'Marketing', value: 200, fill: 'hsl(var(--chart-3))' },
+  { name: "Marketing", value: 200, fill: "hsl(var(--chart-3))" },
   { name: 'Other', value: 100, fill: 'hsl(var(--chart-4))' },
 ];
 
@@ -26,7 +26,8 @@ export function ChartsCard() {
                 <CardTitle>Analytics</CardTitle>
                 <CardDescription>Visual breakdown of messages and prompt usage.</CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-6 md:grid-cols-2 h-[300px]">
+            <CardContent className="h-[300px]">
+              <div className="grid gap-6 md:grid-cols-2 h-full">
                 <div>
                     <h3 className="text-sm font-medium mb-2 text-center">Messages Sent (Last 7 Days)</h3>
                     <ResponsiveContainer width="100%" height="100%">
@@ -60,6 +61,7 @@ export function ChartsCard() {
                         </PieChart>
                     </ResponsiveContainer>
                 </div>
+              </div>
             </CardContent>
         </Card>
     );
