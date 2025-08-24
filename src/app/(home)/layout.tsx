@@ -403,13 +403,6 @@ const FullLayout = ({
                   onLockClick={() => setIsUpgradeModalOpen(true)}
                   items={[
                     {
-                      href: '/real-time-analytics',
-                      label: 'Real-Time Analytics',
-                      icon: TrendingUp,
-                      requiredPlan: 'enterprise',
-                      isDisabled: true,
-                    },
-                    {
                       href: '/workflow-builder',
                       label: 'Workflow Builder',
                       icon: Workflow,
