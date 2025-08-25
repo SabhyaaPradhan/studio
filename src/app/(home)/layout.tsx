@@ -345,7 +345,7 @@ const FullLayout = ({
                 <NavMenuItem
                   href="/prompts"
                   icon={FileText}
-                  label="Custom Prompts"
+                  label="Groups / Prompts"
                   plan={userPlan}
                   requiredPlan="pro"
                   onLockClick={() => setIsUpgradeModalOpen(true)}

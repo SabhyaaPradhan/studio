@@ -10,10 +10,9 @@ import {
   useSidebar
 } from '@/components/ui/sidebar';
 import {
-  FileText,
+  Hash,
   Star,
-  User,
-  Share2,
+  PlusCircle,
   Archive,
   Folder,
   Tag
@@ -27,18 +26,12 @@ export function PromptSidebar() {
     <aside className="hidden md:flex flex-col w-64 border-r p-4 bg-background">
         <nav className="flex flex-col gap-1">
             <Button variant="ghost" className="justify-start gap-2 text-md">
-                <FileText className="h-5 w-5" /> All Prompts
+                <Hash className="h-5 w-5" /> All Groups
             </Button>
             <Button variant="ghost" className="justify-start gap-2 text-md">
                 <Star className="h-5 w-5" /> Favorites
             </Button>
-            <Button variant="ghost" className="justify-start gap-2 text-md">
-                <User className="h-5 w-5" /> My Prompts
-            </Button>
-            <Button variant="ghost" className="justify-start gap-2 text-md">
-                <Share2 className="h-5 w-5" /> Shared with Me
-            </Button>
-            <Button variant="ghost" className="justify-start gap-2 text-md">
+             <Button variant="ghost" className="justify-start gap-2 text-md">
                 <Archive className="h-5 w-5" /> Archived
             </Button>
         </nav>
@@ -47,17 +40,17 @@ export function PromptSidebar() {
         
         <div className="flex-1 space-y-6">
             <div>
-                <h3 className="text-sm font-semibold text-muted-foreground px-2 mb-2 flex items-center gap-2"><Folder className="h-4 w-4" /> Folders</h3>
-                <div className="text-center text-xs text-muted-foreground py-4">No folders created yet.</div>
+                <h3 className="text-sm font-semibold text-muted-foreground px-2 mb-2 flex items-center gap-2"><Hash className="h-4 w-4" /> Groups</h3>
+                <div className="flex flex-col gap-1">
+                    <Button variant="secondary" className="justify-start gap-2">#general</Button>
+                    <Button variant="ghost" className="justify-start gap-2">#support-requests</Button>
+                    <Button variant="ghost" className="justify-start gap-2">#marketing-campaign</Button>
+                </div>
             </div>
              <div>
-                <h3 className="text-sm font-semibold text-muted-foreground px-2 mb-2 flex items-center gap-2"><Tag className="h-4 w-4" /> Tags</h3>
-                 <div className="flex flex-wrap gap-2">
-                    <Badge variant="secondary">Onboarding</Badge>
-                    <Badge variant="secondary">Support</Badge>
-                    <Badge variant="secondary">Finance</Badge>
-                    <Badge variant="secondary">Product</Badge>
-                 </div>
+                 <Button variant="link" className="text-muted-foreground justify-start gap-2 pl-2">
+                    <PlusCircle className="h-4 w-4" /> Add Group
+                 </Button>
             </div>
         </div>
     </aside>

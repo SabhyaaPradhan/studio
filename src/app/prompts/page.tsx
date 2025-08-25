@@ -16,20 +16,14 @@ export default function PromptsPage() {
         <div className="h-full w-full flex flex-col">
             {/* Top Bar */}
             <header className="flex-shrink-0 flex items-center justify-between p-4 border-b bg-background">
-                <h1 className="text-2xl font-bold tracking-tight">Custom Prompts</h1>
+                <h1 className="text-2xl font-bold tracking-tight">Groups & Prompts</h1>
                 <div className="flex items-center gap-2">
                     <div className="relative w-64">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input placeholder="Search prompts..." className="pl-10" />
+                        <Input placeholder="Search groups..." className="pl-10" />
                     </div>
-                    <Button variant="outline" className="hidden sm:inline-flex">
-                        <Import className="mr-2 h-4 w-4" /> Import
-                    </Button>
-                    <Button variant="outline" className="hidden sm:inline-flex">
-                        <FileQuestion className="mr-2 h-4 w-4" /> Help
-                    </Button>
                     <Button onClick={() => setIsEditorOpen(true)}>
-                        <PlusCircle className="mr-2 h-4 w-4" /> New Prompt
+                        <PlusCircle className="mr-2 h-4 w-4" /> New Group
                     </Button>
                 </div>
             </header>
