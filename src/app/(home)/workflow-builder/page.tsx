@@ -11,8 +11,6 @@ export default function WorkflowBuilderPage() {
     const { subscription, isLoading } = useSubscription();
     const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
-    const canAccess = subscription?.plan === 'enterprise';
-
     if (isLoading) {
         return (
             <div className="flex h-full w-full items-center justify-center">
@@ -20,6 +18,8 @@ export default function WorkflowBuilderPage() {
             </div>
         );
     }
+
+    const canAccess = subscription?.plan === 'enterprise';
 
     if (!canAccess) {
         return (
