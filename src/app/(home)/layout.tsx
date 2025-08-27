@@ -47,6 +47,7 @@ import {
   BarChart3,
   Zap,
   Paintbrush,
+  Terminal,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -409,9 +410,9 @@ const FullLayout = ({
                       requiredPlan: 'enterprise',
                     },
                     {
-                      href: '/custom-model',
-                      label: 'Custom AI Model',
-                      icon: Upload,
+                      href: '/ai-console',
+                      label: 'AI Console',
+                      icon: Terminal,
                       requiredPlan: 'enterprise',
                       isDisabled: true,
                     },
