@@ -414,7 +414,6 @@ const FullLayout = ({
                       label: 'AI Console',
                       icon: Terminal,
                       requiredPlan: 'enterprise',
-                      isDisabled: true,
                     },
                     {
                       href: '/security',
@@ -522,7 +521,7 @@ export default function AuthenticatedLayout({
     return null;
   }
   
-  const simpleLayoutPages = ['/home', '/billing', '/settings', '/support', '/prompts', '/brand-voice', '/prompt-library', '/daily-summary', '/collaboration', '/lead-capture', '/export-data', '/workflow-builder'];
+  const simpleLayoutPages = ['/home', '/billing', '/settings', '/support', '/prompts', '/brand-voice', '/prompt-library', '/daily-summary', '/collaboration', '/lead-capture', '/export-data', '/workflow-builder', '/ai-console'];
   const useSimpleLayout = simpleLayoutPages.some(p => pathname.startsWith(p));
 
   if (useSimpleLayout) {
