@@ -420,7 +420,6 @@ const FullLayout = ({
                       label: 'White-label',
                       icon: Paintbrush,
                       requiredPlan: 'enterprise',
-                      isDisabled: true,
                     },
                     {
                       href: '/webhooks',
@@ -514,7 +513,7 @@ export default function AuthenticatedLayout({
     return null;
   }
   
-  const simpleLayoutPages = ['/home', '/billing', '/settings', '/support', '/prompts', '/brand-voice', '/prompt-library', '/daily-summary', '/collaboration', '/lead-capture', '/export-data', '/workflow-builder', '/ai-console'];
+  const simpleLayoutPages = ['/home', '/billing', '/settings', '/support', '/prompts', '/brand-voice', '/prompt-library', '/daily-summary', '/collaboration', '/lead-capture', '/export-data', '/workflow-builder', '/ai-console', '/white-label'];
   const useSimpleLayout = simpleLayoutPages.some(p => pathname.startsWith(p));
 
   if (useSimpleLayout) {
