@@ -416,13 +416,6 @@ const FullLayout = ({
                       requiredPlan: 'enterprise',
                     },
                     {
-                      href: '/security',
-                      label: 'Security',
-                      icon: Shield,
-                      requiredPlan: 'enterprise',
-                      isDisabled: true,
-                    },
-                    {
                       href: '/white-label',
                       label: 'White-label',
                       icon: Paintbrush,
