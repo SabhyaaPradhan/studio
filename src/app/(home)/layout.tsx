@@ -345,7 +345,7 @@ const FullLayout = ({
                 />
                 <NavMenuItem
                   href="/prompts"
-                  icon={FileText}
+                  icon={Users}
                   label="Groups / Prompts"
                   plan={userPlan}
                   requiredPlan="pro"

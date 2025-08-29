@@ -149,6 +149,27 @@ export interface Integration {
 }
 
 
+export interface GroupMember {
+    uid: string;
+    name: string;
+    email: string;
+    role: 'owner' | 'member';
+}
+
+export interface Group {
+    id: string;
+    name: string;
+    description: string;
+    createdBy: string; // uid
+    members: GroupMember[];
+    memberCount: number;
+    createdAt: Date;
+    updatedAt: Date;
+    lastMessage: string;
+    isFavorite: boolean;
+}
+
+
 // --- Functions ---
 
 /**
@@ -566,4 +587,61 @@ export async function disconnectIntegration(userId: string, integrationId: strin
     if (!userId || !integrationId) throw new Error("User ID and Integration ID are required.");
     const docRef = doc(db, 'users', userId, 'integrations', integrationId);
     await deleteDoc(docRef);
+}
+
+
+// --- Group/Prompt Service ---
+export async function createGroup(userId: string, data: { name: string; description: string }) {
+    if (!userId) throw new Error("User ID is required.");
+    if (!data.name) throw new Error("Group name is required.");
+
+    const groupRef = doc(collection(db, 'groups'));
+    const userDocRef = doc(db, 'users', userId);
+
+    const batch = writeBatch(db);
+
+    batch.set(groupRef, {
+        name: data.name,
+        description: data.description,
+        createdBy: userId,
+        members: [userId],
+        memberCount: 1,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        lastMessage: 'Group created!',
+    });
+
+    batch.update(userDocRef, {
+        groups: arrayUnion(groupRef.id)
+    });
+
+    await batch.commit();
+    return groupRef.id;
+}
+
+
+export function listenToGroups(userId: string, callback: (groups: Group[]) => void, onError: (error: FirestoreError) => void): Unsubscribe {
+    if (!userId) {
+        onError({ code: 'invalid-argument', message: 'User ID is required.' } as FirestoreError);
+        return () => {};
+    }
+
+    const q = query(collection(db, "groups"), where("members", "array-contains", userId), orderBy("updatedAt", "desc"));
+    
+    return onSnapshot(q, (querySnapshot) => {
+        const groups: Group[] = [];
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            groups.push({ 
+                ...data, 
+                id: doc.id,
+                createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
+                updatedAt: (data.updatedAt as Timestamp)?.toDate() || new Date(),
+             } as Group);
+        });
+        callback(groups);
+    }, (error) => {
+        console.error("Error listening to groups: ", error);
+        onError(error);
+    });
 }
