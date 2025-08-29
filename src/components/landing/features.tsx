@@ -10,37 +10,37 @@ import { cn } from "@/lib/utils";
 const features = [
   {
     name: "Self-service chatbot",
-    image: "https://images.unsplash.com/photo-1552068751-34cb5cf055b3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMXx8Y2hhdHxlbnwwfHx8fDE3NTY0NzU0NDl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+    image: "/images/self-service-chatbot.png",
     hint: "chatbot conversation",
   },
   {
     name: "Smart agent assistant",
-    image: "https://placehold.co/400x800.png",
+    image: "https://picsum.photos/400/801",
     hint: "agent dashboard",
   },
   {
     name: "Content Analyzer",
-    image: "https://placehold.co/400x800.png",
+    image: "https://picsum.photos/400/802",
     hint: "content analysis",
   },
   {
     name: "Auto-generated tags",
-    image: "https://placehold.co/400x800.png",
+    image: "https://picsum.photos/400/803",
     hint: "tagging system",
   },
   {
     name: "Intelligent ticket routing",
-    image: "https://placehold.co/400x800.png",
+    image: "https://picsum.photos/400/804",
     hint: "ticket system",
   },
   {
     name: "Anomaly notifications",
-    image: "https://placehold.co/400x800.png",
+    image: "https://picsum.photos/400/805",
     hint: "notification bell",
   },
   {
     name: "Actionable insights",
-    image: "https://placehold.co/400x800.png",
+    image: "https://picsum.photos/400/806",
     hint: "data analytics",
   },
 ];
