@@ -15,32 +15,32 @@ const features = [
   },
   {
     name: "Smart agent assistant",
-    image: "https://picsum.photos/400/801",
+    image: "/images/smart-agent-assistant.png",
     hint: "agent dashboard",
   },
   {
     name: "Content Analyzer",
-    image: "https://picsum.photos/400/802",
+    image: "/images/content-analyzer.png",
     hint: "content analysis",
   },
   {
     name: "Auto-generated tags",
-    image: "https://picsum.photos/400/803",
+    image: "/images/auto-generated-tags.png",
     hint: "tagging system",
   },
   {
     name: "Intelligent ticket routing",
-    image: "https://picsum.photos/400/804",
+    image: "/images/intelligent-ticket-routing.png",
     hint: "ticket system",
   },
   {
     name: "Anomaly notifications",
-    image: "https://picsum.photos/400/805",
+    image: "/images/anomaly-notifications.png",
     hint: "notification bell",
   },
   {
     name: "Actionable insights",
-    image: "https://picsum.photos/400/806",
+    image: "/images/actionable-insights.png",
     hint: "data analytics",
   },
 ];
