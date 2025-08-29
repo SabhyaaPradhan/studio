@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 const features = [
   {
     name: "Self-service chatbot",
-    image: "https://placehold.co/400x800.png",
+    image: "https://images.unsplash.com/photo-1552068751-34cb5cf055b3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMXx8Y2hhdHxlbnwwfHx8fDE3NTY0NzU0NDl8MA&ixlib=rb-4.1.0&q=80&w=1080",
     hint: "chatbot conversation",
   },
   {
@@ -90,8 +90,8 @@ export default function Features() {
                         <Image
                             src={activeFeature.image}
                             alt={activeFeature.name}
-                            width={300}
-                            height={600}
+                            width={400}
+                            height={800}
                             className="object-cover w-full h-full"
                             data-ai-hint={activeFeature.hint}
                         />
