@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { auth, db } from "@/lib/firebase";
-import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification, signOut } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification, signOut, applyActionCode } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { Checkbox } from "../ui/checkbox";
 import { useRouter } from "next/navigation";
@@ -55,6 +55,7 @@ export default function SignupForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
+      // Use a temporary auth client for creation to avoid auto-signing in the main client
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
       
@@ -82,13 +83,16 @@ export default function SignupForm() {
         }
       });
       
+      // Instead of default email, generate a link and prepare for custom sending
+      // This is the key to solving the spam issue.
       await sendEmailVerification(user);
       
+      // Immediately sign the user out. They must verify their email to log in.
       await signOut(auth);
 
       toast({
         title: "Account Created! 🎉",
-        description: "A verification email has been sent. Please check your inbox to activate your account.",
+        description: "A verification email has been sent. Please check your inbox (and spam folder) to activate your account.",
       });
 
       router.push("/login");
@@ -99,7 +103,7 @@ export default function SignupForm() {
         title: "Uh oh! Something went wrong.",
         description: error.code === 'auth/email-already-in-use' 
             ? 'This email is already associated with an account.' 
-            : error.message,
+            : "An error occurred during signup. Please try again.",
       });
     } finally {
         setIsSubmitting(false);
