@@ -13,6 +13,13 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BarChart, Bot, FileText, FileUp, List, Loader2, Sparkles, TestTube2, Upload, AlertCircle } from 'lucide-react';
 import { Bar, BarChart as RechartsBarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { useToast } from '@/hooks/use-toast';
+import { generateAssistantPrompt } from '@/ai/flows/generate-assistant-prompt';
+import { summarizeKnowledgeBase } from '@/ai/flows/summarize-knowledge-base';
+
 
 const sampleCategories = [
     { name: 'Support Replies', count: 12 },
@@ -21,14 +28,80 @@ const sampleCategories = [
     { name: 'Internal Memos', count: 2 },
 ];
 
+const guidelinesSchema = z.object({
+    personality: z.string().min(10, 'Please provide more details.'),
+    style: z.string().min(10, 'Please provide more details.'),
+    messages: z.string().min(10, 'Please provide more details.'),
+    avoid: z.string().min(10, 'Please provide more details.'),
+});
+
+type GuidelinesFormData = z.infer<typeof guidelinesSchema>;
+
+const sampleSchema = z.object({
+    name: z.string().min(3, 'Sample name is required.'),
+    category: z.string().min(1, 'Category is required.'),
+    content: z.string().min(20, 'Sample content needs to be at least 20 characters.'),
+});
+
+type SampleFormData = z.infer<typeof sampleSchema>;
+
+interface Sample extends SampleFormData {
+    id: string;
+}
 
 export default function BrandVoicePage() {
+    const { toast } = useToast();
     const [isTraining, setIsTraining] = useState(false);
+    const [isSavingGuidelines, setIsSavingGuidelines] = useState(false);
+    const [isAddingSample, setIsAddingSample] = useState(false);
+    const [samples, setSamples] = useState<Sample[]>([]);
+    const [knowledgeSummary, setKnowledgeSummary] = useState('');
+    const [assistantPrompt, setAssistantPrompt] = useState('');
+    
+    const guidelinesForm = useForm<GuidelinesFormData>({ resolver: zodResolver(guidelinesSchema) });
+    const sampleForm = useForm<SampleFormData>({ resolver: zodResolver(sampleSchema) });
 
     const handleRetrain = () => {
         setIsTraining(true);
         setTimeout(() => setIsTraining(false), 3000); // Simulate training time
     };
+
+    const onAddSample = async (data: SampleFormData) => {
+        setIsAddingSample(true);
+        const newSample = { ...data, id: `sample-${samples.length + 1}` };
+        setSamples(prev => [...prev, newSample]);
+        toast({ title: "Sample Added!", description: `"${data.name}" has been added to your training data.` });
+        sampleForm.reset({ name: '', category: '', content: '' });
+        setIsAddingSample(false);
+    };
+
+    const onSaveGuidelines = async (data: GuidelinesFormData) => {
+        setIsSavingGuidelines(true);
+        try {
+            const knowledgeBase = `
+                Personality: ${data.personality}\n
+                Style: ${data.style}\n
+                Messages: ${data.messages}\n
+                Avoid: ${data.avoid}
+            `;
+            const summaryResult = await summarizeKnowledgeBase({ knowledgeBase });
+            setKnowledgeSummary(summaryResult.summary);
+            
+            const promptResult = await generateAssistantPrompt({
+                businessType: 'Custom Business',
+                contentDetails: summaryResult.summary,
+                exampleQuestions: 'How do I get a refund? What are your business hours?'
+            });
+            setAssistantPrompt(promptResult.prompt);
+            
+            toast({ title: "Guidelines Saved & Processed!", description: "AI has analyzed your guidelines." });
+        } catch (error: any) {
+             toast({ variant: 'destructive', title: "Error", description: error.message || "Failed to process guidelines." });
+        } finally {
+            setIsSavingGuidelines(false);
+        }
+    };
+
 
     return (
         <div className="flex-1 space-y-8 p-4 pt-6 md:p-8">
@@ -61,7 +134,7 @@ export default function BrandVoicePage() {
                         </div>
                         <div>
                             <p className="text-sm font-medium text-muted-foreground">Samples</p>
-                            <p className="text-2xl font-bold">27</p>
+                            <p className="text-2xl font-bold">{samples.length}</p>
                         </div>
                         <div>
                              <p className="text-sm font-medium text-muted-foreground">Status</p>
@@ -98,28 +171,49 @@ export default function BrandVoicePage() {
                 {/* Training Samples Tab */}
                 <TabsContent value="samples" className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                     <Card className="lg:col-span-1">
-                        <CardHeader>
-                            <CardTitle>Add New Sample</CardTitle>
-                            <CardDescription>Provide content for the AI to learn from.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div><Label htmlFor="sample-name">Name</Label><Input id="sample-name" placeholder="e.g., 'Positive Support Reply'" /></div>
-                            <div><Label htmlFor="sample-category">Category</Label>
-                                <Select>
-                                    <SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="support">Support Replies</SelectItem>
-                                        <SelectItem value="sales">Sales Outreach</SelectItem>
-                                        <SelectItem value="marketing">Marketing Copy</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div><Label htmlFor="sample-content">Content</Label><Textarea id="sample-content" placeholder="Paste your text here..." /></div>
-                            <div className="flex gap-2">
-                                <Button className="flex-1"><FileText className="mr-2 h-4 w-4" /> Add Text Sample</Button>
-                                <Button variant="outline" className="flex-1"><FileUp className="mr-2 h-4 w-4" /> Upload File</Button>
-                            </div>
-                        </CardContent>
+                        <form onSubmit={sampleForm.handleSubmit(onAddSample)}>
+                            <CardHeader>
+                                <CardTitle>Add New Sample</CardTitle>
+                                <CardDescription>Provide content for the AI to learn from.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div>
+                                    <Label htmlFor="sample-name">Name</Label>
+                                    <Input id="sample-name" placeholder="e.g., 'Positive Support Reply'" {...sampleForm.register('name')} />
+                                    {sampleForm.formState.errors.name && <p className="text-destructive text-sm mt-1">{sampleForm.formState.errors.name.message}</p>}
+                                </div>
+                                <div>
+                                    <Label htmlFor="sample-category">Category</Label>
+                                    <Controller
+                                        control={sampleForm.control}
+                                        name="category"
+                                        render={({ field }) => (
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="support">Support Replies</SelectItem>
+                                                    <SelectItem value="sales">Sales Outreach</SelectItem>
+                                                    <SelectItem value="marketing">Marketing Copy</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        )}
+                                    />
+                                    {sampleForm.formState.errors.category && <p className="text-destructive text-sm mt-1">{sampleForm.formState.errors.category.message}</p>}
+                                </div>
+                                <div>
+                                    <Label htmlFor="sample-content">Content</Label>
+                                    <Textarea id="sample-content" placeholder="Paste your text here..." {...sampleForm.register('content')} />
+                                     {sampleForm.formState.errors.content && <p className="text-destructive text-sm mt-1">{sampleForm.formState.errors.content.message}</p>}
+                                </div>
+                                <div className="flex gap-2">
+                                    <Button type="submit" className="flex-1" disabled={isAddingSample}>
+                                       {isAddingSample ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <FileText className="mr-2 h-4 w-4" />}
+                                       Add Text Sample
+                                    </Button>
+                                    <Button variant="outline" className="flex-1" type="button"><FileUp className="mr-2 h-4 w-4" /> Upload File</Button>
+                                </div>
+                            </CardContent>
+                        </form>
                     </Card>
                     <Card className="lg:col-span-2">
                         <CardHeader>
@@ -127,29 +221,95 @@ export default function BrandVoicePage() {
                             <CardDescription>A list of all content used for training.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                             <div className="text-center text-muted-foreground p-8 border rounded-lg">
-                                <List className="h-8 w-8 mx-auto mb-2" />
-                                <p>No samples yet. Add your first one to get started.</p>
-                             </div>
+                             {samples.length === 0 ? (
+                                <div className="text-center text-muted-foreground p-8 border rounded-lg">
+                                    <List className="h-8 w-8 mx-auto mb-2" />
+                                    <p>No samples yet. Add your first one to get started.</p>
+                                </div>
+                             ) : (
+                                <div className="space-y-2">
+                                    {samples.map(sample => (
+                                        <div key={sample.id} className="p-3 border rounded-md bg-secondary/50">
+                                            <p className="font-semibold">{sample.name}</p>
+                                            <p className="text-xs text-muted-foreground">{sample.category}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                             )}
                         </CardContent>
                     </Card>
                 </TabsContent>
 
                 {/* Guidelines Tab */}
-                <TabsContent value="guidelines">
+                <TabsContent value="guidelines" className="grid md:grid-cols-2 gap-6">
                     <Card>
-                        <CardHeader>
-                            <CardTitle>Brand Guidelines</CardTitle>
-                            <CardDescription>Set explicit rules for how the AI should behave.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="grid gap-2"><Label htmlFor="guideline-personality">Brand Personality</Label><Textarea id="guideline-personality" placeholder="e.g., We are friendly but professional. We use emojis sparingly..." /></div>
-                            <div className="grid gap-2"><Label htmlFor="guideline-style">Communication Style</Label><Textarea id="guideline-style" placeholder="e.g., Keep sentences short. Start with the customer's name..." /></div>
-                            <div className="grid gap-2"><Label htmlFor="guideline-messages">Key Messages & Values</Label><Textarea id="guideline-messages" placeholder="e.g., Always emphasize our commitment to quality..." /></div>
-                            <div className="grid gap-2"><Label htmlFor="guideline-avoid">What to Avoid</Label><Textarea id="guideline-avoid" placeholder="e.g., Never promise specific delivery dates. Avoid technical jargon." /></div>
-                            <div className="flex justify-end"><Button>Save Guidelines</Button></div>
-                        </CardContent>
+                        <form onSubmit={guidelinesForm.handleSubmit(onSaveGuidelines)}>
+                            <CardHeader>
+                                <CardTitle>Brand Guidelines</CardTitle>
+                                <CardDescription>Set explicit rules for how the AI should behave.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="guideline-personality">Brand Personality</Label>
+                                    <Textarea id="guideline-personality" placeholder="e.g., We are friendly but professional. We use emojis sparingly..." {...guidelinesForm.register('personality')} />
+                                    {guidelinesForm.formState.errors.personality && <p className="text-destructive text-sm mt-1">{guidelinesForm.formState.errors.personality.message}</p>}
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="guideline-style">Communication Style</Label>
+                                    <Textarea id="guideline-style" placeholder="e.g., Keep sentences short. Start with the customer's name..." {...guidelinesForm.register('style')} />
+                                    {guidelinesForm.formState.errors.style && <p className="text-destructive text-sm mt-1">{guidelinesForm.formState.errors.style.message}</p>}
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="guideline-messages">Key Messages & Values</Label>
+                                    <Textarea id="guideline-messages" placeholder="e.g., Always emphasize our commitment to quality..." {...guidelinesForm.register('messages')} />
+                                    {guidelinesForm.formState.errors.messages && <p className="text-destructive text-sm mt-1">{guidelinesForm.formState.errors.messages.message}</p>}
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="guideline-avoid">What to Avoid</Label>
+                                    <Textarea id="guideline-avoid" placeholder="e.g., Never promise specific delivery dates. Avoid technical jargon." {...guidelinesForm.register('avoid')} />
+                                    {guidelinesForm.formState.errors.avoid && <p className="text-destructive text-sm mt-1">{guidelinesForm.formState.errors.avoid.message}</p>}
+                                </div>
+                                <div className="flex justify-end">
+                                    <Button type="submit" disabled={isSavingGuidelines}>
+                                        {isSavingGuidelines ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
+                                        Save Guidelines
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </form>
                     </Card>
+                    <div className="space-y-6">
+                        <Card>
+                             <CardHeader>
+                                <CardTitle>AI Analysis</CardTitle>
+                                <CardDescription>A summary of your provided guidelines.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="min-h-[150px]">
+                                {isSavingGuidelines ? (
+                                    <div className="flex items-center justify-center h-full"><Loader2 className="h-6 w-6 animate-spin" /></div>
+                                ) : knowledgeSummary ? (
+                                    <p className="text-sm text-muted-foreground">{knowledgeSummary}</p>
+                                ) : (
+                                    <p className="text-sm text-muted-foreground">Submit your guidelines to see the AI's analysis.</p>
+                                )}
+                            </CardContent>
+                        </Card>
+                         <Card>
+                             <CardHeader>
+                                <CardTitle>Generated Assistant Prompt</CardTitle>
+                                <CardDescription>The base prompt created from your guidelines.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="min-h-[150px]">
+                                {isSavingGuidelines ? (
+                                    <div className="flex items-center justify-center h-full"><Loader2 className="h-6 w-6 animate-spin" /></div>
+                                ) : assistantPrompt ? (
+                                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{assistantPrompt}</p>
+                                ) : (
+                                    <p className="text-sm text-muted-foreground">Submit your guidelines to generate the prompt.</p>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
                 </TabsContent>
 
                 {/* Analysis Tab */}
