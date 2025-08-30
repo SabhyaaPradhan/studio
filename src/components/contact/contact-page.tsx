@@ -190,7 +190,7 @@ export default function ContactPage() {
                     <h3 className="text-2xl font-semibold">Contact Information</h3>
                     <div className="flex items-center gap-4">
                         <Mail className="h-6 w-6 text-primary"/>
-                        <a href="mailto:support@savrii.com" className="hover:underline">support@savrii.com</a>
+                        <a href="mailto:savriiofficial@gmail.com" className="hover:underline">savriiofficial@gmail.com</a>
                     </div>
                      <div className="flex items-center gap-4">
                         <Phone className="h-6 w-6 text-primary"/>
