@@ -156,7 +156,7 @@ export default function FeaturesPage() {
         </div>
         <div className="features-grid grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
             {coreFeatures.map((feature, i) => (
-                <div key={i} className="feature-card bg-secondary/50 p-8 rounded-2xl shadow-sm border border-transparent hover:border-primary/50 transition-all duration-300 hover:-translate-y-1">
+                <div key={i} className="feature-card bg-card p-8 rounded-2xl shadow-sm border border-transparent hover:border-primary/50 transition-all duration-300 hover:-translate-y-1">
                     <feature.icon className="h-8 w-8 text-primary mb-4" />
                     <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
                     <p className="text-muted-foreground">{feature.description}</p>
