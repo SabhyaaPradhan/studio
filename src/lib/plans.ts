@@ -104,7 +104,6 @@ export const allFeatures = [
     { name: "AI responses", starter: "Basic", pro: "Advanced", enterprise: "Premium" },
     { name: "Support", starter: "Email support", pro: "Priority support", enterprise: "24/7 phone support" },
     { name: "Integrations", starter: "1", pro: "All", enterprise: "All" },
-    { name: "Analytics", starter: "Basic", pro: "Advanced", enterprise: "Real-time" },
     { name: "Custom Prompts", starter: false, pro: true, enterprise: true },
     { name: "Brand Voice Training", starter: false, pro: true, enterprise: true },
     { name: "API Access", starter: false, pro: false, enterprise: true },
