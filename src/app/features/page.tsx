@@ -49,9 +49,9 @@ export default function FeaturesPage() {
         );
 
         // Core Features Grid Animation
-        gsap.from(".feature-card", {
-            opacity: 0,
-            y: 50,
+        gsap.to(".feature-card", {
+            opacity: 1,
+            y: 0,
             stagger: 0.1,
             duration: 0.6,
             ease: "power3.out",
@@ -156,7 +156,7 @@ export default function FeaturesPage() {
         </div>
         <div className="features-grid grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
             {coreFeatures.map((feature, i) => (
-                <div key={i} className="feature-card bg-card p-8 rounded-2xl shadow-sm border border-transparent hover:border-primary/50 transition-all duration-300 hover:-translate-y-1">
+                <div key={i} className="feature-card bg-card p-8 rounded-2xl shadow-sm border border-transparent hover:border-primary/50 transition-all duration-300 hover:-translate-y-1 opacity-0 -translate-y-12">
                     <feature.icon className="h-8 w-8 text-primary mb-4" />
                     <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
                     <p className="text-muted-foreground">{feature.description}</p>
