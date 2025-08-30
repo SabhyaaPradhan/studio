@@ -185,7 +185,7 @@ export default function FeaturesPage() {
                 <Button variant="link" className="p-0 h-auto text-lg" asChild><Link href="/#">Learn more <span aria-hidden="true">→</span></Link></Button>
             </div>
              <div className="feature-image md:order-1">
-                <Image src="https://images.unsplash.com/photo-1688733720228-4f7a18681c4f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHx3ZWJmbG93fGVufDB8fHx8MTc1NjU3NDA5Mnww&ixlib=rb-4.1.0&q=80&w=1080" data-ai-hint="workflow diagram" alt="Workflow Builder" width={600} height={401} className="rounded-2xl shadow-2xl object-cover" />
+                <Image src="https://images.unsplash.com/photo-1603791452906-af1740e171bc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxNnx8ZW1haWx8ZW58MHx8fHwxNzU2NTc0MDUxfDA&ixlib=rb-4.1.0&q=80&w=1080" data-ai-hint="workflow diagram" alt="Workflow Builder" width={600} height={401} className="rounded-2xl shadow-2xl object-cover" />
             </div>
         </div>
 
