@@ -16,7 +16,7 @@ const features = [
   },
   {
     name: "Smart agent assistant",
-    image: "https://images.unsplash.com/photo-1716637644831-e046c73be197?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxhaSUyMGFnZW50fGVufDB8fHx8MTc1NjU2Mzc4M3ww&ixlib=rb-4.1.0&q=80&w=1080",
+    image: "/images/smart-agent-assistant.png",
     hint: "agent dashboard",
   },
   {
@@ -26,7 +26,7 @@ const features = [
   },
   {
     name: "Auto-generated tags",
-    image: "https://images.unsplash.com/photo-1554497103-605884594625?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHx0YWdnaW5nJTIwc3lzdGVtfGVufDB8fHx8MTc1NjU2MzgyNnww&ixlib=rb-4.1.0&q=80&w=1080",
+    image: "/images/auto-generated-tags.png",
     hint: "tagging system",
   },
   {
