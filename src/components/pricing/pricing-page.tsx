@@ -128,7 +128,7 @@ export default function PricingPage() {
                                 </CardContent>
                                 <CardFooter>
                                     <Button asChild className="w-full" variant={plan.isPro ? "default" : "outline"}>
-                                        <Link href={plan.name === 'Starter' ? '/signup' : `/checkout?plan=${plan.name.toLowerCase()}`}>Get Started</Link>
+                                        <Link href={`/signup?plan=${plan.name.toLowerCase()}`}>Get Started</Link>
                                     </Button>
                                 </CardFooter>
                             </Card>
