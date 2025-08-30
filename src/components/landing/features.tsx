@@ -11,12 +11,12 @@ import { cn } from "@/lib/utils";
 const features = [
   {
     name: "Self-service chatbot",
-    image: "https://images.unsplash.com/photo-1654764450232-d0724be6dcd7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyMHx8Ym90fGVufDB8fHx8MTc1NjU2MzY3MHww&ixlib=rb-4.1.0&q=80&w=1080",
+    image: "/images/self-service-chatbot.png",
     hint: "chatbot conversation",
   },
   {
     name: "Smart agent assistant",
-    image: "/images/smart-agent-assistant.png",
+    image: "https://images.unsplash.com/photo-1716637644831-e046c73be197?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxhaSUyMGFnZW50fGVufDB8fHx8MTc1NjU2Mzc4M3ww&ixlib=rb-4.1.0&q=80&w=1080",
     hint: "agent dashboard",
   },
   {
@@ -26,7 +26,7 @@ const features = [
   },
   {
     name: "Auto-generated tags",
-    image: "https://images.unsplash.com/photo-1654764450232-d0724be6dcd7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyMHx8Ym90fGVufDB8fHx8MTc1NjU2MzY3MHww&ixlib=rb-4.1.0&q=80&w=1080",
+    image: "/images/auto-generated-tags.png",
     hint: "tagging system",
   },
   {
@@ -77,26 +77,24 @@ export default function Features() {
               </Button>
             ))}
           </div>
-          <div className="relative flex justify-center items-center h-[600px]">
+          <div className="relative flex justify-center items-center min-h-[500px]">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activeFeature.name}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
+                  initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                  transition={{ duration: 0.3, ease: 'easeInOut' }}
                   className="absolute"
                 >
-                    <div className="relative w-[300px] h-[600px] bg-neutral-800 rounded-3xl border-4 border-neutral-700 shadow-2xl overflow-hidden">
-                        <Image
-                            src={activeFeature.image}
-                            alt={activeFeature.name}
-                            width={400}
-                            height={800}
-                            className="object-cover w-full h-full"
-                            data-ai-hint={activeFeature.hint}
-                        />
-                    </div>
+                    <Image
+                        src={activeFeature.image}
+                        alt={activeFeature.name}
+                        width={400}
+                        height={600}
+                        className="object-cover rounded-2xl shadow-2xl"
+                        data-ai-hint={activeFeature.hint}
+                    />
                 </motion.div>
               </AnimatePresence>
           </div>
