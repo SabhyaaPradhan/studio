@@ -53,7 +53,7 @@ export default function Header() {
 
         <nav className="hidden md:flex flex-1 justify-center items-center gap-6 text-sm font-medium">
           <Link href="/" className="hover:text-primary transition-colors">Home</Link>
-          <Link href="/#features" className="hover:text-primary transition-colors">Features</Link>
+          <Link href="/features" className="hover:text-primary transition-colors">Features</Link>
           <Link href="/pricing" className="hover:text-primary transition-colors">Pricing</Link>
           <Link href="/contact" className="hover:text-primary transition-colors">Contact</Link>
           <Link href="/faq" className="hover:text-primary transition-colors">FAQ</Link>
@@ -94,7 +94,7 @@ export default function Header() {
               <div className="flex flex-col h-full">
                 <nav className="flex flex-col gap-6 p-4 text-base font-medium flex-grow">
                   <SheetClose asChild><Link href="/" className="hover:text-primary transition-colors">Home</Link></SheetClose>
-                  <SheetClose asChild><Link href="/#features" className="hover:text-primary transition-colors">Features</Link></SheetClose>
+                  <SheetClose asChild><Link href="/features" className="hover:text-primary transition-colors">Features</Link></SheetClose>
                   <SheetClose asChild><Link href="/pricing" className="hover:text-primary transition-colors">Pricing</Link></SheetClose>
                   <SheetClose asChild><Link href="/contact" className="hover:text-primary transition-colors">Contact</Link></SheetClose>
                   <SheetClose asChild><Link href="/faq" className="hover:text-primary transition-colors">FAQ</Link></SheetClose>
