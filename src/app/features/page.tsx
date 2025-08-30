@@ -169,7 +169,7 @@ export default function FeaturesPage() {
       <div className="space-y-20 md:space-y-32 py-20 md:py-32">
         <div className="feature-story-section container mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
             <div className="feature-image">
-                <Image src="https://picsum.photos/600/400" data-ai-hint="email inbox" alt="AI Email Writer" width={600} height={400} className="rounded-2xl shadow-2xl object-cover" />
+                <Image src="https://images.unsplash.com/photo-1557200134-90327ee9fafa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxlbWFpbHxlbnwwfHx8fDE3NTY1NzQwNTF8MA&ixlib=rb-4.1.0&q=80&w=1080" data-ai-hint="email inbox" alt="AI Email Writer" width={600} height={400} className="rounded-2xl shadow-2xl object-cover" />
             </div>
             <div className="feature-text">
                 <h3 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">Craft the perfect reply, every time.</h3>
