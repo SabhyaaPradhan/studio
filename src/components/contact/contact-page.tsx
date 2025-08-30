@@ -192,10 +192,6 @@ export default function ContactPage() {
                         <Mail className="h-6 w-6 text-primary"/>
                         <a href="mailto:savriiofficial@gmail.com" className="hover:underline">savriiofficial@gmail.com</a>
                     </div>
-                     <div className="flex items-center gap-4">
-                        <Phone className="h-6 w-6 text-primary"/>
-                        <span>+1 (555) 123-4567</span>
-                    </div>
                     <div className="flex items-center gap-4">
                         <Clock className="h-6 w-6 text-primary"/>
                         <span>Mon - Fri, 9am - 5pm EST</span>
