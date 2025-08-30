@@ -51,7 +51,7 @@ export default function Header() {
           <span className="text-2xl font-bold text-primary">Savrii</span>
         </Link>
 
-        <nav className="hidden md:flex flex-1 justify-center items-center gap-6 text-sm font-medium">
+        <nav className="hidden md:flex flex-1 justify-center items-center gap-6 text-base font-medium">
           <Link href="/" className="hover:text-primary transition-colors">Home</Link>
           <Link href="/features" className="hover:text-primary transition-colors">Features</Link>
           <Link href="/pricing" className="hover:text-primary transition-colors">Pricing</Link>
