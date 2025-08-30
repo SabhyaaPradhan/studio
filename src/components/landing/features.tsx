@@ -11,12 +11,12 @@ import { cn } from "@/lib/utils";
 const features = [
   {
     name: "Self-service chatbot",
-    image: "/images/self-service-chatbot.png",
+    image: "https://images.unsplash.com/photo-1552068751-34cb5cf055b3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMXx8Y2hhdHxlbnwwfHx8fDE3NTY0NzU0NDl8MA&ixlib=rb-4.1.0&q=80&w=1080",
     hint: "chatbot conversation",
   },
   {
     name: "Smart agent assistant",
-    image: "/images/smart-agent-assistant.png",
+    image: "https://images.unsplash.com/photo-1716637644831-e046c73be197?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxhaSUyMGFnZW50fGVufDB8fHx8MTc1NjU2Mzc4M3ww&ixlib=rb-4.1.0&q=80&w=1080",
     hint: "agent dashboard",
   },
   {
@@ -45,7 +45,7 @@ export default function Features() {
   const [activeFeature, setActiveFeature] = useState(features[0]);
 
   return (
-    <section className="py-20 md:py-32 bg-background">
+    <section id="features" className="py-20 md:py-32 bg-background">
       <div className="container mx-auto px-4 md:px-6">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-5xl font-bold tracking-tighter text-primary">
