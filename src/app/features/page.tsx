@@ -191,7 +191,7 @@ export default function FeaturesPage() {
 
         <div className="feature-story-section container mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
             <div className="feature-image">
-                <Image src="https://picsum.photos/600/402" data-ai-hint="custom branding" alt="White Label" width={600} height={402} className="rounded-2xl shadow-2xl object-cover" />
+                <Image src="https://images.unsplash.com/photo-1627896181038-a0cf83c86008?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxjdXN0b21pemV8ZW58MHx8fHwxNzU2NTc0MTQ5fDA&ixlib=rb-4.1.0&q=80&w=1080" data-ai-hint="custom branding" alt="White Label" width={600} height={402} className="rounded-2xl shadow-2xl object-cover" />
             </div>
             <div className="feature-text">
                 <h3 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">Your Brand, Your Platform.</h3>
