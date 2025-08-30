@@ -112,19 +112,23 @@ export const allFeatures = [
 
 export const faqs = [
     {
-        question: "Can I change my plan later?",
-        answer: "Yes, you can upgrade, downgrade, or cancel your plan at any time from your account dashboard. Changes will be prorated."
+        question: "Do I need a credit card to start with the free plan?",
+        answer: "No, you can start for free without adding a credit card."
     },
     {
-        question: "Is there a discount for non-profits or students?",
-        answer: "We offer special discounts for non-profit organizations and educational institutions. Please contact our support team to learn more about our programs."
+        question: "What happens if I exceed my free plan limits?",
+        answer: "You’ll be prompted to upgrade to Pro to continue using AI Email Writer and Chatbot without interruptions."
     },
     {
-        question: "What counts as an 'AI query'?",
-        answer: "An AI query is counted every time Savrii processes and responds to a user's question or message. This includes chats, emails, and DMs handled by the assistant."
+        question: "What are webhooks, and who can use them?",
+        answer: "Webhooks let you receive real-time event data directly to your system. Available only on the Enterprise plan."
     },
     {
-        question: "What happens if I go over my monthly query limit on the Starter plan?",
-        answer: "If you exceed your monthly query limit on the Starter plan, your AI assistant will be temporarily paused until the next billing cycle. You'll receive notifications as you approach your limit and can upgrade to the Pro plan for unlimited queries at any time."
-    }
+        question: "Can I upgrade or downgrade my plan anytime?",
+        answer: "Yes, you can switch plans anytime from the dashboard. Your usage and data will remain intact."
+    },
+    {
+        question: "Do you offer refunds?",
+        answer: "We do not offer refunds, but you can cancel anytime, and your plan will remain active until the end of the billing cycle."
+    },
 ];
