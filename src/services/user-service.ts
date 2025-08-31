@@ -1,7 +1,9 @@
 
-import { onSnapshot, doc, DocumentSnapshot } from "firebase/firestore";
-import { db } from "@/lib/firebase"; 
-import type { Timestamp } from "firebase/firestore";
+import { onSnapshot, doc, DocumentSnapshot, updateDoc, serverTimestamp } from "firebase/firestore";
+import { db, auth } from "@/lib/firebase"; 
+import type { Timestamp, User } from "firebase/firestore";
+import { updateProfile as updateAuthProfile } from "firebase/auth";
+
 
 export type Plan = "starter" | "pro" | "enterprise";
 export type SubscriptionStatus = "trialing" | "active" | "expired" | "canceled";
@@ -21,6 +23,7 @@ export interface UserProfile {
   last_name: string | null;
   email: string | null;
   displayName: string | null;
+  country?: string;
   subscription: Subscription | null;
   createdAt?: Date | null;
   updatedAt?: Date | null;
@@ -80,6 +83,7 @@ export function docToProfile(snap: DocumentSnapshot): UserProfile {
     last_name: typeof data.last_name === "string" ? data.last_name : null,
     email: typeof data.email === "string" ? data.email : null,
     displayName: typeof data.displayName === "string" ? data.displayName : null,
+    country: typeof data.country === "string" ? data.country : undefined,
     subscription,
     createdAt: toDate(data.createdAt) ?? null,
     updatedAt: toDate(data.updatedAt) ?? null,
@@ -125,4 +129,43 @@ export function listenToUser(
       });
     }
   );
+}
+
+
+/**
+ * Updates a user's profile in both Firebase Auth and Firestore.
+ * @param user The Firebase User object from Auth.
+ * @param profileData The data to update.
+ */
+export async function updateUserProfile(user: User, profileData: Partial<UserProfile>) {
+  if (!user) throw new Error("User must be authenticated to update profile.");
+
+  const { displayName, ...firestoreData } = profileData;
+
+  const updatePromises = [];
+
+  // Update Firebase Auth profile if displayName is provided
+  if (displayName) {
+    updatePromises.push(updateAuthProfile(user, { displayName }));
+  }
+
+  // Update Firestore document
+  const userDocRef = doc(db, "users", user.uid);
+  const dataToUpdate = {
+    ...firestoreData,
+    displayName, // Also save displayName in Firestore for consistency
+    updatedAt: serverTimestamp()
+  };
+  
+  // Remove undefined fields to avoid Firestore errors
+  Object.keys(dataToUpdate).forEach(key => {
+    if ((dataToUpdate as any)[key] === undefined) {
+      delete (dataToUpdate as any)[key];
+    }
+  });
+
+  updatePromises.push(updateDoc(userDocRef, dataToUpdate));
+
+  // Run all updates in parallel
+  await Promise.all(updatePromises);
 }
