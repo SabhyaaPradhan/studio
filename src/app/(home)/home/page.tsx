@@ -6,12 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthContext } from '@/context/auth-context';
 import { useSubscription } from '@/hooks/use-subscription';
-import { BrainCircuit, CalendarDays, DollarSign, MessageSquare, ArrowRight, Lightbulb, UserCheck, Loader2 } from 'lucide-react';
+import { BrainCircuit, CalendarDays, DollarSign, MessageSquare, ArrowRight, Lightbulb, UserCheck, Loader2, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { RecentActivity } from '@/components/home/recent-activity';
 import { listenToAnalyticsRealtime, RealtimeAnalytics } from '@/services/firestore-service';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -21,6 +22,17 @@ export default function HomePage() {
     const containerRef = useRef<HTMLDivElement>(null);
     const [realtimeStats, setRealtimeStats] = useState<RealtimeAnalytics | null>(null);
     const [statsLoading, setStatsLoading] = useState(true);
+    const [showTrialEndingModal, setShowTrialEndingModal] = useState(false);
+
+    useEffect(() => {
+        if (!subLoading && subscription?.trialDaysLeft !== null && subscription.trialDaysLeft <= 3 && subscription.trialDaysLeft > 0) {
+            const hasSeenModal = sessionStorage.getItem('hasSeenTrialEndingModal');
+            if (!hasSeenModal) {
+                setShowTrialEndingModal(true);
+                sessionStorage.setItem('hasSeenTrialEndingModal', 'true');
+            }
+        }
+    }, [subLoading, subscription]);
 
     useEffect(() => {
         if (user) {
@@ -143,6 +155,26 @@ export default function HomePage() {
 
     return (
         <div ref={containerRef} className="flex-1 space-y-12 p-4 pt-6 md:p-8">
+            <AlertDialog open={showTrialEndingModal} onOpenChange={setShowTrialEndingModal}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30 mb-4">
+                            <AlertTriangle className="h-6 w-6 text-yellow-500" />
+                        </div>
+                        <AlertDialogTitle className="text-center">Your Trial is Ending Soon!</AlertDialogTitle>
+                        <AlertDialogDescription className="text-center">
+                            You have {subscription?.trialDaysLeft} day{subscription?.trialDaysLeft !== 1 ? 's' : ''} left on your Pro trial. Upgrade now to keep access to all Pro features.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="sm:justify-center flex-row gap-2 pt-2">
+                        <AlertDialogCancel>Dismiss</AlertDialogCancel>
+                        <AlertDialogAction asChild>
+                            <Link href="/billing">Upgrade Now</Link>
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        
             <div className="space-y-2">
                 <h2 data-animate="welcome-title" className="text-3xl md:text-4xl font-bold tracking-tight">
                     Welcome back, <span className="text-accent">{user?.displayName?.split(' ')[0] || 'User'}</span>!
