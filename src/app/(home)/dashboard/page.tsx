@@ -10,6 +10,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { generateChatResponse } from "@/ai/flows/generate-chat-response";
+import Link from 'next/link';
+import { useSubscription } from "@/hooks/use-subscription";
 
 // UI Components
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,7 +37,8 @@ import {
   TrendingUp,
   Zap,
   Crown,
-  Loader2
+  Loader2,
+  BookOpen,
 } from "lucide-react";
 
 // Form schema
@@ -64,6 +67,7 @@ const toneLabels: Record<GenerateFormData['tone'], string> = {
 export default function Dashboard() {
   const { toast } = useToast();
   const { user } = useAuthContext();
+  const { subscription } = useSubscription();
   const [response, setResponse] = useState("");
   const [confidence, setConfidence] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -116,11 +120,6 @@ export default function Dashboard() {
         variant: "destructive",
       });
     }
-  };
-
-  const handleUpgrade = () => {
-    // In a real app, this would open a billing modal or redirect to the billing page.
-    toast({ title: "Upgrade Clicked!", description: "Redirecting to billing..."});
   };
 
   return (
@@ -287,26 +286,36 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button variant="outline" className="w-full justify-start">
-                <MessageSquare className="w-4 h-4 mr-2" />
-                Browse Templates
+              <Button asChild variant="outline" className="w-full justify-start">
+                <Link href="/prompt-library">
+                    <BookOpen className="w-4 h-4 mr-2" />
+                    Browse Prompt Library
+                </Link>
               </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <Wand2 className="w-4 h-4 mr-2" />
-                Build Custom Prompt
+              <Button asChild variant="outline" className="w-full justify-start">
+                <Link href="/prompts">
+                    <Wand2 className="w-4 h-4 mr-2" />
+                    Build Custom Prompt
+                </Link>
               </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <TrendingUp className="w-4 h-4 mr-2" />
-                View Analytics
+              <Button asChild variant="outline" className="w-full justify-start">
+                <Link href="/analytics">
+                    <TrendingUp className="w-4 h-4 mr-2" />
+                    View Analytics
+                </Link>
               </Button>
-              <Button 
-                variant="outline" 
-                className="w-full justify-start border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-300 dark:hover:bg-purple-900/20"
-                onClick={handleUpgrade}
-              >
-                <Crown className="w-4 h-4 mr-2" />
-                Upgrade Plan
-              </Button>
+              {subscription?.plan === 'starter' && (
+                <Button 
+                    asChild
+                    variant="outline" 
+                    className="w-full justify-start border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-300 dark:hover:bg-purple-900/20"
+                >
+                    <Link href="/billing">
+                        <Crown className="w-4 h-4 mr-2" />
+                        Upgrade Plan
+                    </Link>
+                </Button>
+              )}
             </CardContent>
           </Card>
 
