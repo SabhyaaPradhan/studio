@@ -86,6 +86,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   try {
     const info = await transporter.sendMail(mailOptions);
     console.log("[contact] sendMail OK:", { messageId: info.messageId, accepted: info.accepted, rejected: info.rejected });
+    console.log(`Successfully sent email to ${mailOptions.to} with subject: "${mailOptions.subject}"`);
     return res.status(200).json({ ok: true, message: "Email sent" });
   } catch (err: any) {
     console.error("[contact] sendMail error:", err?.message || err);
