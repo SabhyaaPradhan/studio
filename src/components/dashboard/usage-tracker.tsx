@@ -14,11 +14,10 @@ import Link from 'next/link';
 
 const getPlanLimit = (plan: UserProfile['subscription']['plan']) => {
     switch (plan) {
-        case 'starter':
-            return 100;
         case 'pro':
         case 'enterprise':
-            return 1000; // Assuming a higher limit for Pro/Enterprise, can be unlimited
+            return Infinity;
+        case 'starter':
         default:
             return 100;
     }
@@ -63,7 +62,8 @@ export function UsageTracker() {
     
     const planName = userProfile?.subscription?.plan || '...';
     const repliesLimit = userProfile?.subscription ? getPlanLimit(userProfile.subscription.plan) : 100;
-    const percentage = repliesLimit > 0 ? (monthlyReplies / repliesLimit) * 100 : 0;
+    const isUnlimited = repliesLimit === Infinity;
+    const percentage = isUnlimited ? 0 : (monthlyReplies / repliesLimit) * 100;
     const isStarterPlan = userProfile?.subscription?.plan === 'starter';
 
     return (
@@ -91,7 +91,9 @@ export function UsageTracker() {
                     <div>
                         <div className="flex justify-between text-sm mb-1">
                             <span className="font-medium">AI Replies</span>
-                            <span className="text-muted-foreground">{monthlyReplies} / {repliesLimit}</span>
+                            <span className="text-muted-foreground">
+                                {monthlyReplies} / {isUnlimited ? '∞' : repliesLimit}
+                            </span>
                         </div>
                         <Progress value={percentage} />
                     </div>
