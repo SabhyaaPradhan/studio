@@ -3,24 +3,24 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Check } from "lucide-react";
-import { useState } from "react";
+import { Check, Loader2 } from "lucide-react";
 import { getPlans, Currency } from '@/lib/plans';
 import { useRouter } from 'next/navigation';
+import { useSubscription } from '@/hooks/use-subscription';
 
 type PlanKey = 'starter' | 'pro' | 'enterprise';
 
 export default function BillingPage() {
     const router = useRouter();
-    // In a real app, this would come from user's auth state
-    const [currentPlan, setCurrentPlan] = useState<PlanKey>('starter');
-    
+    const { subscription, isLoading } = useSubscription();
+
     // For billing, we assume a fixed currency, e.g., USD, or fetch it from user settings.
     const plans = getPlans("monthly", "USD");
+    const currentPlanName = subscription?.plan || 'starter';
 
     const getPlanCTA = (planName: string) => {
         const planKey = planName.toLowerCase() as PlanKey;
-        if (planKey === currentPlan) {
+        if (planKey === currentPlanName) {
             return "Current Plan";
         }
         return "Switch Plan";
@@ -29,6 +29,14 @@ export default function BillingPage() {
     const handleSwitchPlan = (planName: string) => {
         router.push(`/checkout?plan=${planName.toLowerCase()}`);
     };
+    
+    if (isLoading) {
+        return (
+            <div className="flex h-full w-full items-center justify-center p-8">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
 
     return (
         <div className="flex-1 space-y-8 p-4 pt-6 md:p-8">
@@ -41,7 +49,9 @@ export default function BillingPage() {
                 <Card className="lg:col-span-1">
                     <CardHeader>
                         <CardTitle>Current Plan</CardTitle>
-                        <CardDescription>You are currently on the <span className="font-semibold capitalize text-primary">{currentPlan}</span> plan.</CardDescription>
+                        <CardDescription>
+                            You are currently on the <span className="font-semibold capitalize text-primary">{currentPlanName}</span> plan.
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
                        <p className="text-sm text-muted-foreground">Manage your subscription and features below.</p>
