@@ -87,7 +87,7 @@ export default function HomePage() {
     const quickActions = [
         { title: "Dashboard", icon: ArrowRight, href: "/dashboard", variant: "default" },
         { title: "Upgrade Plan", icon: ArrowRight, href: "/billing", variant: "outline" },
-        { title: "Explore Features", icon: Lightbulb, href: "/#features", variant: "outline" },
+        { title: "Explore Features", icon: Lightbulb, href: "/features", variant: "outline" },
         { title: "Update Profile", icon: UserCheck, href: "/settings", variant: "outline" }
     ];
 
