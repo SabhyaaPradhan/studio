@@ -43,12 +43,28 @@ const formSchema = z.object({
 });
 
 async function handleFormSubmission(values: z.infer<typeof formSchema>) {
-    // This is a placeholder for actual submission logic (e.g., API call)
-    console.log("Form submitted:", values);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    // Simulate success
-    return { success: true };
+    try {
+        const response = await fetch('/api/contact', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(values),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Something went wrong.");
+        }
+
+        return { success: true };
+    } catch (error) {
+        console.error("Submission error:", error);
+        // Forward the error message to be displayed in the toast
+        return { success: false, error: (error as Error).message };
+    }
 }
+
 
 export default function ContactPage() {
   const { toast } = useToast();
@@ -79,7 +95,7 @@ export default function ContactPage() {
       toast({
         variant: "destructive",
         title: "Uh oh! Something went wrong.",
-        description: "There was a problem with your request. Please try again.",
+        description: result.error || "There was a problem with your request. Please try again.",
       });
     }
   }
