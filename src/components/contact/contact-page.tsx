@@ -52,9 +52,10 @@ async function handleFormSubmission(values: z.infer<typeof formSchema>) {
             body: JSON.stringify(values),
         });
 
+        const result = await response.json();
+
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || "Something went wrong.");
+            throw new Error(result.detail || result.message || "Something went wrong.");
         }
 
         return { success: true };
