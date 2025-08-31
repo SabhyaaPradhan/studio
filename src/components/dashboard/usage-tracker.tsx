@@ -10,12 +10,9 @@ import { useState, useEffect } from "react";
 import { listenToUser, UserProfile } from "@/services/user-service";
 import { listenToAnalyticsDaily, DailyAnalytics } from "@/services/firestore-service";
 import { Skeleton } from "../ui/skeleton";
+import Link from 'next/link';
 
-interface UsageTrackerProps {
-    onUpgradeClick: () => void;
-}
-
-const getPlanLimit = (plan: UserProfile['plan']) => {
+const getPlanLimit = (plan: UserProfile['subscription']['plan']) => {
     switch (plan) {
         case 'starter':
             return 100;
@@ -27,7 +24,7 @@ const getPlanLimit = (plan: UserProfile['plan']) => {
     }
 }
 
-export function UsageTracker({ onUpgradeClick }: UsageTrackerProps) {
+export function UsageTracker() {
     const { user } = useAuthContext();
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [monthlyReplies, setMonthlyReplies] = useState(0);
@@ -64,9 +61,10 @@ export function UsageTracker({ onUpgradeClick }: UsageTrackerProps) {
         }
     }, [user, loading]);
     
-    const planName = userProfile?.plan || '...';
-    const repliesLimit = userProfile ? getPlanLimit(userProfile.plan) : 100;
+    const planName = userProfile?.subscription?.plan || '...';
+    const repliesLimit = userProfile?.subscription ? getPlanLimit(userProfile.subscription.plan) : 100;
     const percentage = repliesLimit > 0 ? (monthlyReplies / repliesLimit) * 100 : 0;
+    const isStarterPlan = userProfile?.subscription?.plan === 'starter';
 
     return (
         <Card>
@@ -98,10 +96,14 @@ export function UsageTracker({ onUpgradeClick }: UsageTrackerProps) {
                         <Progress value={percentage} />
                     </div>
                 )}
-                <Button variant="outline" className="w-full" onClick={onUpgradeClick}>
-                    <Crown className="w-4 h-4 mr-2" />
-                    Upgrade to Pro
-                </Button>
+                {!loading && isStarterPlan && (
+                    <Button variant="outline" className="w-full" asChild>
+                        <Link href="/billing">
+                            <Crown className="w-4 h-4 mr-2" />
+                            Upgrade to Pro
+                        </Link>
+                    </Button>
+                )}
             </CardContent>
         </Card>
     );
