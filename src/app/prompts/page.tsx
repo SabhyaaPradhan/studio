@@ -7,10 +7,13 @@ import { useToast } from '@/hooks/use-toast';
 import { PromptSidebar } from '@/components/prompts/prompt-sidebar';
 import { PromptList } from '@/components/prompts/prompt-list';
 import { PromptEditor } from '@/components/prompts/prompt-editor';
-import { Search, PlusCircle, Loader2 } from 'lucide-react';
+import { Search, PlusCircle, Loader2, Lock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { listenToGroups, createGroup, Group } from '@/services/firestore-service';
+import { useSubscription } from '@/hooks/use-subscription';
+import Link from 'next/link';
+import { UpgradeModal } from '@/components/common/upgrade-modal';
 
 export default function PromptsPage() {
     const { user } = useAuthContext();
@@ -20,14 +23,18 @@ export default function PromptsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isEditorOpen, setIsEditorOpen] = useState(false);
     
+    const { subscription, isLoading: isSubLoading } = useSubscription();
+    const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+
+    const canAccess = subscription?.plan === 'pro' || subscription?.plan === 'enterprise';
+
     useEffect(() => {
-        if (user) {
+        if (user && canAccess) {
             setIsLoading(true);
             const unsubscribe = listenToGroups(user.uid, 
                 (newGroups) => {
                     setGroups(newGroups);
                     setIsLoading(false);
-                    // If no group is selected, or selected group is deleted, select the first one
                     if (!selectedGroup || !newGroups.some(g => g.id === selectedGroup.id)) {
                         setSelectedGroup(newGroups[0] || null);
                     }
@@ -39,16 +46,43 @@ export default function PromptsPage() {
                 }
             );
             return () => unsubscribe();
+        } else if (!isSubLoading) {
+            setIsLoading(false);
         }
-    }, [user, toast]);
+    }, [user, toast, canAccess, isSubLoading, selectedGroup]);
 
     const handleSelectGroup = (group: Group) => {
         setSelectedGroup(group);
         setIsEditorOpen(true);
     };
 
+    if (isLoading || isSubLoading) {
+        return (
+            <div className="flex h-full w-full items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
+    
+    if (!canAccess) {
+        return (
+            <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                 {isUpgradeModalOpen && <UpgradeModal onOpenChange={setIsUpgradeModalOpen} />}
+                 <div className="mx-auto mb-6 p-4 bg-primary/10 rounded-full w-fit">
+                    <Lock className="h-10 w-10 text-primary" />
+                </div>
+                <h2 className="text-2xl font-bold mb-2">Custom Prompts is a Pro feature</h2>
+                <p className="text-muted-foreground mb-6 max-w-md">
+                   Upgrade your plan to create, manage, and share custom prompts with your team.
+                </p>
+                <Button onClick={() => setIsUpgradeModalOpen(true)}>Upgrade to Pro</Button>
+            </div>
+        );
+    }
+
     return (
         <div className="h-full w-full flex flex-col">
+            {isUpgradeModalOpen && <UpgradeModal onOpenChange={setIsUpgradeModalOpen} />}
             <header className="flex-shrink-0 flex items-center justify-between p-4 border-b bg-background">
                 <h1 className="text-2xl font-bold tracking-tight">Groups & Prompts</h1>
                 <div className="flex items-center gap-2">
