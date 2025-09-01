@@ -7,7 +7,7 @@ import { listenToChatMessages, ChatMessage, listenToRecentRepliesForHeatmap, lis
 import { listenToUser, UserProfile } from '@/services/user-service';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { BarChart3, MessageSquare, TrendingUp, Target, Clock, AlertTriangle, ShieldCheck, BarChartHorizontal, Activity, Eye, Info } from 'lucide-react';
+import { BarChart3, MessageSquare, TrendingUp, Target, Clock, AlertTriangle, ShieldCheck, BarChartHorizontal, Activity, Eye, Info, Lock, Loader2 } from 'lucide-react';
 import { MetricCard, MetricCardSkeleton } from '@/components/analytics/metric-card';
 import { DailyUsageChart, DailyUsageChartSkeleton } from '@/components/analytics/daily-usage-chart';
 import { PlanUsage, PlanUsageSkeleton } from '@/components/analytics/plan-usage';
@@ -15,6 +15,9 @@ import { GmailRepliesChart, GmailRepliesChartSkeleton } from '@/components/analy
 import { subDays, startOfDay } from 'date-fns';
 import { PeakActivityHeatmap } from '@/components/analytics/PeakActivityHeatmap';
 import { EngagementRatesChart } from '@/components/analytics/EngagementRatesChart';
+import { useSubscription } from '@/hooks/use-subscription';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 
 interface OverviewStats {
@@ -35,13 +38,16 @@ interface DailySummary {
 
 export default function AnalyticsPage() {
   const { user } = useAuthContext();
+  const { subscription, isLoading: isSubLoading } = useSubscription();
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [overview, setOverview] = useState<OverviewStats | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const canAccess = subscription?.plan === 'pro' || subscription?.plan === 'enterprise';
+
   useEffect(() => {
-    if (user) {
+    if (user && canAccess) {
       const unsubChat = listenToChatMessages(user.uid, (messages) => {
         setChatHistory(messages);
         calculateOverview(messages);
@@ -59,8 +65,10 @@ export default function AnalyticsPage() {
         unsubChat();
         unsubUser();
       };
+    } else if (!isSubLoading) {
+      setLoading(false);
     }
-  }, [user]);
+  }, [user, canAccess, isSubLoading]);
 
 
   const calculateOverview = (messages: ChatMessage[]) => {
@@ -134,6 +142,31 @@ export default function AnalyticsPage() {
     }
 
     const dailyDataForChart = getDailyUsageData(chatHistory);
+
+    if (loading || isSubLoading) {
+        return (
+            <div className="flex h-full w-full items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
+    
+    if (!canAccess) {
+        return (
+            <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                <div className="mx-auto mb-6 p-4 bg-primary/10 rounded-full w-fit">
+                    <Lock className="h-10 w-10 text-primary" />
+                </div>
+                <h2 className="text-2xl font-bold mb-2">Advanced Analytics is a Pro feature</h2>
+                <p className="text-muted-foreground mb-6 max-w-md">
+                    Upgrade your plan to access real-time performance metrics, usage trends, and detailed insights.
+                </p>
+                <Button asChild>
+                    <Link href="/billing">Upgrade to Pro</Link>
+                </Button>
+            </div>
+        );
+    }
 
   return (
     <div className="flex-1 space-y-6 p-4 pt-6 md:p-8">
