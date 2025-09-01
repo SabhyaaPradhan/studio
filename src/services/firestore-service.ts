@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { app } from '@/lib/firebase';
@@ -24,7 +25,8 @@ import {
     startAt,
     collectionGroup,
     setDoc,
-    deleteDoc
+    deleteDoc,
+    getDocs
 } from 'firebase/firestore';
 import { format, subDays } from 'date-fns';
 
@@ -345,6 +347,28 @@ export function listenToChatMessages(userId: string, callback: (messages: ChatMe
         console.error("Error listening to chat messages: ", error);
         onError(error);
     });
+}
+
+/**
+ * Deletes all messages in a user's chat history.
+ */
+export async function clearChatHistory(userId: string): Promise<void> {
+    if (!userId) throw new Error("User ID is required.");
+    
+    const messagesRef = collection(db, `users/${userId}/chatMessages`);
+    const q = query(messagesRef);
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) {
+        return; // Nothing to delete
+    }
+
+    const batch = writeBatch(db);
+    snapshot.docs.forEach(doc => {
+        batch.delete(doc.ref);
+    });
+
+    await batch.commit();
 }
 
 
