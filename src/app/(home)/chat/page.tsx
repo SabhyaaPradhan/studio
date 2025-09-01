@@ -210,7 +210,7 @@ function ChatPageContent() {
                               Clear Chat
                           </Button>
                       </CardHeader>
-                      <CardContent ref={scrollAreaRef} className="flex-1 space-y-6 overflow-y-auto p-6 h-[600px] flex-grow">
+                      <CardContent ref={scrollAreaRef} className="flex-1 space-y-6 overflow-y-auto p-6 h-[600px]">
                       {isLoadingHistory ? (
                           <div className="flex justify-center py-8">
                           <Loader2 className="w-6 h-6 animate-spin" />
