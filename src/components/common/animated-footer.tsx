@@ -152,8 +152,8 @@ export default function AnimatedFooter() {
                     <li><Link href="/dashboard" className={footerLinkClasses}>Dashboard</Link></li>
                     <li><Link href="/billing" className={footerLinkClasses}>Upgrade Plan</Link></li>
                     <li><Link href="/support" className={footerLinkClasses}>Support</Link></li>
-                    <li><Link href="/privacy" className={footerLinkClasses}>Privacy Policy</Link></li>
-                    <li><Link href="/terms" className={footerLinkClasses}>Terms of Service</Link></li>
+                    <li><Link href="/privacy-policy" className={footerLinkClasses}>Privacy Policy</Link></li>
+                    <li><Link href="/terms-of-service" className={footerLinkClasses}>Terms of Service</Link></li>
                 </ul>
             </div>
 
