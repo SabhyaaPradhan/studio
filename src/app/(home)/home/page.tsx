@@ -26,7 +26,7 @@ export default function HomePage() {
     const [showTrialEndingModal, setShowTrialEndingModal] = useState(false);
 
     useEffect(() => {
-        if (!subLoading && subscription?.trialDaysLeft !== null && subscription.trialDaysLeft <= 3 && subscription.trialDaysLeft > 0) {
+        if (!subLoading && subscription?.status === 'trialing' && subscription?.trialDaysLeft !== null && subscription.trialDaysLeft <= 3 && subscription.trialDaysLeft > 0) {
             const hasSeenModal = sessionStorage.getItem('hasSeenTrialEndingModal');
             if (!hasSeenModal) {
                 setShowTrialEndingModal(true);
@@ -84,7 +84,7 @@ export default function HomePage() {
         return `${daysLeft} day${daysLeft !== 1 ? 's' : ''}`;
     }
 
-    const stats = [
+    const allStats = [
         { 
             title: "Monthly Replies", 
             value: statsLoading ? -1 : monthlyReplies, 
@@ -118,6 +118,14 @@ export default function HomePage() {
             linkText: "View Plans" 
         }
     ];
+    
+    const stats = allStats.filter(stat => {
+        if (stat.title === "Trial Ends In") {
+            return subscription?.status === 'trialing';
+        }
+        return true;
+    });
+
 
     const quickActions = [
         { title: "Dashboard", icon: ArrowRight, href: "/dashboard", variant: "default" },
