@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import CartSummary from './cart-summary';
 import { Check, Loader2 } from 'lucide-react';
 import { useAuthContext } from '@/context/auth-context';
+import { useToast } from '@/hooks/use-toast';
 
 const checkoutSchema = z.object({
   fullName: z.string().min(3, "Full name is required"),
@@ -35,6 +36,7 @@ type CheckoutFormData = z.infer<typeof checkoutSchema>;
 
 export default function CheckoutPage() {
     const { user } = useAuthContext();
+    const { toast } = useToast();
     const router = useRouter();
     const searchParams = useSearchParams();
     const containerRef = useRef<HTMLDivElement>(null);
@@ -82,7 +84,7 @@ export default function CheckoutPage() {
         const tl = gsap.timeline({ onComplete: () => router.push('/dashboard') });
         const checkmark = successRef.current?.querySelector('path');
 
-        tl.to(formRef.current, { opacity: 0, y: -20, duration: 0.5, ease: 'power2.in' })
+        tl.to([formRef.current, summaryRef.current], { opacity: 0, y: -20, duration: 0.5, ease: 'power2.in', stagger: 0.1 })
           .set(successRef.current, { display: 'flex' })
           .fromTo(successRef.current, { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.6, ease: 'back.out(1.7)' });
 
@@ -96,11 +98,40 @@ export default function CheckoutPage() {
     const onSubmit = async (data: CheckoutFormData) => {
         setIsSubmitting(true);
         console.log("Form submitted:", data);
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        setIsSubmitting(false);
-        setIsSuccess(true);
-        handleSuccessAnimation();
+        
+        try {
+            if (!user) throw new Error("User not authenticated.");
+            if (!selectedPlan) throw new Error("No plan selected.");
+
+            const response = await fetch('/api/user/change-plan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user.uid, newPlan: selectedPlan.name.toLowerCase() }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to update plan.');
+            }
+            
+            // Simulate payment processing time
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            setIsSuccess(true);
+            toast({
+                title: "Payment Successful! 🎉",
+                description: `You've successfully subscribed to the ${selectedPlan.name} plan.`,
+            });
+            handleSuccessAnimation();
+
+        } catch (error: any) {
+             toast({
+                variant: 'destructive',
+                title: 'Checkout Failed',
+                description: error.message || 'An unexpected error occurred.',
+            });
+            setIsSubmitting(false);
+        }
     };
     
     if (!selectedPlan) return <div className="h-screen w-full flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
@@ -108,7 +139,7 @@ export default function CheckoutPage() {
     return (
         <FormProvider {...methods}>
             <div ref={containerRef} className="w-full max-w-6xl mx-auto">
-                <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-16 relative">
+                <div className="flex flex-col-reverse md:flex-col lg:grid lg:grid-cols-2 lg:gap-16 relative">
                     
                     {/* Success Overlay */}
                     <div ref={successRef} className="absolute inset-0 z-20 items-center justify-center bg-background/80 backdrop-blur-sm hidden">
@@ -123,7 +154,7 @@ export default function CheckoutPage() {
                     </div>
 
                     {/* Form Column */}
-                    <div ref={formRef}>
+                    <div ref={formRef} className="w-full">
                         <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-12">
                              {/* Account Info */}
                             <div className="space-y-6">
@@ -188,7 +219,7 @@ export default function CheckoutPage() {
                     </div>
 
                     {/* Summary Column */}
-                    <div ref={summaryRef} className="mt-8 lg:mt-0">
+                    <div ref={summaryRef} className="mt-8 lg:mt-0 order-first lg:order-last">
                          <CartSummary plan={selectedPlan} billingCycle={billingCycle} onCycleChange={setBillingCycle} />
                     </div>
                 </div>

@@ -32,7 +32,7 @@ export default function Checkout() {
                     </Button>
                 </div>
             </header>
-            <main className="flex-grow flex items-center justify-center z-10 pt-20 pb-10">
+            <main className="flex-grow flex items-center justify-center z-10 pt-24 pb-12 px-4">
                 <Suspense fallback={<CheckoutFallback />}>
                     <CheckoutPage />
                 </Suspense>
