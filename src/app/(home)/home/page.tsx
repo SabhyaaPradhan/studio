@@ -11,7 +11,7 @@ import Link from 'next/link';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { RecentActivity } from '@/components/home/recent-activity';
-import { listenToAnalyticsRealtime, RealtimeAnalytics } from '@/services/firestore-service';
+import { listenToAnalyticsDaily, DailyAnalytics } from '@/services/firestore-service';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -20,7 +20,7 @@ export default function HomePage() {
     const { user } = useAuthContext();
     const { subscription, isLoading: subLoading } = useSubscription();
     const containerRef = useRef<HTMLDivElement>(null);
-    const [realtimeStats, setRealtimeStats] = useState<RealtimeAnalytics | null>(null);
+    const [monthlyReplies, setMonthlyReplies] = useState(0);
     const [statsLoading, setStatsLoading] = useState(true);
     const [showTrialEndingModal, setShowTrialEndingModal] = useState(false);
 
@@ -37,8 +37,20 @@ export default function HomePage() {
     useEffect(() => {
         if (user) {
             setStatsLoading(true);
-            const unsubscribe = listenToAnalyticsRealtime(user.uid, (data) => {
-                setRealtimeStats(data);
+            const today = new Date();
+            const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+
+            const unsubscribe = listenToAnalyticsDaily(user.uid, daysInMonth, (analytics) => {
+                const currentMonth = today.getMonth();
+                const currentYear = today.getFullYear();
+                
+                const currentMonthAnalytics = analytics.filter(day => {
+                    const dayDate = new Date(day.date);
+                    return dayDate.getMonth() === currentMonth && dayDate.getFullYear() === currentYear;
+                });
+
+                const totalReplies = currentMonthAnalytics.reduce((sum, day) => sum + (day.assistant_messages || 0), 0);
+                setMonthlyReplies(totalReplies);
                 setStatsLoading(false);
             }, (error) => {
                 console.error("Failed to load realtime stats:", error);
@@ -63,10 +75,10 @@ export default function HomePage() {
 
     const stats = [
         { 
-            title: "AI Replies Today", 
-            value: statsLoading ? -1 : (realtimeStats?.today_assistant_messages ?? 0), 
+            title: "Monthly Replies", 
+            value: statsLoading ? -1 : monthlyReplies, 
             icon: MessageSquare, 
-            change: "Total replies generated today", 
+            change: "Total replies this month", 
             link: "/dashboard", 
             linkText: "View Details" 
         },
