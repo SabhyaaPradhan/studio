@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { generateChatResponse } from "@/ai/flows/generate-chat-response";
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Bot, 
   Send, 
@@ -209,57 +210,68 @@ function ChatPageContent() {
                               Clear Chat
                           </Button>
                       </CardHeader>
-                      <CardContent ref={scrollAreaRef} className="flex-1 space-y-4 overflow-y-auto p-6 h-0 flex-grow">
+                      <CardContent ref={scrollAreaRef} className="flex-1 space-y-6 overflow-y-auto p-6 h-[600px] flex-grow">
                       {isLoadingHistory ? (
                           <div className="flex justify-center py-8">
                           <Loader2 className="w-6 h-6 animate-spin" />
                           </div>
                       ) : (
-                          messages.map((msg) => (
-                          <div
-                              key={msg.id}
-                              className={`flex gap-3 items-start ${
-                              msg.role === "user" ? "justify-end" : "justify-start"
-                              }`}
-                          >
-                              {msg.role === 'model' && <Avatar Icon={Bot} />}
-                              <div
-                              className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg break-words ${
-                                  msg.role === "user"
-                                  ? "bg-primary text-primary-foreground"
-                                  : "bg-secondary"
-                              }`}
+                          <AnimatePresence>
+                            {messages.map((msg) => (
+                              <motion.div
+                                key={msg.id}
+                                layout
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -20 }}
+                                transition={{ duration: 0.3, ease: 'easeOut' }}
+                                className={`flex gap-3 items-start ${
+                                  msg.role === "user" ? "justify-end" : "justify-start"
+                                }`}
                               >
-                              <div className="whitespace-pre-wrap text-sm">
-                                  {msg.content}
-                              </div>
-                              {msg.role === "model" && (
-                                  <div className="flex items-center justify-between text-xs opacity-70 mt-2">
-                                      {msg.confidence && (
-                                      <span className="text-primary">
-                                          {Math.round(msg.confidence * 100)}% confidence
-                                      </span>
-                                      )}
-                                      <div className="flex gap-1">
-                                          <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copyToClipboard(msg.content)}>
-                                              <Copy className="w-3 h-3" />
-                                          </Button>
-                                          <Button size="icon" variant="ghost" className="h-6 w-6">
-                                              <ThumbsUp className="w-3 h-3" />
-                                          </Button>
-                                          <Button size="icon" variant="ghost" className="h-6 w-6">
-                                              <ThumbsDown className="w-3 h-3" />
-                                          </Button>
-                                      </div>
+                                {msg.role === 'model' && <Avatar Icon={Bot} />}
+                                <div
+                                  className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg break-words shadow-sm ${
+                                      msg.role === "user"
+                                      ? "bg-primary text-primary-foreground"
+                                      : "bg-secondary"
+                                  }`}
+                                >
+                                  <div className="whitespace-pre-wrap text-sm">
+                                      {msg.content}
                                   </div>
-                              )}
-                              </div>
-                                  {msg.role === 'user' && <Avatar Icon={User} isUser />}
-                          </div>
-                          ))
+                                  {msg.role === "model" && (
+                                      <div className="flex items-center justify-between text-xs opacity-70 mt-2">
+                                          {msg.confidence && (
+                                          <span className="text-primary">
+                                              {Math.round(msg.confidence * 100)}% confidence
+                                          </span>
+                                          )}
+                                          <div className="flex gap-1">
+                                              <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copyToClipboard(msg.content)}>
+                                                  <Copy className="w-3 h-3" />
+                                              </Button>
+                                              <Button size="icon" variant="ghost" className="h-6 w-6">
+                                                  <ThumbsUp className="w-3 h-3" />
+                                              </Button>
+                                              <Button size="icon" variant="ghost" className="h-6 w-6">
+                                                  <ThumbsDown className="w-3 h-3" />
+                                              </Button>
+                                          </div>
+                                      </div>
+                                  )}
+                                </div>
+                                {msg.role === 'user' && <Avatar Icon={User} isUser />}
+                              </motion.div>
+                            ))}
+                          </AnimatePresence>
                       )}
                       {isSending && (
-                              <div className="flex gap-3 items-start justify-start">
+                          <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="flex gap-3 items-start justify-start"
+                          >
                               <Avatar Icon={Bot} />
                               <div className="max-w-xs lg:max-w-md px-4 py-3 rounded-lg bg-secondary">
                                   <div className="flex items-center gap-2">
@@ -267,7 +279,7 @@ function ChatPageContent() {
                                   <span className="text-sm">Generating response...</span>
                                   </div>
                               </div>
-                          </div>
+                          </motion.div>
                       )}
                       </CardContent>
 
