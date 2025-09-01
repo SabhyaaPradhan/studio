@@ -171,6 +171,15 @@ export interface Group {
     isFavorite: boolean;
 }
 
+export interface SampleFormData {
+    name: string;
+    category: string;
+    content: string;
+}
+
+export interface Sample extends SampleFormData {
+    id: string;
+}
 
 // --- Functions ---
 
@@ -668,4 +677,35 @@ export function listenToGroups(userId: string, callback: (groups: Group[]) => vo
         console.error("Error listening to groups: ", error);
         onError(error);
     });
+}
+
+// --- Brand Voice Samples Service ---
+
+export async function addSample(userId: string, sample: SampleFormData): Promise<void> {
+    if (!userId) throw new Error("User ID is required.");
+    await addDoc(collection(db, `users/${userId}/samples`), {
+        ...sample,
+        createdAt: serverTimestamp(),
+    });
+}
+
+export function listenToSamples(
+    userId: string, 
+    callback: (samples: Sample[]) => void, 
+    onError: (error: FirestoreError) => void
+): Unsubscribe {
+    if (!userId) {
+        onError({ code: 'invalid-argument', message: 'User ID is required.' } as FirestoreError);
+        return () => {};
+    }
+
+    const q = query(collection(db, `users/${userId}/samples`), orderBy('createdAt', 'desc'));
+
+    return onSnapshot(q, (querySnapshot) => {
+        const samples: Sample[] = [];
+        querySnapshot.forEach((doc) => {
+            samples.push({ id: doc.id, ...doc.data() } as Sample);
+        });
+        callback(samples);
+    }, onError);
 }

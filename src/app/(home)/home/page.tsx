@@ -11,7 +11,7 @@ import Link from 'next/link';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { RecentActivity } from '@/components/home/recent-activity';
-import { listenToAnalyticsDaily, DailyAnalytics } from '@/services/firestore-service';
+import { listenToAnalyticsDaily, DailyAnalytics, listenToSamples, Sample } from '@/services/firestore-service';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -21,6 +21,7 @@ export default function HomePage() {
     const { subscription, isLoading: subLoading } = useSubscription();
     const containerRef = useRef<HTMLDivElement>(null);
     const [monthlyReplies, setMonthlyReplies] = useState(0);
+    const [knowledgeSources, setKnowledgeSources] = useState(0);
     const [statsLoading, setStatsLoading] = useState(true);
     const [showTrialEndingModal, setShowTrialEndingModal] = useState(false);
 
@@ -40,7 +41,7 @@ export default function HomePage() {
             const today = new Date();
             const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
 
-            const unsubscribe = listenToAnalyticsDaily(user.uid, daysInMonth, (analytics) => {
+            const unsubAnalytics = listenToAnalyticsDaily(user.uid, daysInMonth, (analytics) => {
                 const currentMonth = today.getMonth();
                 const currentYear = today.getFullYear();
                 
@@ -56,7 +57,17 @@ export default function HomePage() {
                 console.error("Failed to load realtime stats:", error);
                 setStatsLoading(false);
             });
-            return () => unsubscribe();
+            
+            const unsubSamples = listenToSamples(user.uid, (samples) => {
+                setKnowledgeSources(samples.length);
+            }, (error) => {
+                 console.error("Failed to load knowledge sources:", error);
+            });
+
+            return () => {
+                unsubAnalytics();
+                unsubSamples();
+            };
         }
     }, [user]);
 
@@ -92,10 +103,10 @@ export default function HomePage() {
         },
         { 
             title: "Knowledge Sources", 
-            value: 1, 
+            value: statsLoading ? -1 : knowledgeSources, 
             icon: BrainCircuit, 
-            change: "+0 this week", 
-            link: "/dashboard", 
+            change: "Samples added for training", 
+            link: "/brand-voice", 
             linkText: "Manage" 
         },
         { 

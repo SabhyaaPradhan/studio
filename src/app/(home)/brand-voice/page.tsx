@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -19,6 +19,8 @@ import * as z from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { generateAssistantPrompt } from '@/ai/flows/generate-assistant-prompt';
 import { summarizeKnowledgeBase } from '@/ai/flows/summarize-knowledge-base';
+import { addSample, listenToSamples, Sample, SampleFormData } from '@/services/firestore-service';
+import { useAuthContext } from '@/context/auth-context';
 
 
 const sampleCategories = [
@@ -43,23 +45,34 @@ const sampleSchema = z.object({
     content: z.string().min(20, 'Sample content needs to be at least 20 characters.'),
 });
 
-type SampleFormData = z.infer<typeof sampleSchema>;
-
-interface Sample extends SampleFormData {
-    id: string;
-}
-
 export default function BrandVoicePage() {
+    const { user } = useAuthContext();
     const { toast } = useToast();
     const [isTraining, setIsTraining] = useState(false);
     const [isSavingGuidelines, setIsSavingGuidelines] = useState(false);
     const [isAddingSample, setIsAddingSample] = useState(false);
     const [samples, setSamples] = useState<Sample[]>([]);
+    const [isLoadingSamples, setIsLoadingSamples] = useState(true);
     const [knowledgeSummary, setKnowledgeSummary] = useState('');
     const [assistantPrompt, setAssistantPrompt] = useState('');
     
     const guidelinesForm = useForm<GuidelinesFormData>({ resolver: zodResolver(guidelinesSchema) });
     const sampleForm = useForm<SampleFormData>({ resolver: zodResolver(sampleSchema) });
+
+    useEffect(() => {
+        if (user) {
+            setIsLoadingSamples(true);
+            const unsubscribe = listenToSamples(user.uid, (loadedSamples) => {
+                setSamples(loadedSamples);
+                setIsLoadingSamples(false);
+            }, (error) => {
+                console.error(error);
+                toast({ variant: 'destructive', title: 'Error', description: 'Could not load training samples.' });
+                setIsLoadingSamples(false);
+            });
+            return () => unsubscribe();
+        }
+    }, [user, toast]);
 
     const handleRetrain = () => {
         setIsTraining(true);
@@ -67,12 +80,20 @@ export default function BrandVoicePage() {
     };
 
     const onAddSample = async (data: SampleFormData) => {
+        if (!user) {
+            toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in.' });
+            return;
+        }
         setIsAddingSample(true);
-        const newSample = { ...data, id: `sample-${samples.length + 1}` };
-        setSamples(prev => [...prev, newSample]);
-        toast({ title: "Sample Added!", description: `"${data.name}" has been added to your training data.` });
-        sampleForm.reset({ name: '', category: '', content: '' });
-        setIsAddingSample(false);
+        try {
+            await addSample(user.uid, data);
+            toast({ title: "Sample Added!", description: `"${data.name}" has been added to your training data.` });
+            sampleForm.reset({ name: '', category: '', content: '' });
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: "Error Adding Sample", description: error.message });
+        } finally {
+            setIsAddingSample(false);
+        }
     };
 
     const onSaveGuidelines = async (data: GuidelinesFormData) => {
@@ -221,7 +242,9 @@ export default function BrandVoicePage() {
                             <CardDescription>A list of all content used for training.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                             {samples.length === 0 ? (
+                             {isLoadingSamples ? (
+                                <div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
+                             ) : samples.length === 0 ? (
                                 <div className="text-center text-muted-foreground p-8 border rounded-lg">
                                     <List className="h-8 w-8 mx-auto mb-2" />
                                     <p>No samples yet. Add your first one to get started.</p>
