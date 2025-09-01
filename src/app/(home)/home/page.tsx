@@ -26,7 +26,8 @@ export default function HomePage() {
     const [showTrialEndingModal, setShowTrialEndingModal] = useState(false);
 
     useEffect(() => {
-        if (!subLoading && subscription?.status === 'trialing' && subscription?.trialDaysLeft !== null && subscription.trialDaysLeft <= 3 && subscription.trialDaysLeft > 0) {
+        const isPaidPlan = subscription?.plan === 'pro' || subscription?.plan === 'enterprise';
+        if (!subLoading && subscription?.status === 'trialing' && !isPaidPlan && subscription?.trialDaysLeft !== null && subscription.trialDaysLeft <= 3 && subscription.trialDaysLeft > 0) {
             const hasSeenModal = sessionStorage.getItem('hasSeenTrialEndingModal');
             if (!hasSeenModal) {
                 setShowTrialEndingModal(true);
@@ -34,7 +35,7 @@ export default function HomePage() {
             }
         }
     }, [subLoading, subscription]);
-
+    
     useEffect(() => {
         if (user) {
             setStatsLoading(true);
@@ -121,7 +122,9 @@ export default function HomePage() {
     
     const stats = allStats.filter(stat => {
         if (stat.title === "Trial Ends In") {
-            return subscription?.status === 'trialing';
+            const isPaidPlan = subscription?.plan === 'pro' || subscription?.plan === 'enterprise';
+            // Only show trial card if they are on a trial and NOT on a paid plan.
+            return subscription?.status === 'trialing' && !isPaidPlan;
         }
         return true;
     });
