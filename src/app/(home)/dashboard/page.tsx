@@ -340,7 +340,7 @@ export default function Dashboard() {
                     </p>
                   </div>
                 </div>
-                <Button size="sm" variant="outline">Connect</Button>
+                <Button size="sm" variant="outline" disabled>Coming Soon</Button>
               </div>
               
               <div className="flex items-center justify-between p-3 border rounded-lg">
